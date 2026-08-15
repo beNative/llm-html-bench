@@ -215,7 +215,36 @@ async function generateIcons() {
   process.exit(0);
 }
 
-generateIcons().catch((err) => {
-  console.error('[ICON BUILD] Failed to generate icons:', err);
+/**
+ * Main entry point: Fast-sync if prebuilt icons exist, otherwise generate via Electron
+ */
+async function main() {
+  const force = process.argv.includes('--force');
+  const buildDir = path.join(projectRoot, 'build');
+  const distDir = path.join(projectRoot, 'dist');
+  const publicDir = path.join(projectRoot, 'public');
+
+  const requiredFiles = ['icon.ico', 'icon.png', 'icon.svg'];
+  const allExist = requiredFiles.every((f) => fs.existsSync(path.join(buildDir, f)) && fs.statSync(path.join(buildDir, f)).size > 0);
+
+  if (allExist && !force) {
+    log('[ICON BUILD] Verified existing icon assets in build/ directory.', colors.cyan);
+    fs.mkdirSync(distDir, { recursive: true });
+    fs.mkdirSync(publicDir, { recursive: true });
+
+    for (const f of requiredFiles) {
+      fs.copyFileSync(path.join(buildDir, f), path.join(distDir, f));
+      fs.copyFileSync(path.join(buildDir, f), path.join(publicDir, f));
+    }
+    log('[ICON BUILD] Synchronized icon assets to dist/ and public/ successfully (0ms).', colors.green);
+    process.exit(0);
+  }
+
+  // If icons are missing or --force requested, generate using Electron with --no-sandbox
+  await generateIcons();
+}
+
+main().catch((err) => {
+  console.error('[ICON BUILD] Failed to build icon assets:', err);
   process.exit(1);
 });
