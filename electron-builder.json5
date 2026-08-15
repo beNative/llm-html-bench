@@ -81,6 +81,7 @@
 
   // Linux Platform Configuration (AppImage + DEB + Tar.gz)
   "linux": {
+    "maintainer": "beNative <dev@benative.org>",
     "target": [
       { "target": "AppImage", "arch": ["x64"] },
       { "target": "deb", "arch": ["x64"] },
@@ -93,7 +94,8 @@
 
   "deb": {
     "packageCategory": "devel",
-    "priority": "optional"
+    "priority": "optional",
+    "maintainer": "beNative <dev@benative.org>"
   },
 
   "asar": true
