@@ -7,9 +7,12 @@ import { RatingInput } from '../common/RatingInput';
 import { extractHtml } from '@shared/utils/htmlExtractor';
 import { calculateOverallScore } from '@shared/utils/scoreCalculator';
 import { MonacoCodeEditor } from '../editor/MonacoCodeEditor';
+import { Tooltip } from '../common/Tooltip';
 import {
   Award,
   Plus,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 export const AddOutputModal: React.FC = () => {
@@ -27,6 +30,22 @@ export const AddOutputModal: React.FC = () => {
   const [promptVersions, setPromptVersions] = useState<PromptVersion[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<string>('');
   const [selectedModelId, setSelectedModelId] = useState<string>('');
+  const [isPromptCopied, setIsPromptCopied] = useState<boolean>(false);
+
+  const activePv = promptVersions.find((pv) => pv.id === selectedVersionId);
+  const activePromptObj = prompts.find((p) => p.id === selectedPromptId);
+
+  const handleCopyPrompt = async () => {
+    const text = activePv?.prompt_text;
+    if (text) {
+      await navigator.clipboard.writeText(text);
+      setIsPromptCopied(true);
+      setTimeout(() => setIsPromptCopied(false), 2000);
+      showToast(`Prompt "${activePromptObj?.name || ''}" copied to clipboard!`, 'success');
+    } else {
+      showToast('No prompt text available to copy', 'error');
+    }
+  };
 
   // Generation Metadata
   const [temperature, setTemperature] = useState<string>('0.7');
@@ -252,6 +271,58 @@ export const AddOutputModal: React.FC = () => {
             </select>
           </div>
         </div>
+
+        {/* Prompt Preview & Quick Copy */}
+        {activePv && (
+          <div
+            style={{
+              padding: '8px 10px',
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '11px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                Prompt Preview (Version {activePv.version})
+              </span>
+              <Tooltip content="Copy Prompt Text" description="Copy full challenge prompt to paste into AI tools or web interfaces">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  icon={isPromptCopied ? <Check size={11} color="var(--accent-success)" /> : <Copy size={11} />}
+                  onClick={handleCopyPrompt}
+                  style={{
+                    padding: '2px 8px',
+                    fontSize: '10px',
+                    height: '22px',
+                    color: isPromptCopied ? 'var(--accent-success)' : undefined,
+                  }}
+                >
+                  {isPromptCopied ? 'Copied!' : 'Copy Prompt'}
+                </Button>
+              </Tooltip>
+            </div>
+            <div
+              style={{
+                maxHeight: '65px',
+                overflowY: 'auto',
+                color: 'var(--text-secondary)',
+                fontSize: '11px',
+                lineHeight: '1.4',
+                whiteSpace: 'pre-wrap',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              {activePv.prompt_text}
+            </div>
+          </div>
+        )}
 
         {/* Step 2: Sampling & Performance Metadata */}
         <div

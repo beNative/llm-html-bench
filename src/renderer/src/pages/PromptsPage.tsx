@@ -20,6 +20,8 @@ import {
   Trophy,
   Edit2,
   Trash2,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 export const PromptsPage: React.FC = () => {
@@ -39,6 +41,11 @@ export const PromptsPage: React.FC = () => {
   const [promptVersions, setPromptVersions] = useState<PromptVersion[]>([]);
   const [selectedVersionId, setSelectedVersionId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'runs' | 'editor' | 'h2h'>('runs');
+
+  // Copy States for Instant Clipboard Feedback
+  const [isHeaderPromptCopied, setIsHeaderPromptCopied] = useState<boolean>(false);
+  const [copiedPromptId, setCopiedPromptId] = useState<string | null>(null);
+  const [copiedVersionId, setCopiedVersionId] = useState<string | null>(null);
 
   // Runs for selected prompt
   const [runs, setRuns] = useState<ModelRun[]>([]);
@@ -186,6 +193,51 @@ export const PromptsPage: React.FC = () => {
 
   const currentVersionObj = promptVersions.find((v) => v.id === selectedVersionId);
 
+  // Quick Copy to Clipboard Engine
+  const copyPromptToClipboard = async (
+    text: string,
+    promptName?: string,
+    type: 'header' | 'list' | 'version' = 'header',
+    itemId?: string
+  ) => {
+    if (!text || !text.trim()) {
+      showToast('No prompt text available to copy', 'error');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === 'header') {
+        setIsHeaderPromptCopied(true);
+        setTimeout(() => setIsHeaderPromptCopied(false), 2000);
+      } else if (type === 'list' && itemId) {
+        setCopiedPromptId(itemId);
+        setTimeout(() => setCopiedPromptId(null), 2000);
+      } else if (type === 'version' && itemId) {
+        setCopiedVersionId(itemId);
+        setTimeout(() => setCopiedVersionId(null), 2000);
+      }
+      showToast(promptName ? `Prompt "${promptName}" copied to clipboard!` : 'Prompt text copied to clipboard!', 'success');
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+      showToast('Failed to copy prompt to clipboard', 'error');
+    }
+  };
+
+  // Keyboard shortcut listener: Alt+C to copy active prompt text
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && (e.key === 'c' || e.key === 'C')) {
+        const text = currentVersionObj?.prompt_text || editedPromptText || activePrompt?.latest_version?.prompt_text;
+        if (text && activePrompt) {
+          e.preventDefault();
+          copyPromptToClipboard(text, activePrompt.name, 'header');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentVersionObj, editedPromptText, activePrompt]);
+
   return (
     <div style={{ flex: 1, display: 'flex', height: '100%', overflow: 'hidden' }}>
       {/* Left Sidebar: Prompt Library Browser */}
@@ -292,11 +344,44 @@ export const PromptsPage: React.FC = () => {
                     transition: 'all 0.1s ease',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
-                    <span style={{ fontWeight: 600, fontSize: '12px', color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px', gap: '6px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '12px', color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {p.name}
                     </span>
-                    <span className="badge">{p.category}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                      <span className="badge">{p.category}</span>
+                      <Tooltip content="Quick Copy Prompt" description={`Copy "${p.name}" prompt text to clipboard`} position="right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const text = p.latest_version?.prompt_text || (p.id === activePrompt?.id ? (currentVersionObj?.prompt_text || editedPromptText) : '');
+                            if (text) {
+                              copyPromptToClipboard(text, p.name, 'list', p.id);
+                            } else if (window.electronAPI) {
+                              window.electronAPI.getPromptVersions(p.id).then((vers) => {
+                                if (vers && vers.length > 0) {
+                                  copyPromptToClipboard(vers[0].prompt_text, p.name, 'list', p.id);
+                                }
+                              });
+                            }
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '2px 4px',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid transparent',
+                            backgroundColor: copiedPromptId === p.id ? 'var(--accent-success-light)' : 'transparent',
+                            color: copiedPromptId === p.id ? 'var(--accent-success)' : 'var(--text-muted)',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          {copiedPromptId === p.id ? <Check size={12} color="var(--accent-success)" /> : <Copy size={12} />}
+                        </button>
+                      </Tooltip>
+                    </div>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-muted)' }}>
@@ -359,6 +444,24 @@ export const PromptsPage: React.FC = () => {
 
             {/* Prompt Actions */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Tooltip content="Copy Prompt to Clipboard" description="Copy active prompt text to clipboard for use anywhere" shortcut="Alt+C">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={isHeaderPromptCopied ? <Check size={13} color="var(--accent-success)" /> : <Copy size={13} />}
+                  onClick={() => {
+                    const text = currentVersionObj?.prompt_text || editedPromptText || activePrompt.latest_version?.prompt_text || '';
+                    copyPromptToClipboard(text, activePrompt.name, 'header');
+                  }}
+                  style={{
+                    borderColor: isHeaderPromptCopied ? 'var(--accent-success)' : undefined,
+                    color: isHeaderPromptCopied ? 'var(--accent-success)' : undefined,
+                  }}
+                >
+                  {isHeaderPromptCopied ? 'Copied Prompt!' : 'Copy Prompt'}
+                </Button>
+              </Tooltip>
+
               <Tooltip content="Add Model Output" description="Record a generated HTML application for this prompt version">
                 <Button
                   size="sm"
@@ -604,14 +707,24 @@ export const PromptsPage: React.FC = () => {
 
           {/* Tab 2: Prompt Editor & Historical Versions */}
           {activeTab === 'editor' && (
-            <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 240px', overflow: 'hidden' }}>
+            <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 260px', overflow: 'hidden' }}>
               {/* Editor Workspace */}
               <div style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-color)', height: '100%' }}>
                 <div style={{ padding: '10px 14px', backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
                     Prompt Text — <span style={{ color: 'var(--text-primary)' }}>Version {currentVersionObj?.version || 1}</span>
                   </div>
-                  <div style={{ display: 'flex', gap: '6px' }}>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <Tooltip content="Copy Editor Text" description="Copy currently edited or selected prompt text">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon={isHeaderPromptCopied ? <Check size={12} color="var(--accent-success)" /> : <Copy size={12} />}
+                        onClick={() => copyPromptToClipboard(editedPromptText, `${activePrompt.name} (v${currentVersionObj?.version || 1})`, 'header')}
+                      >
+                        {isHeaderPromptCopied ? 'Copied' : 'Copy Text'}
+                      </Button>
+                    </Tooltip>
                     <Button
                       size="sm"
                       variant="primary"
@@ -673,9 +786,32 @@ export const PromptsPage: React.FC = () => {
                         fontSize: '11px',
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: isCurrent ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 600, color: isCurrent ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
                         <span>Version {v.version}</span>
-                        <span>{v.run_count || 0} runs</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{v.run_count || 0} runs</span>
+                          <Tooltip content={`Copy Version ${v.version} Text`} position="left">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyPromptToClipboard(v.prompt_text, `${activePrompt?.name} (v${v.version})`, 'version', v.id);
+                              }}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '2px 4px',
+                                border: 'none',
+                                borderRadius: '3px',
+                                backgroundColor: copiedVersionId === v.id ? 'var(--accent-success-light)' : 'transparent',
+                                color: copiedVersionId === v.id ? 'var(--accent-success)' : 'var(--text-muted)',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {copiedVersionId === v.id ? <Check size={11} color="var(--accent-success)" /> : <Copy size={11} />}
+                            </button>
+                          </Tooltip>
+                        </div>
                       </div>
                       <div style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '2px' }}>
                         {new Date(v.created_at).toLocaleDateString()}

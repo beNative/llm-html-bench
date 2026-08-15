@@ -21,6 +21,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Universal Replaced Native OS Tooltips**:
   - Completely replaced ugly, unstyled default Windows OS tooltips (`title=`) across all pages (Prompts, Models, Compare Lab, Collections, Runs History, Viewport Controls, Logging Panel, Header, and Sidebar) with rich glassmorphism hints.
   - Added support for subtext descriptions and glowing 3D `<kbd>` keyboard shortcut pills.
+- **⚡ Instant 1-Click Prompt Copy Engine**:
+  - **Prompt Library Header**: Added a prominent `Copy Prompt` action button with live `Copied!` visual checkmark feedback and toast notification.
+  - **Global Keyboard Shortcut (`Alt+C`)**: Pressing `Alt+C` on the Prompts or Compare page instantly copies the active challenge prompt to the clipboard.
+  - **Prompt List Sidebar**: Every prompt card in the left library list features a 1-click quick-copy button.
+  - **Prompt Version History**: Historical versions (`v1`, `v2`, etc.) and Monaco editor toolbar have dedicated 1-click copy buttons.
+  - **Command Palette (`Ctrl+K`)**: Direct prompt search results have instant copy buttons and dedicated `Copy Prompt: <Name>` action items, plus `Alt+C` shortcut support from anywhere in the app.
+  - **Execution & Output Modals**: Direct prompt preview and copy capabilities within `RunBenchmarkModal` and `AddOutputModal`.
+  - **Comparison Laboratory**: Added a top toolbar prompt pill with a 1-click `Copy Prompt` button.
 
 ---
 

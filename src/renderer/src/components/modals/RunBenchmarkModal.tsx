@@ -4,7 +4,8 @@ import { Model, Prompt, PromptVersion } from '@shared/types/entities';
 import { ProviderConfig } from '@shared/types/providers';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
-import { Play, AlertCircle } from 'lucide-react';
+import { Tooltip } from '../common/Tooltip';
+import { Play, AlertCircle, Copy, Check } from 'lucide-react';
 
 export const RunBenchmarkModal: React.FC = () => {
   const {
@@ -32,6 +33,22 @@ export const RunBenchmarkModal: React.FC = () => {
 
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isPromptCopied, setIsPromptCopied] = useState<boolean>(false);
+
+  const activePv = promptVersions.find((pv) => pv.id === selectedVersionId);
+  const activePromptObj = prompts.find((p) => p.id === targetPromptId);
+
+  const handleCopyPrompt = async () => {
+    const text = activePv?.prompt_text;
+    if (text) {
+      await navigator.clipboard.writeText(text);
+      setIsPromptCopied(true);
+      setTimeout(() => setIsPromptCopied(false), 2000);
+      showToast(`Prompt "${activePromptObj?.name || ''}" copied to clipboard!`, 'success');
+    } else {
+      showToast('No prompt text available to copy', 'error');
+    }
+  };
 
   useEffect(() => {
     if (isRunBenchmarkModalOpen && window.electronAPI) {
@@ -209,6 +226,58 @@ export const RunBenchmarkModal: React.FC = () => {
             </select>
           </div>
         </div>
+
+        {/* Prompt Preview & Quick Copy Box */}
+        {activePv && (
+          <div
+            style={{
+              padding: '8px 10px',
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '11px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                Prompt Preview (Version {activePv.version})
+              </span>
+              <Tooltip content="Copy Prompt Text" description="Copy full challenge prompt to clipboard">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  icon={isPromptCopied ? <Check size={11} color="var(--accent-success)" /> : <Copy size={11} />}
+                  onClick={handleCopyPrompt}
+                  style={{
+                    padding: '2px 8px',
+                    fontSize: '10px',
+                    height: '22px',
+                    color: isPromptCopied ? 'var(--accent-success)' : undefined,
+                  }}
+                >
+                  {isPromptCopied ? 'Copied!' : 'Copy Prompt'}
+                </Button>
+              </Tooltip>
+            </div>
+            <div
+              style={{
+                maxHeight: '70px',
+                overflowY: 'auto',
+                color: 'var(--text-secondary)',
+                fontSize: '11px',
+                lineHeight: '1.4',
+                whiteSpace: 'pre-wrap',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              {activePv.prompt_text}
+            </div>
+          </div>
+        )}
 
         <div>
           <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>

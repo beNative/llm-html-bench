@@ -21,6 +21,8 @@ import {
   Trash2,
   RefreshCw,
   Edit2,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 type ViewMode = 'preview' | 'source' | 'split' | 'diff';
@@ -37,6 +39,7 @@ export const ComparePage: React.FC = () => {
   const [runs, setRuns] = useState<ModelRun[]>([]);
   const [allAvailableRuns, setAllAvailableRuns] = useState<ModelRun[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('preview');
+  const [isPromptCopied, setIsPromptCopied] = useState<boolean>(false);
 
   // Viewport Settings
   const [selectedPreset, setSelectedPreset] = useState<string>('Responsive (Fit)');
@@ -169,6 +172,34 @@ export const ComparePage: React.FC = () => {
     gridStyle.gridTemplateRows = '1fr 1fr';
   }
 
+  const handleCopyPrompt = async () => {
+    if (runs.length === 0) return;
+    const targetRun = runs[0];
+    try {
+      if (targetRun.prompt_text) {
+        await navigator.clipboard.writeText(targetRun.prompt_text);
+        setIsPromptCopied(true);
+        setTimeout(() => setIsPromptCopied(false), 2000);
+        showToast(`Prompt "${targetRun.prompt_name || ''} (v${targetRun.prompt_version || 1})" copied to clipboard!`, 'success');
+        return;
+      }
+      if (targetRun.prompt_id && window.electronAPI) {
+        const versions = await window.electronAPI.getPromptVersions(targetRun.prompt_id);
+        const matched = versions.find((v) => v.id === targetRun.prompt_version_id) || versions[0];
+        if (matched && matched.prompt_text) {
+          await navigator.clipboard.writeText(matched.prompt_text);
+          setIsPromptCopied(true);
+          setTimeout(() => setIsPromptCopied(false), 2000);
+          showToast(`Prompt "${targetRun.prompt_name || ''} (v${targetRun.prompt_version || 1})" copied to clipboard!`, 'success');
+          return;
+        }
+      }
+      showToast('Could not retrieve prompt text', 'error');
+    } catch (err) {
+      showToast('Failed to copy prompt', 'error');
+    }
+  };
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Top Comparison Toolbar */}
@@ -260,6 +291,25 @@ export const ComparePage: React.FC = () => {
             </button>
           )}
         </div>
+
+        {/* Center: Prompt Context & Quick Copy */}
+        {runs.length > 0 && runs[0].prompt_name && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Prompt: <span style={{ color: 'var(--text-primary)' }}>{runs[0].prompt_name}</span> (v{runs[0].prompt_version})
+            </span>
+            <Tooltip content="Copy Benchmark Prompt" description="Copy full prompt text tested across these models" position="bottom">
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={isPromptCopied ? <Check size={12} color="var(--accent-success)" /> : <Copy size={12} />}
+                onClick={handleCopyPrompt}
+              >
+                {isPromptCopied ? 'Copied!' : 'Copy Prompt'}
+              </Button>
+            </Tooltip>
+          </div>
+        )}
 
         {/* Global actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

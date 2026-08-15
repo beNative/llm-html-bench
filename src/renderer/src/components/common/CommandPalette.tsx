@@ -23,7 +23,10 @@ import {
   ArrowRight,
   X,
   Code2,
+  Copy,
+  Check,
 } from 'lucide-react';
+import { Tooltip } from './Tooltip';
 
 interface CommandItem {
   id: string;
@@ -33,6 +36,7 @@ interface CommandItem {
   icon: React.ReactNode;
   shortcut?: string;
   onSelect: () => void;
+  onCopy?: () => void;
 }
 
 export const CommandPalette: React.FC = () => {
@@ -59,6 +63,7 @@ export const CommandPalette: React.FC = () => {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [recentRuns, setRecentRuns] = useState<ModelRun[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [copiedCmdId, setCopiedCmdId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -281,8 +286,24 @@ export const CommandPalette: React.FC = () => {
       },
     });
 
-    // 3. Dynamic Prompts
+    // 3. Dynamic Prompts (Searchable & Quick-Copyable)
     prompts.forEach((p) => {
+      const copyFn = async () => {
+        let text = p.latest_version?.prompt_text;
+        if (!text && window.electronAPI) {
+          const vers = await window.electronAPI.getPromptVersions(p.id);
+          if (vers && vers.length > 0) text = vers[0].prompt_text;
+        }
+        if (text) {
+          await navigator.clipboard.writeText(text);
+          setCopiedCmdId(`prompt-${p.id}`);
+          setTimeout(() => setCopiedCmdId(null), 2000);
+          showToast(`Prompt "${p.name}" copied to clipboard!`, 'success');
+        } else {
+          showToast('No prompt text available to copy', 'error');
+        }
+      };
+
       list.push({
         id: `prompt-${p.id}`,
         title: p.name,
@@ -293,6 +314,19 @@ export const CommandPalette: React.FC = () => {
           setIsCommandPaletteOpen(false);
           setSelectedPromptId(p.id);
           setCurrentTab('prompts');
+        },
+        onCopy: copyFn,
+      });
+
+      list.push({
+        id: `copy-prompt-${p.id}`,
+        title: `Copy Prompt: ${p.name}`,
+        category: 'Actions',
+        subtitle: `Copy full text of "${p.name}" (${p.category}) to clipboard`,
+        icon: <Copy size={14} color="var(--accent-cyan)" />,
+        onSelect: async () => {
+          setIsCommandPaletteOpen(false);
+          await copyFn();
         },
       });
     });
@@ -369,6 +403,15 @@ export const CommandPalette: React.FC = () => {
 
   // Keyboard navigation inside command palette
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.altKey && (e.key === 'c' || e.key === 'C')) {
+      const activeCmd = filteredCommands[selectedIndex];
+      if (activeCmd?.onCopy) {
+        e.preventDefault();
+        activeCmd.onCopy();
+        return;
+      }
+    }
+
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setSelectedIndex((prev) => (prev + 1 < filteredCommands.length ? prev + 1 : 0));
@@ -471,6 +514,32 @@ export const CommandPalette: React.FC = () => {
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: '12px' }}>
+                    {cmd.onCopy && (
+                      <Tooltip content="Quick Copy Prompt" description="Copy prompt text to clipboard" position="left">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cmd.onCopy?.();
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '2px 5px',
+                            borderRadius: 'var(--radius-sm)',
+                            backgroundColor: copiedCmdId === cmd.id ? 'var(--accent-success-light)' : 'transparent',
+                            color: copiedCmdId === cmd.id ? 'var(--accent-success)' : 'var(--text-muted)',
+                            border: '1px solid var(--border-subtle)',
+                            cursor: 'pointer',
+                            fontSize: '10px',
+                            gap: '3px',
+                          }}
+                        >
+                          {copiedCmdId === cmd.id ? <Check size={11} color="var(--accent-success)" /> : <Copy size={11} />}
+                          <span>{copiedCmdId === cmd.id ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      </Tooltip>
+                    )}
                     <span
                       style={{
                         fontSize: '9px',
@@ -498,6 +567,7 @@ export const CommandPalette: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span><kbd className="keycap">↑</kbd> <kbd className="keycap">↓</kbd> to navigate</span>
             <span><kbd className="keycap">↵</kbd> to select</span>
+            <span><kbd className="keycap">Alt+C</kbd> to copy prompt</span>
             <span><kbd className="keycap">ESC</kbd> to close</span>
           </div>
           <span style={{ color: 'var(--text-muted)' }}>
