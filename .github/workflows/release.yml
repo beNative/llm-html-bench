@@ -69,6 +69,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb libgbm1 libnss3
+          npx @electron/rebuild -f -w better-sqlite3
           xvfb-run --auto-servernum npm test
         env:
           ELECTRON_RUN_AS_NODE: '1'

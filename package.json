@@ -11,6 +11,7 @@
     "build:mac": "npm run generate-icons && tsc && vite build && electron-builder --mac",
     "build:linux": "npm run generate-icons && tsc && vite build && electron-builder --linux",
     "release:notes": "node scripts/generate-release-notes.mjs",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
     "test": "vitest run tests/htmlExtractor.test.ts tests/scoreCalculator.test.ts && electron scripts/test-database.mjs",
     "typecheck": "tsc --noEmit"
   },
@@ -39,6 +40,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.2.0",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.13.4",
     "@types/react": "^18.3.18",
