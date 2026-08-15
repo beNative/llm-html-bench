@@ -1,0 +1,208 @@
+name: Automated Release Build Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag (e.g. v1.0.0)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  # -------------------------------------------------------------
+  # 1. Validation & Test Suite
+  # -------------------------------------------------------------
+  validate-and-test:
+    name: 🧪 Validate & Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⚙️ Set up Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Validate Version Tag
+        shell: bash
+        run: |
+          set -e
+          TAG="${{ github.ref_name }}"
+          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          fi
+          
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          CLEAN_TAG="${TAG#v}"
+          
+          echo "::group::Version Verification"
+          echo "Git Tag:        $TAG"
+          echo "Clean Tag:      $CLEAN_TAG"
+          echo "Package.json:   $PKG_VERSION"
+          echo "::endgroup::"
+          
+          if [[ "$TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
+            echo "✅ Tag format valid semver: $TAG"
+          else
+            echo "::error::Tag '$TAG' is not a valid Semantic Version (expected vX.Y.Z)"
+            exit 1
+          fi
+
+      - name: 🔎 TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: 🧪 Run Integration & Unit Tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgbm1 libasound2
+          xvfb-run --auto-servernum npm test
+
+  # -------------------------------------------------------------
+  # 2. Multi-Platform Build Matrix (Windows, macOS, Linux)
+  # -------------------------------------------------------------
+  build-binaries:
+    name: 🔨 Build ${{ matrix.platform-name }} Binaries
+    needs: validate-and-test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform-name: Windows
+            build-cmd: npm run build:win
+            artifact-pattern: dist-package/*.exe dist-package/*.zip
+          - os: macos-latest
+            platform-name: macOS (Universal & Intel/ARM)
+            build-cmd: npm run build:mac
+            artifact-pattern: dist-package/*.dmg dist-package/*.zip
+          - os: ubuntu-latest
+            platform-name: Linux (AppImage & DEB)
+            build-cmd: xvfb-run --auto-servernum npm run build:linux
+            artifact-pattern: dist-package/*.AppImage dist-package/*.deb dist-package/*.tar.gz
+
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Set up Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: 🐧 Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgbm1 libasound2 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2
+
+      - name: 📦 Install npm dependencies
+        run: npm ci
+
+      - name: 🎨 Pre-generate Vector Icons
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            xvfb-run --auto-servernum npm run generate-icons
+          else
+            npm run generate-icons
+          fi
+        shell: bash
+
+      - name: 🚀 Compile Production Bundle & Package
+        run: ${{ matrix.build-cmd }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBUG: electron-builder
+
+      - name: 📤 Upload Platform Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.os }}
+          path: |
+            dist-package/*.exe
+            dist-package/*.dmg
+            dist-package/*.AppImage
+            dist-package/*.deb
+            dist-package/*.tar.gz
+            dist-package/*.zip
+          if-no-files-found: warn
+          retention-days: 2
+
+  # -------------------------------------------------------------
+  # 3. Aggregate Release & Publish to GitHub
+  # -------------------------------------------------------------
+  publish-release:
+    name: 🚀 Publish GitHub Release
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Set up Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: 📂 Create release staging directory
+        run: mkdir -p release-assets
+
+      - name: 📥 Download all platform build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-temp
+          merge-multiple: true
+
+      - name: 📋 Move and organize binaries
+        run: |
+          mkdir -p release-assets
+          find release-temp -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.tar.gz" -o -name "*.zip" \) ! -name "*blockmap*" ! -name "*builder-debug*" -exec cp {} release-assets/ \;
+          echo "::group::Aggregated Release Files"
+          ls -lh release-assets/
+          echo "::endgroup::"
+
+      - name: 🔒 Compute SHA-256 Checksums
+        working-directory: release-assets
+        run: |
+          sha256sum * > SHA256SUMS.txt
+          echo "::group::SHA256 Checksums"
+          cat SHA256SUMS.txt
+          echo "::endgroup::"
+
+      - name: 📝 Generate Structured Release Notes
+        id: release_notes
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          fi
+          RELEASE_TAG="$TAG" node scripts/generate-release-notes.mjs > release_body.md
+          echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+
+      - name: 🏷️ Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: LLM HTML Bench ${{ env.RELEASE_TAG }} 🚀
+          body_path: dist-package/release-notes.md
+          files: |
+            release-assets/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

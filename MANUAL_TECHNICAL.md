@@ -198,3 +198,30 @@ This isolates and mirrors console messages in the application's **Console Drawer
   - In development mode, logs are stored in `<workspace>/logs/`.
   - Daily dated file naming convention: `llm-html-bench-YYYY-MM-DD.log`.
   - Format per line: `[YYYY-MM-DDTHH:mm:ss.SSSZ] [LEVEL] [SOURCE] message | Details: ...`
+
+---
+
+## 10. Automated CI/CD Release Pipeline
+
+LLM HTML Bench features a fully automated multi-platform release workflow powered by GitHub Actions:
+
+- **Workflow Definition**: `.github/workflows/release.yml`
+- **Triggers**:
+  - Pushing any semantic version Git tag (e.g. `git tag v1.0.0 && git push origin v1.0.0`).
+  - Manual trigger via `workflow_dispatch` with custom tag parameters.
+- **Stage 1: Validation & Quality Gate (`validate-and-test`)**:
+  - Validates that the git tag conforms to Semantic Versioning (`vMAJOR.MINOR.PATCH`).
+  - Executes full TypeScript typecheck (`tsc --noEmit`).
+  - Runs headless Vitest unit tests and SQLite Electron migration tests inside an automated Xvfb display server.
+- **Stage 2: Multi-Platform Build Matrix (`build-binaries`)**:
+  - Matrix parallel compilation on native host runners:
+    - **Windows (`windows-latest`)**: Produces `LLM HTML Bench-Setup-X.Y.Z.exe` (NSIS) and `LLM HTML Bench-X.Y.Z-win.zip` (Portable).
+    - **macOS (`macos-latest`)**: Produces `LLM HTML Bench-X.Y.Z-arm64.dmg`, `LLM HTML Bench-X.Y.Z-x64.dmg`, and standalone `.zip` archives.
+    - **Linux (`ubuntu-latest`)**: Produces `LLM HTML Bench-X.Y.Z-x64.AppImage`, `LLM HTML Bench-X.Y.Z-x64.deb`, and `LLM HTML Bench-X.Y.Z-x64.tar.gz`.
+  - Native module rebuilds (`better-sqlite3`) executed per target platform and architecture.
+- **Stage 3: Release Packaging & Publishing (`publish-release`)**:
+  - Gathers all platform binaries into unified release staging.
+  - Computes cryptographic SHA-256 hashes (`SHA256SUMS.txt`).
+  - Automatically parses and extracts the matching release section from `CHANGELOG.md` via `scripts/generate-release-notes.mjs`.
+  - Publishes a formal GitHub Release attaching all binary packages, checksums, and structured download tables.
+

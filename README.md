@@ -100,9 +100,23 @@ npm test
 # Package for local platform
 npm run build
 
-# Package for Windows (.exe / NSIS)
+# Package for Windows (.exe / NSIS & portable .zip)
 npm run build:win
+
+# Package for macOS (.dmg & .zip for Apple Silicon & Intel)
+npm run build:mac
+
+# Package for Linux (.AppImage, .deb, .tar.gz)
+npm run build:linux
 ```
+
+### 🏷️ Creating a GitHub Release (Automated CI/CD)
+To trigger an automated multi-platform release with GitHub Actions:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+The CI/CD pipeline will automatically validate the version, execute the test suite, build binaries across Windows, macOS, and Linux, generate SHA-256 checksums, and publish a GitHub Release.
 
 ---
 
@@ -110,6 +124,7 @@ npm run build:win
 
 | Shortcut | Description |
 | :--- | :--- |
+| `Ctrl + K` / `Ctrl + P` / `/` | Open Spotlight Command Palette & Global Search |
 | `Ctrl + N` | Create New Benchmark Prompt |
 | `Ctrl + Shift + C` | Open Comparison View with Selected Runs |
 | `F12` | Toggle Developer Tools & Diagnostics |

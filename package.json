@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "npm run generate-icons && vite",
     "generate-icons": "electron scripts/build-icons.mjs",
-    "prebuild": "npm run generate-icons",
     "build": "npm run generate-icons && tsc && vite build && electron-builder --dir",
     "build:win": "npm run generate-icons && tsc && vite build && electron-builder --win",
+    "build:mac": "npm run generate-icons && tsc && vite build && electron-builder --mac",
+    "build:linux": "npm run generate-icons && tsc && vite build && electron-builder --linux",
+    "release:notes": "node scripts/generate-release-notes.mjs",
     "test": "vitest run tests/htmlExtractor.test.ts tests/scoreCalculator.test.ts && electron scripts/test-database.mjs",
     "typecheck": "tsc --noEmit"
   },
