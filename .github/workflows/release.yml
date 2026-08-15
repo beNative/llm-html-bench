@@ -94,9 +94,9 @@ jobs:
             build-cmd: npm run build:mac
             artifact-pattern: dist-package/*.dmg dist-package/*.zip
           - os: ubuntu-latest
-            platform-name: Linux (AppImage & DEB)
+            platform-name: Linux (Universal AppImage & Tar.gz)
             build-cmd: xvfb-run --auto-servernum npm run build:linux
-            artifact-pattern: dist-package/*.AppImage dist-package/*.deb dist-package/*.tar.gz
+            artifact-pattern: dist-package/*.AppImage dist-package/*.tar.gz
 
     steps:
       - name: 📥 Check out repository

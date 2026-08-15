@@ -68,7 +68,6 @@ Desktop benchmark database and inspection laboratory for LLM-generated HTML appl
 | **macOS** | \`LLM HTML Bench-${targetVersion}-arm64.dmg\` | Apple Silicon | Apple Silicon Disk Image (M1/M2/M3/M4) |
 | **macOS** | \`LLM HTML Bench-${targetVersion}-x64.dmg\` | Intel | Intel Mac Disk Image |
 | **Linux** | \`LLM HTML Bench-${targetVersion}-x64.AppImage\` | x64 | Standalone Universal AppImage |
-| **Linux** | \`LLM HTML Bench-${targetVersion}-x64.deb\` | x64 | Debian / Ubuntu Package |
 | **Linux** | \`LLM HTML Bench-${targetVersion}-x64.tar.gz\` | x64 | Tarball Archive |
 
 > 🔒 **Verification**: Download \`SHA256SUMS.txt\` to verify the integrity and checksum of all release binaries.

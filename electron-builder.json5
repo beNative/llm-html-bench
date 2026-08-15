@@ -79,23 +79,15 @@
     }
   },
 
-  // Linux Platform Configuration (AppImage + DEB + Tar.gz)
+  // Linux Platform Configuration (Universal AppImage + Tar.gz)
   "linux": {
-    "maintainer": "beNative <dev@benative.org>",
     "target": [
       { "target": "AppImage", "arch": ["x64"] },
-      { "target": "deb", "arch": ["x64"] },
       { "target": "tar.gz", "arch": ["x64"] }
     ],
     "icon": "build/icon.png",
     "category": "Development",
     "artifactName": "${productName}-${version}-${arch}.${ext}"
-  },
-
-  "deb": {
-    "packageCategory": "devel",
-    "priority": "optional",
-    "maintainer": "beNative <dev@benative.org>"
   },
 
   "asar": true
