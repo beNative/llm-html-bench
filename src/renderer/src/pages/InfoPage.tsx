@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { DocumentationDocs } from '@shared/types/ipc';
 import { Button } from '../components/common/Button';
 import { Tooltip } from '../components/common/Tooltip';
+import { MarkdownViewer } from '../components/common/MarkdownViewer';
 import {
   BookOpen,
   FileText,
@@ -114,172 +115,6 @@ export const InfoPage: React.FC = () => {
     if (window.electronAPI) {
       window.electronAPI.openDocsFolder();
     }
-  };
-
-  const renderMarkdown = (markdown: string) => {
-    if (!markdown) return null;
-
-    const lines = markdown.split('\n');
-    const elements: React.ReactNode[] = [];
-    let inCodeBlock = false;
-    let codeBlockContent: string[] = [];
-    let inTable = false;
-    let tableRows: string[][] = [];
-
-    const flushTable = (key: number) => {
-      if (tableRows.length === 0) return null;
-      const headers = tableRows[0];
-      const dataRows = tableRows.slice(1);
-      const table = (
-        <div key={`table-${key}`} style={{ overflowX: 'auto', margin: '14px 0' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-            <thead>
-              <tr style={{ backgroundColor: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
-                {headers.map((h, i) => (
-                  <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                    {h.trim()}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {dataRows.map((row, rIdx) => (
-                <tr key={rIdx} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  {row.map((cell, cIdx) => (
-                    <td key={cIdx} style={{ padding: '8px 12px', color: 'var(--text-primary)' }}>
-                      {cell.trim()}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-      tableRows = [];
-      inTable = false;
-      return table;
-    };
-
-    lines.forEach((line, idx) => {
-      // Code block start/end
-      if (line.trim().startsWith('```')) {
-        if (inCodeBlock) {
-          elements.push(
-            <pre
-              key={`code-${idx}`}
-              style={{
-                backgroundColor: 'var(--bg-primary)',
-                padding: '12px 14px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-                color: 'var(--text-primary)',
-                overflowX: 'auto',
-                margin: '12px 0',
-                lineHeight: '1.5',
-              }}
-            >
-              <code>{codeBlockContent.join('\n')}</code>
-            </pre>
-          );
-          codeBlockContent = [];
-          inCodeBlock = false;
-        } else {
-          inCodeBlock = true;
-        }
-        return;
-      }
-
-      if (inCodeBlock) {
-        codeBlockContent.push(line);
-        return;
-      }
-
-      // Markdown Tables
-      if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
-        if (line.includes('---')) {
-          // Separator row, ignore
-          return;
-        }
-        const cells = line.split('|').slice(1, -1);
-        tableRows.push(cells);
-        inTable = true;
-        return;
-      } else if (inTable) {
-        elements.push(flushTable(idx));
-      }
-
-      // Headings
-      if (line.startsWith('# ')) {
-        elements.push(
-          <h1 key={idx} className="h1" style={{ margin: '20px 0 10px 0', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-            {line.replace(/^#\s+/, '')}
-          </h1>
-        );
-        return;
-      }
-      if (line.startsWith('## ')) {
-        elements.push(
-          <h2 key={idx} className="h2" style={{ margin: '18px 0 8px 0', color: 'var(--accent-primary)' }}>
-            {line.replace(/^##\s+/, '')}
-          </h2>
-        );
-        return;
-      }
-      if (line.startsWith('### ')) {
-        elements.push(
-          <h3 key={idx} className="h3" style={{ margin: '14px 0 6px 0' }}>
-            {line.replace(/^###\s+/, '')}
-          </h3>
-        );
-        return;
-      }
-
-      // Horizontal rules
-      if (line.trim() === '---') {
-        elements.push(<hr key={idx} style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '16px 0' }} />);
-        return;
-      }
-
-      // Bullet lists
-      if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
-        const text = line.trim().replace(/^[-*]\s+/, '');
-        elements.push(
-          <div key={idx} style={{ display: 'flex', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0', paddingLeft: '8px' }}>
-            <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>•</span>
-            <div>{text}</div>
-          </div>
-        );
-        return;
-      }
-
-      // Numbered lists
-      if (/^\d+\.\s+/.test(line.trim())) {
-        elements.push(
-          <div key={idx} style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0', paddingLeft: '8px' }}>
-            {line.trim()}
-          </div>
-        );
-        return;
-      }
-
-      // Regular paragraphs
-      if (line.trim().length > 0) {
-        elements.push(
-          <p key={idx} style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', margin: '8px 0' }}>
-            {line}
-          </p>
-        );
-      }
-    });
-
-    if (inTable) {
-      elements.push(flushTable(999999));
-    }
-
-    return elements;
   };
 
   if (loading) {
@@ -436,7 +271,7 @@ export const InfoPage: React.FC = () => {
         {/* Main Document Content with Table of Contents Drawer */}
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           {/* Document Body */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }} id="doc-scroll-container">
             <div
               style={{
                 maxWidth: '900px',
@@ -448,14 +283,10 @@ export const InfoPage: React.FC = () => {
                 boxShadow: 'var(--shadow-sm)',
               }}
             >
-              {renderMarkdown(
-                searchQuery
-                  ? activeContent
-                      .split('\n')
-                      .filter((l) => l.toLowerCase().includes(searchQuery.toLowerCase()) || l.startsWith('#'))
-                      .join('\n')
-                  : activeContent
-              )}
+              <MarkdownViewer
+                content={activeContent}
+                searchQuery={searchQuery}
+              />
             </div>
           </div>
 
@@ -463,7 +294,7 @@ export const InfoPage: React.FC = () => {
           {tableOfContents.length > 0 && (
             <div
               style={{
-                width: '220px',
+                width: '230px',
                 backgroundColor: 'var(--bg-secondary)',
                 borderLeft: '1px solid var(--border-color)',
                 padding: '14px',
@@ -475,16 +306,33 @@ export const InfoPage: React.FC = () => {
                 <Layers size={13} color="var(--accent-primary)" />
                 <span>On This Page</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {tableOfContents.map((h, i) => (
                   <div
                     key={i}
+                    onClick={() => {
+                      const el = document.getElementById(h.id);
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }}
                     style={{
-                      paddingLeft: `${(h.level - 1) * 8}px`,
+                      padding: '4px 6px',
+                      paddingLeft: `${(h.level - 1) * 10 + 6}px`,
                       color: h.level === 1 ? 'var(--text-primary)' : 'var(--text-secondary)',
                       fontWeight: h.level === 1 ? 600 : 400,
-                      cursor: 'default',
-                      lineHeight: '1.3',
+                      cursor: 'pointer',
+                      lineHeight: '1.35',
+                      borderRadius: 'var(--radius-sm)',
+                      transition: 'all 0.12s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                      e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = h.level === 1 ? 'var(--text-primary)' : 'var(--text-secondary)';
                     }}
                   >
                     {h.text}

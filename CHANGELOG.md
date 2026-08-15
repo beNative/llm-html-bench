@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.1.1] - 2026-08-15
+
+### 📖 Full GitHub Flavored Markdown (GFM) Rendering Engine
+
+#### 🚀 Features & Architecture Improvements
+- **Robust GFM & CommonMark Parser**:
+  - Replaced the legacy line-by-line manual string splitter in the Documentation & Manuals viewer with a high-fidelity Markdown engine (`MarkdownViewer.tsx`) powered by `marked`.
+  - **Inline Formatting**: Fully parses bold (`**bold**`), italics (`*italic*`), strikethrough (`~~text~~`), inline code (`` `code` ``), and nested formatting correctly without rendering raw unparsed markdown symbols.
+  - **Lists & Indentation**: Fully supports bulleted lists, numbered lists, sub-lists, and interactive task checkboxes.
+  - **Interactive Code Blocks**: Code blocks now display language badges and include 1-click **"Copy Code"** buttons with visual checkmark animations.
+  - **Interactive Table of Contents**: Clicking any heading in the "On This Page" sidebar or within the document body smoothly scrolls directly to the section anchor.
+  - **GitHub-Style Callouts**: Supports `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, and `[!CAUTION]` alert banners.
+  - **Responsive Tables**: Beautiful glassmorphic table borders with zebra striping and horizontal scrolling support.
+  - **Dynamic In-Doc Search**: Real-time highlighting of search queries across headings, paragraphs, and lists.
+
+---
+
 ## [1.1.0] - 2026-08-15
 
 ### 🌟 Smart Portal-Based Hint & Tooltip System (Zero-Clipping Architecture)
