@@ -126,6 +126,10 @@ function createIcoBuffer(pngBuffersWithSize) {
 async function generateIcons() {
   const { app, BrowserWindow } = await import('electron');
 
+  app.disableHardwareAcceleration();
+  app.commandLine.appendSwitch('no-sandbox');
+  app.commandLine.appendSwitch('disable-gpu');
+
   await app.whenReady();
 
   const svgSource = detectSvgSource();
