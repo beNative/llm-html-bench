@@ -1,0 +1,244 @@
+import {
+  Prompt,
+  PromptVersion,
+  Model,
+  ModelRun,
+  Output,
+  Evaluation,
+  HeadToHeadComparison,
+  Tag,
+  Collection,
+  BenchmarkStats,
+  Screenshot,
+} from './entities';
+import { ProviderConfig } from './providers';
+
+export interface CreatePromptInput {
+  name: string;
+  description?: string;
+  category: string;
+  promptText: string;
+  notes?: string;
+  tags?: string[];
+  collectionIds?: string[];
+}
+
+export interface UpdatePromptInput {
+  id: string;
+  name: string;
+  description?: string;
+  category: string;
+  tags?: string[];
+  collectionIds?: string[];
+}
+
+export interface CreatePromptVersionInput {
+  promptId: string;
+  promptText: string;
+  notes?: string;
+}
+
+export interface CreateModelInput {
+  provider: string;
+  modelName: string;
+  displayName: string;
+  modelVersion?: string;
+  modelFamily?: string;
+  parameterCount?: string;
+  architecture?: string;
+  quantization?: string;
+  localOrCloud?: 'local' | 'cloud';
+  notes?: string;
+}
+
+export interface CreateModelRunInput {
+  promptVersionId: string;
+  modelId: string;
+  temperature?: number;
+  topP?: number;
+  topK?: number;
+  maxTokens?: number;
+  seed?: number;
+  reasoningEffort?: string;
+  contextLength?: number;
+  generationTimeMs?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  tokensPerSecond?: number;
+  notes?: string;
+  metadataJson?: string;
+  rawOutput: string;
+  html?: string;
+  provenance: 'manual-paste' | 'api' | 'import';
+  requestedModelId?: string;
+  resolvedModelId?: string;
+  evaluation?: {
+    visualScore?: number;
+    promptAdherenceScore?: number;
+    functionalityScore?: number;
+    codeQualityScore?: number;
+    creativityScore?: number;
+    overallScore?: number;
+    isManualOverall?: boolean;
+    favorite?: boolean;
+    notes?: string;
+  };
+}
+
+export interface SaveEvaluationInput {
+  modelRunId: string;
+  visualScore: number | null;
+  promptAdherenceScore: number | null;
+  functionalityScore: number | null;
+  codeQualityScore: number | null;
+  creativityScore: number | null;
+  overallScore: number | null;
+  isManualOverall: boolean;
+  favorite: boolean;
+  notes: string | null;
+}
+
+export interface SaveHeadToHeadInput {
+  promptVersionId: string;
+  leftRunId: string;
+  rightRunId: string;
+  winner: 'left' | 'right' | 'tie';
+  dimensionReason:
+    | 'Visual Design'
+    | 'Functionality'
+    | 'Prompt Adherence'
+    | 'Performance'
+    | 'Code Quality'
+    | 'Overall Preference';
+  notes?: string;
+}
+
+export interface SaveModifiedOutputInput {
+  modelRunId: string;
+  html: string;
+  originalOutputId: string;
+}
+
+export interface DatasetExport {
+  format: 'llm-html-bench';
+  version: number;
+  exportedAt: string;
+  appVersion: string;
+  prompts: Prompt[];
+  promptVersions: PromptVersion[];
+  models: Model[];
+  runs: ModelRun[];
+  outputs: Output[];
+  evaluations: Evaluation[];
+  comparisons: HeadToHeadComparison[];
+  tags: Tag[];
+  collections: Collection[];
+}
+
+export interface DatabaseInfo {
+  filePath: string;
+  sizeBytes: number;
+  version: number;
+  counts: {
+    prompts: number;
+    promptVersions: number;
+    models: number;
+    runs: number;
+    outputs: number;
+    evaluations: number;
+    comparisons: number;
+  };
+}
+
+export interface ElectronAPI {
+  // Prompts
+  getPrompts: (filter?: {
+    search?: string;
+    category?: string;
+    tagId?: string;
+    collectionId?: string;
+    archived?: boolean;
+    sortBy?: 'name' | 'created_at' | 'last_tested' | 'run_count';
+    sortOrder?: 'asc' | 'desc';
+  }) => Promise<Prompt[]>;
+  getPromptById: (id: string) => Promise<Prompt | null>;
+  createPrompt: (input: CreatePromptInput) => Promise<Prompt>;
+  updatePrompt: (input: UpdatePromptInput) => Promise<Prompt>;
+  archivePrompt: (id: string, archived: boolean) => Promise<void>;
+  deletePrompt: (id: string) => Promise<void>;
+  createPromptVersion: (input: CreatePromptVersionInput) => Promise<PromptVersion>;
+  getPromptVersions: (promptId: string) => Promise<PromptVersion[]>;
+
+  // Models
+  getModels: () => Promise<Model[]>;
+  getModelById: (id: string) => Promise<Model | null>;
+  createModel: (input: CreateModelInput) => Promise<Model>;
+  updateModel: (id: string, input: Partial<CreateModelInput>) => Promise<Model>;
+  deleteModel: (id: string) => Promise<void>;
+
+  // Model Runs & Outputs
+  getRunsForPrompt: (promptId: string) => Promise<ModelRun[]>;
+  getRunsForPromptVersion: (promptVersionId: string) => Promise<ModelRun[]>;
+  getRunsForModel: (modelId: string) => Promise<ModelRun[]>;
+  getRunById: (id: string) => Promise<ModelRun | null>;
+  getRunsByIds: (ids: string[]) => Promise<ModelRun[]>;
+  getAllRuns: (limit?: number, offset?: number) => Promise<ModelRun[]>;
+  createModelRun: (input: CreateModelRunInput) => Promise<ModelRun>;
+  deleteModelRun: (id: string) => Promise<void>;
+  saveModifiedOutput: (input: SaveModifiedOutputInput) => Promise<Output>;
+
+  // Evaluations & Comparisons
+  saveEvaluation: (input: SaveEvaluationInput) => Promise<Evaluation>;
+  saveHeadToHeadComparison: (input: SaveHeadToHeadInput) => Promise<HeadToHeadComparison>;
+  getComparisonsForPrompt: (promptVersionId?: string) => Promise<HeadToHeadComparison[]>;
+
+  // Tags & Collections
+  getTags: () => Promise<Tag[]>;
+  createTag: (name: string) => Promise<Tag>;
+  getCollections: () => Promise<Collection[]>;
+  createCollection: (name: string, description?: string) => Promise<Collection>;
+  updateCollection: (id: string, name: string, description?: string) => Promise<Collection>;
+  deleteCollection: (id: string) => Promise<void>;
+
+  // Dashboard & Stats
+  getBenchmarkStats: () => Promise<BenchmarkStats>;
+
+  // Provider / Execution
+  getProviderConfigs: () => Promise<ProviderConfig[]>;
+  saveProviderConfig: (config: ProviderConfig) => Promise<void>;
+  testProviderConnection: (config: ProviderConfig) => Promise<{ success: boolean; error?: string }>;
+  executeBenchmarkRun: (request: {
+    promptVersionId: string;
+    modelId: string;
+    providerConfigId: string;
+    temperature?: number;
+    topP?: number;
+    maxTokens?: number;
+  }) => Promise<ModelRun>;
+
+  // Database Management & Backup
+  getDatabaseInfo: () => Promise<DatabaseInfo>;
+  backupDatabase: (targetPath?: string) => Promise<{ success: boolean; filePath: string }>;
+  restoreDatabase: (sourcePath: string) => Promise<{ success: boolean }>;
+  vacuumDatabase: () => Promise<void>;
+  openDatabaseFolder: () => Promise<void>;
+
+  // Export / Import
+  exportDataset: () => Promise<DatasetExport>;
+  exportDatasetToFile: (targetPath?: string) => Promise<{ success: boolean; filePath: string }>;
+  importDataset: (data: DatasetExport) => Promise<{ success: boolean; importedCount: number }>;
+  importDatasetFromFile: (sourcePath?: string) => Promise<{ success: boolean; importedCount: number }>;
+
+  // Screenshots
+  saveScreenshot: (runId: string, base64Data: string, width: number, height: number) => Promise<Screenshot>;
+
+  // System
+  getAppVersion: () => Promise<string>;
+  extractHtml: (raw: string) => Promise<string>;
+}
+
+declare global {
+  interface Window {
+    electronAPI: ElectronAPI;
+  }
+}

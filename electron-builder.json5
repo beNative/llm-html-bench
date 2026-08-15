@@ -1,0 +1,48 @@
+{
+  // Unique Application ID & Product Name
+  "appId": "com.antigravity.llm-html-bench",
+  "productName": "LLM HTML Bench",
+
+  "directories": {
+    "output": "dist-package",
+    "buildResources": "build"
+  },
+
+  // Files included in production ASAR bundle
+  "files": [
+    "dist/**/*",
+    "dist-electron/**/*",
+    "build/**/*",
+    "assets/**/*",
+    "package.json"
+  ],
+
+  // Windows Platform Icon Configuration (Multi-size ICO generated from SVG)
+  "win": {
+    "target": "nsis",
+    "icon": "build/icon.ico"
+  },
+
+  // macOS Platform Icon Configuration
+  "mac": {
+    "target": "dmg",
+    "icon": "build/icon.png",
+    "category": "public.app-category.developer-tools"
+  },
+
+  // Linux Platform Icon Configuration
+  "linux": {
+    "target": "AppImage",
+    "icon": "build/icon.png",
+    "category": "Development"
+  },
+
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "installerIcon": "build/icon.ico",
+    "uninstallerIcon": "build/icon.ico"
+  },
+
+  "asar": true
+}
