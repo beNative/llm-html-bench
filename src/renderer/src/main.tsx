@@ -9,6 +9,7 @@ import './styles/typography.css';
 import './styles/titlebar.css';
 import './styles/tooltips.css';
 import './styles/markdown.css';
+import './styles/updateToast.css';
 
 console.log('[Renderer] Starting LLM HTML Bench renderer process...');
 console.log('[Renderer] window.electronAPI available:', typeof window !== 'undefined' && !!window.electronAPI);

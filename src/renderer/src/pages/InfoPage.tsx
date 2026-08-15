@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Copy,
   Layers,
+  RotateCw,
 } from 'lucide-react';
 
 type DocKey = 'functionalManual' | 'technicalManual' | 'readme' | 'versionLog';
@@ -263,6 +264,21 @@ export const InfoPage: React.FC = () => {
                 onClick={handleCopyDoc}
               >
                 {copied ? 'Copied Markdown' : 'Copy Raw'}
+              </Button>
+            </Tooltip>
+
+            <Tooltip content="Check for Software Updates" description="Check GitHub Releases for newer versions of LLM HTML Bench">
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<RotateCw size={13} color="var(--accent-primary)" />}
+                onClick={() => {
+                  if (window.electronAPI?.checkForUpdates) {
+                    window.electronAPI.checkForUpdates();
+                  }
+                }}
+              >
+                Check Updates
               </Button>
             </Tooltip>
           </div>

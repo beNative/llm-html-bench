@@ -255,9 +255,43 @@ export interface ElectronAPI {
   addLog: (level: LogLevel, source: string, message: string, details?: string) => Promise<void>;
   onNewLog: (callback: (entry: LogEntry) => void) => () => void;
 
+  // Auto-Update System
+  checkForUpdates: () => Promise<{ success: boolean; message?: string }>;
+  quitAndInstallUpdate: () => Promise<void>;
+  onUpdateStateChange: (callback: (state: UpdateState) => void) => () => void;
+
   // System
   getAppVersion: () => Promise<string>;
   extractHtml: (raw: string) => Promise<string>;
+}
+
+export type UpdateStatus =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'not-available'
+  | 'downloading'
+  | 'downloaded'
+  | 'error';
+
+export interface UpdateInfo {
+  version: string;
+  releaseDate?: string;
+  releaseNotes?: string | null;
+}
+
+export interface UpdateProgress {
+  percent: number;
+  bytesPerSecond: number;
+  transferred: number;
+  total: number;
+}
+
+export interface UpdateState {
+  status: UpdateStatus;
+  info?: UpdateInfo;
+  progress?: UpdateProgress;
+  error?: string;
 }
 
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR';

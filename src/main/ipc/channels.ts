@@ -88,6 +88,11 @@ export const IPC_CHANNELS = {
   LOGS_ADD_ENTRY: 'logs:add-entry',
   LOGS_NEW_ENTRY_EVENT: 'logs:new-entry-event',
 
+  // Auto-Update System
+  UPDATER_CHECK_FOR_UPDATES: 'updater:check-for-updates',
+  UPDATER_QUIT_AND_INSTALL: 'updater:quit-and-install',
+  UPDATER_STATUS_EVENT: 'updater:status-event',
+
   // System
   APP_GET_VERSION: 'app:get-version',
   EXTRACT_HTML: 'app:extract-html',

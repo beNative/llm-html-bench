@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.2.0] - 2026-08-15
+
+### 🚀 Automated Background Auto-Update System with Real-Time Progress Toast
+
+#### 🌟 Features & Architecture Improvements
+- **Silent Background Update Detection & Auto-Download**:
+  - Integrated `electron-updater` with GitHub Releases (`beNative/llm-html-bench`).
+  - Automatically queries for newer releases in the background 5 seconds after startup, downloading update bundles transparently without interrupting the user.
+- **Sleek Real-Time Progress Toast Notification (`UpdateToast.tsx`)**:
+  - **Dynamic Visual Stages**: Seamlessly transitions between Downloading, Ready-to-Install, and Up-to-Date states.
+  - **Real-Time Progress Tracking**: Displays a vibrant animated gradient progress bar, percentage (`0.0%` → `100.0%`), download transfer speed (`MB/s`), and transferred size (`MB / MB`).
+  - **Glassmorphic Styling**: Frosted glass blur, glowing accents, pulsing indicator badges, and smooth entrance micro-animations.
+- **Zero-Disruption Silent Upgrade & Relaunch**:
+  - Configured NSIS `oneClick: true` to eliminate all installer wizard screens and setup dialogs.
+  - One-click **"Restart & Update"** instantly applies the update and relaunches the application in under 2 seconds.
+  - Clicking **"Later"** closes the notification while automatically staging the update to apply silently when the app exits.
+- **Manual Check Triggers**:
+  - Added **"Check for Updates..."** action inside the Title Bar **Help** dropdown menu.
+  - Added a dedicated **"Check Updates"** button in the Documentation & Info page header toolbar.
+
+---
+
 ## [1.1.1] - 2026-08-15
 
 ### 📖 Full GitHub Flavored Markdown (GFM) Rendering Engine

@@ -16,6 +16,7 @@ import { StatsRepository } from './repositories/statsRepository';
 import { ExportImportService } from './services/exportImportService';
 import { ScreenshotService } from './services/screenshotService';
 import { SettingsService } from './services/settingsService';
+import { AutoUpdateService } from './services/autoUpdateService';
 import { ProviderRegistry } from './providers/providerRegistry';
 
 // Global Process Error Handlers
@@ -80,6 +81,9 @@ function createWindow(): void {
       mainWindow.webContents.send(IPC_CHANNELS.LOGS_NEW_ENTRY_EVENT, entry);
     }
   });
+
+  // Initialize background Auto-Update system
+  AutoUpdateService.init(mainWindow);
 
   // Intercept renderer console messages and write to main logger
   mainWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {

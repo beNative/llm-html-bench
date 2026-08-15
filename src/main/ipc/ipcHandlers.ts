@@ -13,6 +13,7 @@ import { StatsRepository } from '../repositories/statsRepository';
 import { ExportImportService } from '../services/exportImportService';
 import { ScreenshotService } from '../services/screenshotService';
 import { SettingsService } from '../services/settingsService';
+import { AutoUpdateService } from '../services/autoUpdateService';
 import { ProviderRegistry } from '../providers/providerRegistry';
 import { Logger } from '../utils/logger';
 import { extractHtml } from '../../shared/utils/htmlExtractor';
@@ -336,6 +337,10 @@ export function registerIpcHandlers(services: {
     else if (level === 'WARNING') Logger.warn(source, message, details);
     else if (level === 'ERROR') Logger.error(source, message, details);
   });
+
+  // Auto-Update System
+  ipcMain.handle(IPC_CHANNELS.UPDATER_CHECK_FOR_UPDATES, () => AutoUpdateService.checkForUpdates());
+  ipcMain.handle(IPC_CHANNELS.UPDATER_QUIT_AND_INSTALL, () => AutoUpdateService.quitAndInstall());
 
   // System
   ipcMain.handle(IPC_CHANNELS.APP_GET_VERSION, () => APP_VERSION);

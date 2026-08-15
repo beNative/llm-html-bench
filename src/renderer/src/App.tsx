@@ -18,6 +18,7 @@ import { AddOutputModal } from './components/modals/AddOutputModal';
 import { NewModelModal } from './components/modals/NewModelModal';
 import { RunBenchmarkModal } from './components/modals/RunBenchmarkModal';
 import { CommandPalette } from './components/common/CommandPalette';
+import { UpdateToast } from './components/common/UpdateToast';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 export const MainApp: React.FC = () => {
@@ -71,12 +72,13 @@ export const MainApp: React.FC = () => {
 
       <StatusBar />
 
-      {/* Global Modals */}
+      {/* Global Modals & Notifications */}
       <CommandPalette />
       <NewPromptModal />
       <AddOutputModal />
       <NewModelModal />
       <RunBenchmarkModal />
+      <UpdateToast />
 
       {/* Toast Notifications */}
       <div

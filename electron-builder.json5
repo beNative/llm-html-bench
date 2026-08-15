@@ -36,13 +36,23 @@
   },
 
   "nsis": {
-    "oneClick": false,
-    "allowToChangeInstallationDirectory": true,
+    "oneClick": true,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": false,
     "installerIcon": "build/icon.ico",
     "uninstallerIcon": "build/icon.ico",
     "createDesktopShortcut": "always",
     "createStartMenuShortcut": true,
-    "shortcutName": "LLM HTML Bench"
+    "shortcutName": "LLM HTML Bench",
+    "differentialPackage": true
+  },
+
+  // GitHub Auto-Update Publish Settings
+  "publish": {
+    "provider": "github",
+    "owner": "beNative",
+    "repo": "llm-html-bench",
+    "private": false
   },
 
   // macOS Platform Configuration (DMG + Zip for Intel and Apple Silicon)

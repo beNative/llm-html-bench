@@ -18,6 +18,7 @@ import {
   FileCode2,
   Database,
   BookOpen,
+  RotateCw,
 } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Tooltip } from '../common/Tooltip';
@@ -377,6 +378,23 @@ export const Header: React.FC = () => {
                 >
                   <Database size={13} />
                   <span>Open Database Location</span>
+                </div>
+                <div className="titlebar-dropdown-divider" />
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={async () => {
+                    setActiveMenu(null);
+                    if (window.electronAPI?.checkForUpdates) {
+                      showToast('Checking for software updates...', 'info');
+                      const res = await window.electronAPI.checkForUpdates();
+                      if (res?.message) {
+                        showToast(res.message, 'info');
+                      }
+                    }
+                  }}
+                >
+                  <RotateCw size={13} color="var(--accent-primary)" />
+                  <span>Check for Updates...</span>
                 </div>
               </div>
             )}

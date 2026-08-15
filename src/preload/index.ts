@@ -105,6 +105,17 @@ const api: ElectronAPI = {
     };
   },
 
+  // Auto-Update System
+  checkForUpdates: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATER_CHECK_FOR_UPDATES),
+  quitAndInstallUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATER_QUIT_AND_INSTALL),
+  onUpdateStateChange: (callback) => {
+    const handler = (_: any, state: any) => callback(state);
+    ipcRenderer.on(IPC_CHANNELS.UPDATER_STATUS_EVENT, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.UPDATER_STATUS_EVENT, handler);
+    };
+  },
+
   // System
   getAppVersion: () => ipcRenderer.invoke(IPC_CHANNELS.APP_GET_VERSION),
   extractHtml: (raw) => ipcRenderer.invoke(IPC_CHANNELS.EXTRACT_HTML, raw),
