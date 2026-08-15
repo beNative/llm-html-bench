@@ -183,11 +183,14 @@ export const NewPromptModal: React.FC = () => {
                 fontSize: '12px',
               }}
             />
+            <div className="field-hint">
+              <span>Separate tags with commas to categorize tasks</span>
+            </div>
           </div>
 
           <div>
             <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-              Collections
+              Collections / Benchmark Suites
             </label>
             <select
               multiple
@@ -213,6 +216,9 @@ export const NewPromptModal: React.FC = () => {
                 </option>
               ))}
             </select>
+            <div className="field-hint">
+              <span>Hold <kbd className="keycap">Ctrl</kbd> to select multiple suites</span>
+            </div>
           </div>
         </div>
 

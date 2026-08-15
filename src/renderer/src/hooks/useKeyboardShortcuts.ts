@@ -7,11 +7,22 @@ export function useKeyboardShortcuts() {
     compareRunIds,
     setCurrentTab,
     showToast,
+    openCommandPalette,
   } = useApp();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Disallow shortcuts when focused inside an input, textarea, or select
+      // Allow Ctrl+K / Ctrl+P even from some inputs or disallow if standard
+      // Ctrl + K or Ctrl + P: Open Command Palette
+      if ((e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'k') ||
+          (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'p') ||
+          (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'p')) {
+        e.preventDefault();
+        openCommandPalette();
+        return;
+      }
+
+      // Disallow other shortcuts when focused inside an input, textarea, or select
       const activeEl = document.activeElement;
       const isInputFocused =
         activeEl instanceof HTMLInputElement ||
@@ -28,6 +39,13 @@ export function useKeyboardShortcuts() {
       }
 
       if (isInputFocused) {
+        return;
+      }
+
+      // /: Open Command Palette
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        openCommandPalette();
         return;
       }
 
@@ -50,5 +68,5 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setIsNewPromptModalOpen, compareRunIds, setCurrentTab, showToast]);
+  }, [setIsNewPromptModalOpen, compareRunIds, setCurrentTab, showToast, openCommandPalette]);
 }

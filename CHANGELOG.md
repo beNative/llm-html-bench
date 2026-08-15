@@ -42,3 +42,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - **Outputs & Runs**: Added `EditOutputModal` enabling in-place or versioned modification of generated HTML code (with live preview and syntax editing), raw responses, and notes. Added run deletion across Prompts, Models, and Runs tabs.
   - **Benchmark Suites**: Added Suite editing (name & description), deletion, and individual prompt unlinking.
   - **Compare Lab In-Situ Actions**: Added one-click output editing and slot removal directly within side-by-side comparison cards.
+- **Spotlight Command Palette & Global Search (`Ctrl+K` / `Ctrl+P`)**:
+  - Implemented an interactive search bar in the title header that opens an instant Spotlight-style command palette.
+  - Real-time unified search across **Actions** (New Prompt, Register Model, Run Benchmark, Export/Import, Logs, Theme), **Navigation Tabs**, **Prompt Library**, **Model Catalog**, **Benchmark Runs**, and **Suites**.
+  - Complete keyboard navigation with `↑` `↓` arrows, `↵` execution, and `ESC` dismissal.
+- **Polished Tooltips, Keycaps & Form Hints Design System**:
+  - Replaced boxy browser native OS tooltips with a custom glassmorphism `Tooltip` component supporting customizable directions (top, bottom, left, right) and keyboard shortcut badges.
+  - Introduced styled 3D keyboard keycaps (`<kbd>`, `.keycap`) and structured `.field-hint` / `.form-hint` components across forms, header controls, and status bar elements.

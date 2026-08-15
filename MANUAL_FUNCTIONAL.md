@@ -189,13 +189,25 @@ LLM HTML Bench features a dedicated real-time diagnostic and logging panel acces
 
 ---
 
-## 12. Keyboard Shortcuts
+## 12. Command Palette & Global Search
+
+Access the **Command Palette & Global Search** anytime by clicking the center command search bar in the top title bar or pressing `Ctrl + K` (or `Ctrl + P` / `/`):
+- **Universal Search**: Instantly query across Prompts, Models, Suites, Benchmark Runs, Navigation Tabs, and System Actions.
+- **Quick Keyboard Execution**:
+  - `↑` / `↓` Arrow keys: Navigate through search results.
+  - `↵ Enter`: Immediately execute action, navigate to page, or jump to prompt/model/run.
+  - `ESC`: Dismiss the command palette.
+
+---
+
+## 13. Keyboard Shortcuts
 
 | Shortcut | Action |
 | :--- | :--- |
+| `Ctrl + K` / `Ctrl + P` / `/` | Open Spotlight Command Palette & Global Search |
 | `Ctrl + N` | Create New Benchmark Prompt |
 | `Ctrl + Shift + C` | Open Comparison View with Selected Runs |
 | `F12` | Toggle Developer Tools & Diagnostics |
-| `Escape` | Close active dialog or modal window |
+| `Escape` | Close active dialog, menu, or modal window |
 
 *(Note: Global shortcuts are automatically guarded when typing inside form inputs and text areas).*

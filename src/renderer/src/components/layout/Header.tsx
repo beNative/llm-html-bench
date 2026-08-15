@@ -20,6 +20,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { Button } from '../common/Button';
+import { Tooltip } from '../common/Tooltip';
 
 export const Header: React.FC = () => {
   const {
@@ -30,6 +31,7 @@ export const Header: React.FC = () => {
     setIsNewModelModalOpen,
     setIsRunBenchmarkModalOpen,
     openAddOutputModal,
+    openCommandPalette,
     showToast,
     toggleLogPanel,
   } = useApp();
@@ -388,13 +390,14 @@ export const Header: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'center',
           flex: 1,
-          maxWidth: '420px',
+          maxWidth: '460px',
           margin: '0 12px',
           WebkitAppRegion: 'no-drag',
         } as React.CSSProperties}
       >
         <div
-          onClick={() => setCurrentTab('prompts')}
+          onClick={openCommandPalette}
+          className="header-command-pill"
           style={{
             width: '100%',
             height: '24px',
@@ -408,17 +411,19 @@ export const Header: React.FC = () => {
             cursor: 'pointer',
             color: 'var(--text-muted)',
             fontSize: '11px',
-            transition: 'border-color 0.15s ease',
+            transition: 'all 0.15s ease',
           }}
-          title="Search prompts, models, and benchmark runs"
+          title="Open Command Palette & Global Search (Ctrl+K or Ctrl+P)"
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Search size={12} />
-            <span>LLM HTML Bench — Search prompts, models, runs...</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+            <Search size={12} color="var(--accent-primary)" />
+            <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              Search prompts, models, runs or type a command...
+            </span>
           </div>
-          <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', padding: '1px 4px', backgroundColor: 'var(--bg-tertiary)', borderRadius: '3px' }}>
-            Ctrl+N
-          </span>
+          <kbd className="keycap" style={{ fontSize: '9px', padding: '0 4px', height: '16px' }}>
+            Ctrl+K
+          </kbd>
         </div>
       </div>
 
@@ -434,79 +439,85 @@ export const Header: React.FC = () => {
       >
         {/* Quick Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginRight: '4px' }}>
-          <Button
-            size="sm"
-            variant="primary"
-            icon={<Plus size={12} />}
-            onClick={() => setIsNewPromptModalOpen(true)}
-            style={{ padding: '3px 8px', fontSize: '11px', height: '24px' }}
-            title="Create New Benchmark Prompt (Ctrl+N)"
-          >
-            Prompt
-          </Button>
+          <Tooltip content="Create New Benchmark Prompt" shortcut="Ctrl+N" position="bottom">
+            <Button
+              size="sm"
+              variant="primary"
+              icon={<Plus size={12} />}
+              onClick={() => setIsNewPromptModalOpen(true)}
+              style={{ padding: '3px 8px', fontSize: '11px', height: '24px' }}
+            >
+              Prompt
+            </Button>
+          </Tooltip>
 
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={<Sparkles size={12} />}
-            onClick={() => setIsNewModelModalOpen(true)}
-            style={{ padding: '3px 8px', fontSize: '11px', height: '24px' }}
-            title="Register New Model"
-          >
-            Model
-          </Button>
-
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={<Play size={11} color="var(--accent-success)" />}
-            onClick={() => setIsRunBenchmarkModalOpen(true)}
-            style={{ padding: '3px 8px', fontSize: '11px', height: '24px' }}
-            title="Execute Live API Benchmark"
-          >
-            Run
-          </Button>
-
-          {compareRunIds.length > 0 && (
+          <Tooltip content="Register New LLM Architecture" position="bottom">
             <Button
               size="sm"
               variant="secondary"
-              icon={<Columns size={12} />}
-              onClick={() => setCurrentTab('compare')}
-              style={{
-                borderColor: 'var(--accent-primary)',
-                color: 'var(--accent-primary)',
-                backgroundColor: 'var(--accent-primary-light)',
-                padding: '3px 8px',
-                fontSize: '11px',
-                height: '24px',
-              }}
-              title="Open Comparison View (Ctrl+Shift+C)"
+              icon={<Sparkles size={12} />}
+              onClick={() => setIsNewModelModalOpen(true)}
+              style={{ padding: '3px 8px', fontSize: '11px', height: '24px' }}
             >
-              Compare ({compareRunIds.length})
+              Model
             </Button>
+          </Tooltip>
+
+          <Tooltip content="Execute Live API Benchmark" position="bottom">
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<Play size={11} color="var(--accent-success)" />}
+              onClick={() => setIsRunBenchmarkModalOpen(true)}
+              style={{ padding: '3px 8px', fontSize: '11px', height: '24px' }}
+            >
+              Run
+            </Button>
+          </Tooltip>
+
+          {compareRunIds.length > 0 && (
+            <Tooltip content="Open Comparison Laboratory" shortcut="Ctrl+Shift+C" position="bottom">
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<Columns size={12} />}
+                onClick={() => setCurrentTab('compare')}
+                style={{
+                  borderColor: 'var(--accent-primary)',
+                  color: 'var(--accent-primary)',
+                  backgroundColor: 'var(--accent-primary-light)',
+                  padding: '3px 8px',
+                  fontSize: '11px',
+                  height: '24px',
+                }}
+              >
+                Compare ({compareRunIds.length})
+              </Button>
+            </Tooltip>
           )}
 
           {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} theme`}
-            style={{
-              padding: '4px',
-              borderRadius: 'var(--radius-sm)',
-              color: 'var(--text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'transparent',
-              border: 'none',
-              marginLeft: '2px',
-              height: '24px',
-              width: '24px',
-            }}
-          >
-            {theme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}
-          </button>
+          <Tooltip content={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} theme`} position="bottom">
+            <button
+              onClick={toggleTheme}
+              style={{
+                padding: '4px',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'transparent',
+                border: 'none',
+                marginLeft: '2px',
+                height: '24px',
+                width: '24px',
+                cursor: 'pointer',
+              }}
+            >
+              {theme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}
+            </button>
+          </Tooltip>
         </div>
 
         <div style={{ width: '1px', height: '18px', backgroundColor: 'var(--border-color)', margin: '0 2px' }} />

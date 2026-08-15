@@ -34,6 +34,9 @@ interface AppContextType {
   setIsNewModelModalOpen: (open: boolean) => void;
   isRunBenchmarkModalOpen: boolean;
   setIsRunBenchmarkModalOpen: (open: boolean) => void;
+  isCommandPaletteOpen: boolean;
+  setIsCommandPaletteOpen: (open: boolean) => void;
+  openCommandPalette: () => void;
   activePromptForOutput: { promptId: string; versionId?: string } | null;
   openAddOutputModal: (promptId: string, versionId?: string) => void;
 
@@ -75,7 +78,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAddOutputModalOpen, setIsAddOutputModalOpen] = useState(false);
   const [isNewModelModalOpen, setIsNewModelModalOpen] = useState(false);
   const [isRunBenchmarkModalOpen, setIsRunBenchmarkModalOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [activePromptForOutput, setActivePromptForOutput] = useState<{ promptId: string; versionId?: string } | null>(null);
+
+  const openCommandPalette = () => {
+    setIsCommandPaletteOpen(true);
+  };
 
   const [collections, setCollections] = useState<Collection[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -245,6 +253,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsNewModelModalOpen,
         isRunBenchmarkModalOpen,
         setIsRunBenchmarkModalOpen,
+        isCommandPaletteOpen,
+        setIsCommandPaletteOpen,
+        openCommandPalette,
         activePromptForOutput,
         openAddOutputModal,
         collections,

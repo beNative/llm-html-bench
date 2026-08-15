@@ -95,3 +95,10 @@
     transform: translateY(0);
   }
 }
+
+.header-command-pill:hover {
+  border-color: var(--accent-primary) !important;
+  background-color: var(--bg-hover) !important;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+

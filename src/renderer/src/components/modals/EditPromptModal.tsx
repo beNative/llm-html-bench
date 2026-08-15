@@ -234,6 +234,9 @@ export const EditPromptModal: React.FC<EditPromptModalProps> = ({
               <Plus size={12} /> Add
             </Button>
           </div>
+          <div className="field-hint" style={{ marginBottom: '6px' }}>
+            <span>Type a tag and press <kbd className="keycap">Enter</kbd> or click Add</span>
+          </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
             {tags.map((t) => (
