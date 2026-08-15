@@ -4,6 +4,7 @@ import { Collection, Prompt } from '@shared/types/entities';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { ConfirmModal } from '../components/common/ConfirmModal';
+import { Tooltip } from '../components/common/Tooltip';
 import { Plus, Edit2, Trash2, X, Save } from 'lucide-react';
 
 export const CollectionsPage: React.FC = () => {
@@ -206,28 +207,30 @@ export const CollectionsPage: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '8px' }}>
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={<Edit2 size={13} />}
-                onClick={() => {
-                  setEditColName(selectedCol.name);
-                  setEditColDesc(selectedCol.description || '');
-                  setIsEditModalOpen(true);
-                }}
-                title="Edit suite name and description"
-              >
-                Edit Suite
-              </Button>
-              <Button
-                size="sm"
-                variant="danger"
-                icon={<Trash2 size={13} />}
-                onClick={() => setIsDeleteModalOpen(true)}
-                title="Delete this benchmark suite"
-              >
-                Delete Suite
-              </Button>
+              <Tooltip content="Edit Suite Details" description="Update suite name and challenge description">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={<Edit2 size={13} />}
+                  onClick={() => {
+                    setEditColName(selectedCol.name);
+                    setEditColDesc(selectedCol.description || '');
+                    setIsEditModalOpen(true);
+                  }}
+                >
+                  Edit Suite
+                </Button>
+              </Tooltip>
+              <Tooltip content="Delete Suite" description="Remove this benchmark suite (prompts are preserved)">
+                <Button
+                  size="sm"
+                  variant="danger"
+                  icon={<Trash2 size={13} />}
+                  onClick={() => setIsDeleteModalOpen(true)}
+                >
+                  Delete Suite
+                </Button>
+              </Tooltip>
             </div>
           </div>
 
@@ -287,13 +290,14 @@ export const CollectionsPage: React.FC = () => {
                           >
                             Open Prompt →
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            icon={<X size={12} color="var(--text-muted)" />}
-                            onClick={() => handleRemovePrompt(p.id)}
-                            title="Remove prompt from this suite"
-                          />
+                          <Tooltip content="Remove from Suite" description="Unlink prompt from this benchmark collection">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              icon={<X size={12} color="var(--text-muted)" />}
+                              onClick={() => handleRemovePrompt(p.id)}
+                            />
+                          </Tooltip>
                         </div>
                       </td>
                     </tr>

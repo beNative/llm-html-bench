@@ -2,6 +2,7 @@ import React from 'react';
 import { VIEWPORT_PRESETS } from '@shared/constants/defaults';
 import { RotateCw, Terminal, ZoomIn, ZoomOut, Camera } from 'lucide-react';
 import { Button } from '../common/Button';
+import { Tooltip } from '../common/Tooltip';
 
 interface ViewportControlsProps {
   selectedPreset: string;
@@ -145,107 +146,114 @@ export const ViewportControls: React.FC<ViewportControlsProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         {/* Zoom Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-          <button
-            onClick={() => onZoomChange(Math.max(0.25, zoom - 0.25))}
-            title="Zoom Out"
-            style={{
-              padding: '4px',
-              color: 'var(--text-secondary)',
-              borderRadius: 'var(--radius-sm)',
-              display: 'flex',
-            }}
-          >
-            <ZoomOut size={14} />
-          </button>
+          <Tooltip content="Zoom Out" position="bottom">
+            <button
+              onClick={() => onZoomChange(Math.max(0.25, zoom - 0.25))}
+              style={{
+                padding: '4px',
+                color: 'var(--text-secondary)',
+                borderRadius: 'var(--radius-sm)',
+                display: 'flex',
+              }}
+            >
+              <ZoomOut size={14} />
+            </button>
+          </Tooltip>
           <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', minWidth: '35px', textAlign: 'center', color: 'var(--text-secondary)' }}>
             {Math.round(zoom * 100)}%
           </span>
-          <button
-            onClick={() => onZoomChange(Math.min(2.0, zoom + 0.25))}
-            title="Zoom In"
-            style={{
-              padding: '4px',
-              color: 'var(--text-secondary)',
-              borderRadius: 'var(--radius-sm)',
-              display: 'flex',
-            }}
-          >
-            <ZoomIn size={14} />
-          </button>
-          {zoom !== 1 && (
+          <Tooltip content="Zoom In" position="bottom">
             <button
-              onClick={() => onZoomChange(1)}
-              title="Reset Zoom to 100%"
+              onClick={() => onZoomChange(Math.min(2.0, zoom + 0.25))}
               style={{
-                padding: '2px 4px',
-                fontSize: '10px',
-                color: 'var(--text-muted)',
-                marginLeft: '2px',
+                padding: '4px',
+                color: 'var(--text-secondary)',
+                borderRadius: 'var(--radius-sm)',
+                display: 'flex',
               }}
             >
-              100%
+              <ZoomIn size={14} />
             </button>
+          </Tooltip>
+          {zoom !== 1 && (
+            <Tooltip content="Reset Zoom to 100%" position="bottom">
+              <button
+                onClick={() => onZoomChange(1)}
+                style={{
+                  padding: '2px 4px',
+                  fontSize: '10px',
+                  color: 'var(--text-muted)',
+                  marginLeft: '2px',
+                }}
+              >
+                100%
+              </button>
+            </Tooltip>
           )}
         </div>
 
         {/* Reload */}
-        <Button
-          size="sm"
-          variant="ghost"
-          icon={<RotateCw size={13} />}
-          onClick={onReload}
-          title="Reload Preview (F5)"
-        >
-          Reload
-        </Button>
-
-        {/* Capture Screenshot */}
-        {onCaptureScreenshot && (
+        <Tooltip content="Reload HTML Sandbox" shortcut="F5" position="bottom">
           <Button
             size="sm"
             variant="ghost"
-            icon={<Camera size={13} />}
-            onClick={onCaptureScreenshot}
-            title="Capture Screenshot"
+            icon={<RotateCw size={13} />}
+            onClick={onReload}
           >
-            Screenshot
+            Reload
           </Button>
+        </Tooltip>
+
+        {/* Capture Screenshot */}
+        {onCaptureScreenshot && (
+          <Tooltip content="Capture High-Res Viewport Screenshot" position="bottom">
+            <Button
+              size="sm"
+              variant="ghost"
+              icon={<Camera size={13} />}
+              onClick={onCaptureScreenshot}
+            >
+              Screenshot
+            </Button>
+          </Tooltip>
         )}
 
         {/* Console / Log toggle */}
-        <button
-          onClick={onToggleConsole}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            padding: '3px 8px',
-            fontSize: '11px',
-            borderRadius: 'var(--radius-sm)',
-            backgroundColor: isConsoleOpen ? 'var(--bg-active)' : 'var(--bg-tertiary)',
-            color: errorCount > 0 ? 'var(--accent-danger)' : isConsoleOpen ? 'var(--text-primary)' : 'var(--text-secondary)',
-            border: `1px solid ${errorCount > 0 ? 'var(--accent-danger)' : 'var(--border-subtle)'}`,
-          }}
-          title="Toggle JavaScript Console & Errors"
-        >
-          <Terminal size={12} />
-          Console
-          {errorCount > 0 && (
-            <span
-              style={{
-                backgroundColor: 'var(--accent-danger)',
-                color: '#fff',
-                borderRadius: '8px',
-                padding: '0 4px',
-                fontSize: '9px',
-                fontWeight: 700,
-              }}
-            >
-              {errorCount}
-            </span>
-          )}
-        </button>
+        <Tooltip content="Toggle JavaScript Console & Errors" position="bottom">
+          <button
+            onClick={onToggleConsole}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '3px 8px',
+              fontSize: '11px',
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: isConsoleOpen ? 'var(--bg-active)' : 'var(--bg-tertiary)',
+              color: errorCount > 0 ? 'var(--accent-danger)' : isConsoleOpen ? 'var(--text-primary)' : 'var(--text-secondary)',
+              border: `1px solid ${errorCount > 0 ? 'var(--accent-danger)' : 'var(--border-subtle)'}`,
+            }}
+          >
+            <Terminal size={12} />
+            Console
+            {errorCount > 0 && (
+              <span
+                style={{
+                  backgroundColor: 'var(--accent-danger)',
+                  color: '#fff',
+                  borderRadius: '8px',
+                  padding: '0 4px',
+                  fontSize: '9px',
+                  fontWeight: 700,
+                }}
+              >
+                {errorCount}
+              </span>
+            )}
+          </button>
+        </Tooltip>
       </div>
     </div>
   );
 };
+

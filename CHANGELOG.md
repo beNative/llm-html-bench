@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.1.0] - 2026-08-15
+
+### 🌟 Smart Portal-Based Hint & Tooltip System (Zero-Clipping Architecture)
+
+#### 🚀 Features & Architecture Improvements
+- **Smart Portal Rendering (`ReactDOM.createPortal`)**:
+  - Eliminated UI clipping and cropping caused by parent containers with `overflow: hidden`, `overflow: scroll`, modal borders, or restricted stacking contexts by mounting tooltips directly to `document.body`.
+- **Dynamic Viewport Collision & Boundary Clamping Engine**:
+  - Implemented automatic edge detection: tooltips automatically flip placement (`top` ↔ `bottom`, `left` ↔ `right`) when encountering viewport boundaries.
+  - Added strict coordinate clamping with a safety margin (8px) ensuring tooltips and hints are never clipped, cut off, or pushed off-screen.
+  - Dynamically calculates the arrow/caret offset to point accurately at the target element's center even when clamped.
+  - Live recalculation on window resize and container scroll events.
+- **Universal Replaced Native OS Tooltips**:
+  - Completely replaced ugly, unstyled default Windows OS tooltips (`title=`) across all pages (Prompts, Models, Compare Lab, Collections, Runs History, Viewport Controls, Logging Panel, Header, and Sidebar) with rich glassmorphism hints.
+  - Added support for subtext descriptions and glowing 3D `<kbd>` keyboard shortcut pills.
+
+---
+
 ## [1.0.0] - 2026-08-15
 
 ### 🚀 Initial Production Release

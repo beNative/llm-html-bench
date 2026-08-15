@@ -11,6 +11,7 @@ import { HeadToHeadSelector } from '../components/evaluation/HeadToHeadSelector'
 import { ScoreBadge } from '../components/common/ScoreBadge';
 import { Button } from '../components/common/Button';
 import { EditOutputModal } from '../components/modals/EditOutputModal';
+import { Tooltip } from '../components/common/Tooltip';
 import {
   Eye,
   Code2,
@@ -385,59 +386,62 @@ export const ComparePage: React.FC = () => {
 
                   {/* Slot Controls */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <button
-                      onClick={() => setEditingRun(run)}
-                      title="Edit HTML code or run notes"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '3px',
-                        padding: '3px 6px',
-                        fontSize: '10px',
-                        borderRadius: 'var(--radius-sm)',
-                        backgroundColor: 'var(--bg-tertiary)',
-                        color: 'var(--text-secondary)',
-                        border: '1px solid var(--border-subtle)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <Edit2 size={11} /> Edit
-                    </button>
+                    <Tooltip content="Edit HTML Code or Notes" position="bottom">
+                      <button
+                        onClick={() => setEditingRun(run)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          padding: '3px 6px',
+                          fontSize: '10px',
+                          borderRadius: 'var(--radius-sm)',
+                          backgroundColor: 'var(--bg-tertiary)',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border-subtle)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Edit2 size={11} /> Edit
+                      </button>
+                    </Tooltip>
 
-                    <button
-                      onClick={() =>
-                        setEvalOpenSlots((prev) => ({ ...prev, [run.id]: !prev[run.id] }))
-                      }
-                      title="Toggle Evaluation & Scores Drawer"
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '3px',
-                        padding: '3px 6px',
-                        fontSize: '10px',
-                        borderRadius: 'var(--radius-sm)',
-                        backgroundColor: isEvalOpen ? 'var(--accent-primary-light)' : 'var(--bg-tertiary)',
-                        color: isEvalOpen ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                        border: `1px solid ${isEvalOpen ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <Award size={11} /> Score
-                    </button>
+                    <Tooltip content="Toggle Evaluation & Rating Drawer" position="bottom">
+                      <button
+                        onClick={() =>
+                          setEvalOpenSlots((prev) => ({ ...prev, [run.id]: !prev[run.id] }))
+                        }
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          padding: '3px 6px',
+                          fontSize: '10px',
+                          borderRadius: 'var(--radius-sm)',
+                          backgroundColor: isEvalOpen ? 'var(--accent-primary-light)' : 'var(--bg-tertiary)',
+                          color: isEvalOpen ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                          border: `1px solid ${isEvalOpen ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Award size={11} /> Score
+                      </button>
+                    </Tooltip>
 
-                    <button
-                      onClick={() => handleRemoveSlot(index)}
-                      title="Remove from comparison"
-                      style={{
-                        padding: '3px',
-                        color: 'var(--text-muted)',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    <Tooltip content="Remove Slot from Comparison" position="bottom">
+                      <button
+                        onClick={() => handleRemoveSlot(index)}
+                        style={{
+                          padding: '3px',
+                          color: 'var(--text-muted)',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
 

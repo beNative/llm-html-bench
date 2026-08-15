@@ -107,24 +107,25 @@ export const Header: React.FC = () => {
         ref={menuBarRef}
       >
         {/* App Icon */}
-        <div
-          style={{
-            width: '22px',
-            height: '22px',
-            borderRadius: 'var(--radius-sm)',
-            backgroundColor: 'var(--accent-primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#ffffff',
-            boxShadow: '0 0 8px rgba(59, 130, 246, 0.4)',
-            cursor: 'pointer',
-          }}
-          onClick={() => setCurrentTab('dashboard')}
-          title="LLM HTML Bench — Dashboard"
-        >
-          <Layers size={13} />
-        </div>
+        <Tooltip content="LLM HTML Bench" description="Return to main Dashboard overview" position="bottom">
+          <div
+            style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '6px',
+              backgroundColor: 'var(--accent-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#ffffff',
+              boxShadow: '0 0 8px rgba(59, 130, 246, 0.4)',
+              cursor: 'pointer',
+            }}
+            onClick={() => setCurrentTab('dashboard')}
+          >
+            <Layers size={13} />
+          </div>
+        </Tooltip>
 
         {/* Product Brand */}
         <span
@@ -395,36 +396,37 @@ export const Header: React.FC = () => {
           WebkitAppRegion: 'no-drag',
         } as React.CSSProperties}
       >
-        <div
-          onClick={openCommandPalette}
-          className="header-command-pill"
-          style={{
-            width: '100%',
-            height: '24px',
-            backgroundColor: 'var(--bg-card)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-sm)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 8px',
-            cursor: 'pointer',
-            color: 'var(--text-muted)',
-            fontSize: '11px',
-            transition: 'all 0.15s ease',
-          }}
-          title="Open Command Palette & Global Search (Ctrl+K or Ctrl+P)"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-            <Search size={12} color="var(--accent-primary)" />
-            <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              Search prompts, models, runs or type a command...
-            </span>
+        <Tooltip content="Command Palette & Quick Search" description="Search prompts, models, test runs, and actions" shortcut="Ctrl+K" position="bottom">
+          <div
+            className="header-command-pill"
+            onClick={openCommandPalette}
+            style={{
+              flex: 1,
+              height: '24px',
+              backgroundColor: 'var(--bg-primary)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 8px',
+              cursor: 'pointer',
+              color: 'var(--text-muted)',
+              fontSize: '11px',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+              <Search size={12} color="var(--accent-primary)" />
+              <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                Search prompts, models, runs or type a command...
+              </span>
+            </div>
+            <kbd className="keycap" style={{ fontSize: '9px', padding: '0 4px', height: '16px' }}>
+              Ctrl+K
+            </kbd>
           </div>
-          <kbd className="keycap" style={{ fontSize: '9px', padding: '0 4px', height: '16px' }}>
-            Ctrl+K
-          </kbd>
-        </div>
+        </Tooltip>
       </div>
 
       {/* Right Section: Quick Action Buttons, Theme Switcher & Frameless Window Controls */}
@@ -525,31 +527,34 @@ export const Header: React.FC = () => {
         {/* VSCode-inspired Custom Window Controls */}
         <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           {/* Minimize */}
-          <button
-            onClick={handleMinimize}
-            className="window-control-button"
-            title="Minimize"
-          >
-            <Minus size={14} />
-          </button>
+          <Tooltip content="Minimize Window" position="bottom">
+            <button
+              onClick={handleMinimize}
+              className="window-control-button"
+            >
+              <Minus size={14} />
+            </button>
+          </Tooltip>
 
           {/* Maximize / Restore */}
-          <button
-            onClick={handleMaximizeToggle}
-            className="window-control-button"
-            title={isMaximized ? 'Restore' : 'Maximize'}
-          >
-            {isMaximized ? <Copy size={11} /> : <Square size={12} />}
-          </button>
+          <Tooltip content={isMaximized ? 'Restore Window' : 'Maximize Window'} position="bottom">
+            <button
+              onClick={handleMaximizeToggle}
+              className="window-control-button"
+            >
+              {isMaximized ? <Copy size={11} /> : <Square size={12} />}
+            </button>
+          </Tooltip>
 
           {/* Close */}
-          <button
-            onClick={handleClose}
-            className="window-control-button window-control-close"
-            title="Close"
-          >
-            <X size={15} />
-          </button>
+          <Tooltip content="Close Window" position="bottom">
+            <button
+              onClick={handleClose}
+              className="window-control-button window-control-close"
+            >
+              <X size={15} />
+            </button>
+          </Tooltip>
         </div>
       </div>
     </header>

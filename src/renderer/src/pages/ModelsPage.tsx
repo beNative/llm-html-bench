@@ -6,6 +6,7 @@ import { ScoreBadge } from '../components/common/ScoreBadge';
 import { EditModelModal } from '../components/modals/EditModelModal';
 import { EditOutputModal } from '../components/modals/EditOutputModal';
 import { ConfirmModal } from '../components/common/ConfirmModal';
+import { Tooltip } from '../components/common/Tooltip';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 
 export const ModelsPage: React.FC = () => {
@@ -179,24 +180,26 @@ export const ModelsPage: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    icon={<Edit2 size={13} />}
-                    onClick={() => setIsEditModelModalOpen(true)}
-                    title="Edit Model metadata and specs"
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    icon={<Trash2 size={13} />}
-                    onClick={() => setIsDeleteModelModalOpen(true)}
-                    title="Delete Model and all its runs"
-                  >
-                    Delete
-                  </Button>
+                  <Tooltip content="Edit Model Specs" description="Modify provider, parameter counts, quantization, and notes" position="left">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      icon={<Edit2 size={13} />}
+                      onClick={() => setIsEditModelModalOpen(true)}
+                    >
+                      Edit
+                    </Button>
+                  </Tooltip>
+                  <Tooltip content="Delete Model" description="Permanently remove model and all its benchmark results" position="left">
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      icon={<Trash2 size={13} />}
+                      onClick={() => setIsDeleteModelModalOpen(true)}
+                    >
+                      Delete
+                    </Button>
+                  </Tooltip>
                 </div>
               </div>
             </div>
@@ -315,20 +318,22 @@ export const ModelsPage: React.FC = () => {
                           >
                             Compare
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            icon={<Edit2 size={12} />}
-                            onClick={() => setEditingRun(r)}
-                            title="Edit HTML code or run notes"
-                          />
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            icon={<Trash2 size={12} color="var(--accent-danger)" />}
-                            onClick={() => setDeletingRun(r)}
-                            title="Delete this run"
-                          />
+                          <Tooltip content="Edit HTML Code or Notes">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              icon={<Edit2 size={12} />}
+                              onClick={() => setEditingRun(r)}
+                            />
+                          </Tooltip>
+                          <Tooltip content="Delete Run Output">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              icon={<Trash2 size={12} color="var(--accent-danger)" />}
+                              onClick={() => setDeletingRun(r)}
+                            />
+                          </Tooltip>
                         </div>
                       </td>
                     </tr>

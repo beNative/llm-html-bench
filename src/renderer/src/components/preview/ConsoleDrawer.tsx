@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ConsoleEntry } from './IsolatedFrame';
 import { Trash2, AlertCircle, AlertTriangle, Info, Terminal, ChevronDown } from 'lucide-react';
+import { Tooltip } from '../common/Tooltip';
 
 interface ConsoleDrawerProps {
   isOpen: boolean;
@@ -94,29 +95,31 @@ export const ConsoleDrawer: React.FC<ConsoleDrawerProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <button
-            onClick={onClear}
-            title="Clear Console"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              padding: '2px 6px',
-              color: 'var(--text-muted)',
-            }}
-          >
-            <Trash2 size={12} /> Clear
-          </button>
-          <button
-            onClick={onClose}
-            title="Close Console"
-            style={{
-              padding: '2px 4px',
-              color: 'var(--text-muted)',
-            }}
-          >
-            <ChevronDown size={14} />
-          </button>
+          <Tooltip content="Clear Console Entries" position="top">
+            <button
+              onClick={onClear}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 6px',
+                color: 'var(--text-muted)',
+              }}
+            >
+              <Trash2 size={12} /> Clear
+            </button>
+          </Tooltip>
+          <Tooltip content="Close Console Drawer" position="top">
+            <button
+              onClick={onClose}
+              style={{
+                padding: '2px 4px',
+                color: 'var(--text-muted)',
+              }}
+            >
+              <ChevronDown size={14} />
+            </button>
+          </Tooltip>
         </div>
       </div>
 

@@ -14,6 +14,7 @@ import {
   HardDrive,
   Filter,
 } from 'lucide-react';
+import { Tooltip } from '../common/Tooltip';
 
 export const LoggingPanel: React.FC = () => {
   const {
@@ -301,47 +302,49 @@ export const LoggingPanel: React.FC = () => {
         {/* Right: Auto-Save, Auto-Scroll, Actions, Close */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {/* Auto-Save to File Switch */}
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              cursor: 'pointer',
-              color: logConfig?.autoSaveToFile ? 'var(--accent-primary)' : 'var(--text-muted)',
-              fontSize: '10px',
-            }}
-            title={logConfig ? `Log file location: ${logConfig.logFilePath}` : 'Automatically append logs to disk file'}
-          >
-            <input
-              type="checkbox"
-              checked={logConfig?.autoSaveToFile ?? true}
-              onChange={(e) => setLogAutoSave(e.target.checked)}
-              style={{ cursor: 'pointer', accentColor: 'var(--accent-primary)' }}
-            />
-            <HardDrive size={11} />
-            <span>Save to Logfile</span>
-          </label>
+          <Tooltip content="Auto-Save Logs to Disk" description={logConfig ? `Location: ${logConfig.logFilePath}` : 'Automatically append logs to disk file'} position="top">
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                cursor: 'pointer',
+                color: logConfig?.autoSaveToFile ? 'var(--accent-primary)' : 'var(--text-muted)',
+                fontSize: '10px',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={logConfig?.autoSaveToFile ?? true}
+                onChange={(e) => setLogAutoSave(e.target.checked)}
+                style={{ cursor: 'pointer', accentColor: 'var(--accent-primary)' }}
+              />
+              <HardDrive size={11} />
+              <span>Save to Logfile</span>
+            </label>
+          </Tooltip>
 
           {/* Open Log Folder Button */}
-          <button
-            onClick={openLogFolder}
-            style={{
-              padding: '2px 5px',
-              backgroundColor: 'var(--bg-primary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--radius-sm)',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '3px',
-              fontSize: '10px',
-            }}
-            title={logConfig ? `Open log file directory: ${logConfig.logDirectory}` : 'Open log directory'}
-          >
-            <FolderOpen size={11} />
-            <span>Log Folder</span>
-          </button>
+          <Tooltip content="Open Log Directory" description={logConfig?.logDirectory ? `Location: ${logConfig.logDirectory}` : 'Open disk log folder'} position="top">
+            <button
+              onClick={openLogFolder}
+              style={{
+                padding: '2px 5px',
+                backgroundColor: 'var(--bg-primary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+                fontSize: '10px',
+              }}
+            >
+              <FolderOpen size={11} />
+              <span>Log Folder</span>
+            </button>
+          </Tooltip>
 
           {/* Auto-Scroll Checkbox */}
           <label
@@ -367,49 +370,52 @@ export const LoggingPanel: React.FC = () => {
           <div style={{ width: '1px', height: '12px', backgroundColor: 'var(--border-color)', margin: '0 2px' }} />
 
           {/* Copy Button */}
-          <button
-            onClick={handleCopyLogs}
-            style={{
-              padding: '2px 5px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: copied ? 'var(--accent-success)' : 'var(--text-muted)',
-              cursor: 'pointer',
-            }}
-            title="Copy Filtered Logs"
-          >
-            {copied ? <CheckCircle2 size={12} /> : <Copy size={12} />}
-          </button>
+          <Tooltip content="Copy Filtered Logs" description="Copy active log stream to clipboard" position="top">
+            <button
+              onClick={handleCopyLogs}
+              style={{
+                padding: '2px 5px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: copied ? 'var(--accent-success)' : 'var(--text-muted)',
+                cursor: 'pointer',
+              }}
+            >
+              {copied ? <CheckCircle2 size={12} /> : <Copy size={12} />}
+            </button>
+          </Tooltip>
 
           {/* Clear Button */}
-          <button
-            onClick={clearLogs}
-            style={{
-              padding: '2px 5px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-            }}
-            title="Clear Log Messages"
-          >
-            <Trash2 size={12} />
-          </button>
+          <Tooltip content="Clear In-Memory Logs" position="top">
+            <button
+              onClick={clearLogs}
+              style={{
+                padding: '2px 5px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+              }}
+            >
+              <Trash2 size={12} />
+            </button>
+          </Tooltip>
 
           {/* Close Button */}
-          <button
-            onClick={() => setIsLogPanelOpen(false)}
-            style={{
-              padding: '2px 5px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-            }}
-            title="Close Log Panel"
-          >
-            <X size={13} />
-          </button>
+          <Tooltip content="Close Log Drawer" position="top">
+            <button
+              onClick={() => setIsLogPanelOpen(false)}
+              style={{
+                padding: '2px 5px',
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={13} />
+            </button>
+          </Tooltip>
         </div>
       </div>
 

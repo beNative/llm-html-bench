@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { DocumentationDocs } from '@shared/types/ipc';
 import { Button } from '../components/common/Button';
+import { Tooltip } from '../components/common/Tooltip';
 import {
   BookOpen,
   FileText,
@@ -361,16 +362,17 @@ export const InfoPage: React.FC = () => {
 
         {/* Open Folder Action */}
         <div style={{ padding: '12px', borderTop: '1px solid var(--border-color)' }}>
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={<FolderOpen size={13} />}
-            onClick={handleOpenFolder}
-            style={{ width: '100%', justifyContent: 'center' }}
-            title="Open the folder containing these markdown documents on disk"
-          >
-            Open Documents Folder
-          </Button>
+          <Tooltip content="Open Documents Folder on Disk" description="Directly open the folder where Markdown manuals are stored" position="top">
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<FolderOpen size={13} />}
+              onClick={handleOpenFolder}
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              Open Documents Folder
+            </Button>
+          </Tooltip>
         </div>
       </div>
 
@@ -418,15 +420,16 @@ export const InfoPage: React.FC = () => {
               />
             </div>
 
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={copied ? <CheckCircle2 size={13} color="var(--accent-success)" /> : <Copy size={13} />}
-              onClick={handleCopyDoc}
-              title="Copy Raw Markdown Content"
-            >
-              {copied ? 'Copied Markdown' : 'Copy Raw'}
-            </Button>
+            <Tooltip content="Copy Markdown Content" description="Copy full raw Markdown source to clipboard">
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={copied ? <CheckCircle2 size={13} color="var(--accent-success)" /> : <Copy size={13} />}
+                onClick={handleCopyDoc}
+              >
+                {copied ? 'Copied Markdown' : 'Copy Raw'}
+              </Button>
+            </Tooltip>
           </div>
         </div>
 

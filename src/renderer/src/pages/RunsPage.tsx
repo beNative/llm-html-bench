@@ -9,6 +9,7 @@ import { MonacoCodeEditor } from '../components/editor/MonacoCodeEditor';
 import { EvaluationPanel } from '../components/evaluation/EvaluationPanel';
 import { EditOutputModal } from '../components/modals/EditOutputModal';
 import { ConfirmModal } from '../components/common/ConfirmModal';
+import { Tooltip } from '../components/common/Tooltip';
 import {
   Search,
   Eye,
@@ -179,20 +180,22 @@ export const RunsPage: React.FC = () => {
                       <Button size="sm" variant="primary" icon={<Columns size={12} />} onClick={() => openCompareWithRuns([r.id])}>
                         Compare
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        icon={<Edit2 size={12} />}
-                        onClick={() => setEditingRun(r)}
-                        title="Edit HTML code or run notes"
-                      />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        icon={<Trash2 size={12} color="var(--accent-danger)" />}
-                        onClick={() => setDeletingRun(r)}
-                        title="Delete this run"
-                      />
+                      <Tooltip content="Edit HTML Code or Notes">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          icon={<Edit2 size={12} />}
+                          onClick={() => setEditingRun(r)}
+                        />
+                      </Tooltip>
+                      <Tooltip content="Delete Run Output">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          icon={<Trash2 size={12} color="var(--accent-danger)" />}
+                          onClick={() => setDeletingRun(r)}
+                        />
+                      </Tooltip>
                     </div>
                   </td>
                 </tr>
@@ -284,24 +287,26 @@ export const RunsPage: React.FC = () => {
 
               {/* Action & Copy Buttons */}
               <div style={{ display: 'flex', gap: '6px' }}>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  icon={<Edit2 size={12} />}
-                  onClick={() => setEditingRun(selectedRun)}
-                  title="Edit Output HTML or run notes"
-                >
-                  Edit Output
-                </Button>
-                <Button
-                  size="sm"
-                  variant="danger"
-                  icon={<Trash2 size={12} />}
-                  onClick={() => setDeletingRun(selectedRun)}
-                  title="Delete this run"
-                >
-                  Delete Run
-                </Button>
+                <Tooltip content="Edit HTML Code or Notes">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={<Edit2 size={12} />}
+                    onClick={() => setEditingRun(selectedRun)}
+                  >
+                    Edit Output
+                  </Button>
+                </Tooltip>
+                <Tooltip content="Delete this Run">
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    icon={<Trash2 size={12} />}
+                    onClick={() => setDeletingRun(selectedRun)}
+                  >
+                    Delete Run
+                  </Button>
+                </Tooltip>
                 <Button
                   size="sm"
                   variant="secondary"

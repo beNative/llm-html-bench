@@ -8,6 +8,7 @@ import { MonacoCodeEditor } from '../components/editor/MonacoCodeEditor';
 import { EditPromptModal } from '../components/modals/EditPromptModal';
 import { EditOutputModal } from '../components/modals/EditOutputModal';
 import { ConfirmModal } from '../components/common/ConfirmModal';
+import { Tooltip } from '../components/common/Tooltip';
 import {
   Search,
   Plus,
@@ -358,45 +359,49 @@ export const PromptsPage: React.FC = () => {
 
             {/* Prompt Actions */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Button
-                size="sm"
-                variant="primary"
-                icon={<Plus size={13} />}
-                onClick={() => openAddOutputModal(activePrompt.id, selectedVersionId)}
-                title="Add Model Output for this prompt"
-              >
-                Add Output
-              </Button>
+              <Tooltip content="Add Model Output" description="Record a generated HTML application for this prompt version">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  icon={<Plus size={13} />}
+                  onClick={() => openAddOutputModal(activePrompt.id, selectedVersionId)}
+                >
+                  Add Output
+                </Button>
+              </Tooltip>
 
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={<Edit2 size={13} />}
-                onClick={() => setIsEditPromptModalOpen(true)}
-                title="Edit Prompt metadata, category, and tags"
-              >
-                Edit
-              </Button>
+              <Tooltip content="Edit Prompt" description="Update prompt title, category, description, and tags">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={<Edit2 size={13} />}
+                  onClick={() => setIsEditPromptModalOpen(true)}
+                >
+                  Edit
+                </Button>
+              </Tooltip>
 
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={<Archive size={13} />}
-                onClick={handleArchive}
-                title={activePrompt.archived ? 'Restore Prompt' : 'Archive Prompt'}
-              >
-                {activePrompt.archived ? 'Restore' : 'Archive'}
-              </Button>
+              <Tooltip content={activePrompt.archived ? 'Restore Prompt' : 'Archive Prompt'}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={<Archive size={13} />}
+                  onClick={handleArchive}
+                >
+                  {activePrompt.archived ? 'Restore' : 'Archive'}
+                </Button>
+              </Tooltip>
 
-              <Button
-                size="sm"
-                variant="danger"
-                icon={<Trash2 size={13} />}
-                onClick={() => setIsDeletePromptModalOpen(true)}
-                title="Delete this Prompt and all its benchmark runs"
-              >
-                Delete
-              </Button>
+              <Tooltip content="Delete Prompt" description="Permanently remove this prompt and all associated runs">
+                <Button
+                  size="sm"
+                  variant="danger"
+                  icon={<Trash2 size={13} />}
+                  onClick={() => setIsDeletePromptModalOpen(true)}
+                >
+                  Delete
+                </Button>
+              </Tooltip>
             </div>
           </div>
 
@@ -560,28 +565,31 @@ export const PromptsPage: React.FC = () => {
                             </td>
                             <td style={{ padding: '8px 12px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => openCompareWithRuns([r.id])}
-                                  title="Preview and score output"
-                                >
-                                  Preview & Score
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  icon={<Edit2 size={12} />}
-                                  onClick={() => setEditingRun(r)}
-                                  title="Edit HTML code or run notes"
-                                />
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  icon={<Trash2 size={12} color="var(--accent-danger)" />}
-                                  onClick={() => setDeletingRun(r)}
-                                  title="Delete this run"
-                                />
+                                <Tooltip content="Preview & Score" description="Open interactive preview sandbox and multi-dimension rating card">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => openCompareWithRuns([r.id])}
+                                  >
+                                    Preview & Score
+                                  </Button>
+                                </Tooltip>
+                                <Tooltip content="Edit HTML Code or Notes">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    icon={<Edit2 size={12} />}
+                                    onClick={() => setEditingRun(r)}
+                                  />
+                                </Tooltip>
+                                <Tooltip content="Delete Run Output">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    icon={<Trash2 size={12} color="var(--accent-danger)" />}
+                                    onClick={() => setDeletingRun(r)}
+                                  />
+                                </Tooltip>
                               </div>
                             </td>
                           </tr>

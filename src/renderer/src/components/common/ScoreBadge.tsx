@@ -1,4 +1,5 @@
 import React from 'react';
+import { Tooltip } from './Tooltip';
 
 interface ScoreBadgeProps {
   score?: number | null;
@@ -9,22 +10,24 @@ interface ScoreBadgeProps {
 export const ScoreBadge: React.FC<ScoreBadgeProps> = ({ score, size = 'md', isManual }) => {
   if (score === null || score === undefined || isNaN(score)) {
     return (
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          padding: size === 'sm' ? '1px 5px' : size === 'lg' ? '4px 10px' : '2px 7px',
-          fontSize: size === 'sm' ? '10px' : size === 'lg' ? '14px' : '11px',
-          fontWeight: 600,
-          fontFamily: 'var(--font-mono)',
-          borderRadius: 'var(--radius-sm)',
-          backgroundColor: 'var(--bg-tertiary)',
-          color: 'var(--text-muted)',
-          border: '1px solid var(--border-subtle)',
-        }}
-      >
-        —
-      </span>
+      <Tooltip content="No Evaluation Recorded" description="Run has not been rated yet">
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: size === 'sm' ? '1px 5px' : size === 'lg' ? '4px 10px' : '2px 7px',
+            fontSize: size === 'sm' ? '10px' : size === 'lg' ? '14px' : '11px',
+            fontWeight: 600,
+            fontFamily: 'var(--font-mono)',
+            borderRadius: 'var(--radius-sm)',
+            backgroundColor: 'var(--bg-tertiary)',
+            color: 'var(--text-muted)',
+            border: '1px solid var(--border-subtle)',
+          }}
+        >
+          —
+        </span>
+      </Tooltip>
     );
   }
 
@@ -52,24 +55,28 @@ export const ScoreBadge: React.FC<ScoreBadgeProps> = ({ score, size = 'md', isMa
   }
 
   return (
-    <span
-      title={isManual ? 'Manually assigned score' : 'Calculated average score'}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '3px',
-        padding: size === 'sm' ? '1px 5px' : size === 'lg' ? '4px 10px' : '2px 7px',
-        fontSize: size === 'sm' ? '11px' : size === 'lg' ? '14px' : '12px',
-        fontWeight: 600,
-        fontFamily: 'var(--font-mono)',
-        borderRadius: 'var(--radius-sm)',
-        backgroundColor: bg,
-        color: color,
-        border: `1px solid ${borderColor}`,
-      }}
+    <Tooltip
+      content={`Benchmark Rating: ${num.toFixed(1)} / 10`}
+      description={isManual ? 'Manually assigned overall evaluation score' : 'Calculated weighted average rating'}
     >
-      {num.toFixed(1)}
-      {isManual && <span style={{ fontSize: '9px', opacity: 0.8 }}>✎</span>}
-    </span>
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '3px',
+          padding: size === 'sm' ? '1px 5px' : size === 'lg' ? '4px 10px' : '2px 7px',
+          fontSize: size === 'sm' ? '11px' : size === 'lg' ? '14px' : '12px',
+          fontWeight: 600,
+          fontFamily: 'var(--font-mono)',
+          borderRadius: 'var(--radius-sm)',
+          backgroundColor: bg,
+          color: color,
+          border: `1px solid ${borderColor}`,
+        }}
+      >
+        {num.toFixed(1)}
+        {isManual && <span style={{ fontSize: '9px', opacity: 0.8 }}>✎</span>}
+      </span>
+    </Tooltip>
   );
 };
