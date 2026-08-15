@@ -13,19 +13,19 @@ export const UpdateToast: React.FC = () => {
     const cleanup = window.electronAPI.onUpdateStateChange((state: UpdateState) => {
       setUpdateState(state);
 
-      if (state.status === 'available' || state.status === 'downloading') {
-        setIsVisible(true);
-        setIsDismissed(false);
-      } else if (state.status === 'downloaded') {
+      if (state.status === 'available' || state.status === 'downloading' || state.status === 'downloaded') {
         setIsVisible(true);
         setIsDismissed(false);
       } else if (state.status === 'error') {
         setIsVisible(true);
-        // Auto-hide error toast after 6 seconds
-        setTimeout(() => setIsVisible(false), 6000);
+        // Auto-dismiss error notice after 4 seconds
+        setTimeout(() => setIsVisible(false), 4000);
       } else if (state.status === 'not-available') {
-        // If checking was triggered and nothing found, don't pop intrusive toast unless user was waiting
+        setIsVisible(true);
+        // Auto-dismiss up-to-date notice after 3.5 seconds
         setTimeout(() => setIsVisible(false), 3500);
+      } else if (state.status === 'idle') {
+        setIsVisible(false);
       }
     });
 

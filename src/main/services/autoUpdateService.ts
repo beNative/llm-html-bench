@@ -8,6 +8,7 @@ export class AutoUpdateService {
   private static mainWindow: BrowserWindow | null = null;
   private static isInitialized = false;
   private static currentState: UpdateState = { status: 'idle' };
+  private static isManualCheck = false;
 
   public static init(window: BrowserWindow): void {
     this.mainWindow = window;
@@ -35,7 +36,9 @@ export class AutoUpdateService {
     // 1. Checking for update
     autoUpdater.on('checking-for-update', () => {
       Logger.info('AUTO_UPDATER', 'Checking for software updates on GitHub Releases...');
-      this.broadcastState({ status: 'checking' });
+      if (this.isManualCheck) {
+        this.broadcastState({ status: 'checking' });
+      }
     });
 
     // 2. Update Available
@@ -55,12 +58,17 @@ export class AutoUpdateService {
     // 3. Update Not Available (Already on latest version)
     autoUpdater.on('update-not-available', (info) => {
       Logger.info('AUTO_UPDATER', `Application is up-to-date (Current: v${app.getVersion()}, Latest: v${info.version})`);
-      this.broadcastState({
-        status: 'not-available',
-        info: {
-          version: info.version,
-        },
-      });
+      if (this.isManualCheck) {
+        this.broadcastState({
+          status: 'not-available',
+          info: {
+            version: info.version,
+          },
+        });
+      } else {
+        this.currentState = { status: 'idle' };
+      }
+      this.isManualCheck = false;
     });
 
     // 4. Download Progress
@@ -91,23 +99,32 @@ export class AutoUpdateService {
           releaseNotes: notes,
         },
       });
+      this.isManualCheck = false;
     });
 
-    // 6. Error handling
+    // 6. Error handling - Silent on background check, sanitized on manual check
     autoUpdater.on('error', (err) => {
-      const errMsg = err?.message || 'Unknown update error';
-      Logger.error('AUTO_UPDATER', `Auto-update error occurred: ${errMsg}`);
-      this.broadcastState({
-        status: 'error',
-        error: errMsg,
-      });
+      const sanitized = this.sanitizeErrorMessage(err);
+      Logger.warn('AUTO_UPDATER', `Update check notice: ${sanitized} (Raw: ${err?.message || err})`);
+
+      if (this.isManualCheck) {
+        this.broadcastState({
+          status: 'error',
+          error: sanitized,
+        });
+      } else {
+        // Keep background check completely silent to never disrupt the user on startup
+        this.currentState = { status: 'idle' };
+      }
+      this.isManualCheck = false;
     });
 
-    // Schedule initial background check 5 seconds after launch in production
+    // Schedule initial silent background check 5 seconds after launch in production
     if (app.isPackaged) {
       setTimeout(() => {
-        this.checkForUpdates().catch((err) => {
-          Logger.warn('AUTO_UPDATER', `Background startup update check failed: ${err.message}`);
+        this.isManualCheck = false;
+        this.checkForUpdates(false).catch((err) => {
+          Logger.info('AUTO_UPDATER', `Silent startup update check completed: ${err?.message || 'No updates'}`);
         });
       }, 5000);
     } else {
@@ -116,20 +133,24 @@ export class AutoUpdateService {
   }
 
   /**
-   * Triggers an update check. Returns status message.
+   * Triggers an update check.
+   * @param manual If true, indicates explicit user request from menu/UI (will surface not-found / clean error notices)
    */
-  public static async checkForUpdates(): Promise<{ success: boolean; message?: string }> {
-    Logger.info('AUTO_UPDATER', 'Explicit update check requested...');
+  public static async checkForUpdates(manual = true): Promise<{ success: boolean; message?: string }> {
+    this.isManualCheck = manual;
+    Logger.info('AUTO_UPDATER', `Update check initiated (manual=${manual})...`);
 
     if (!app.isPackaged) {
       Logger.info('AUTO_UPDATER', 'Development mode: Simulating up-to-date state');
-      this.broadcastState({ status: 'checking' });
-      setTimeout(() => {
-        this.broadcastState({
-          status: 'not-available',
-          info: { version: app.getVersion() },
-        });
-      }, 800);
+      if (manual) {
+        this.broadcastState({ status: 'checking' });
+        setTimeout(() => {
+          this.broadcastState({
+            status: 'not-available',
+            info: { version: app.getVersion() },
+          });
+        }, 600);
+      }
       return {
         success: true,
         message: `Development environment: Current version v${app.getVersion()} is up to date.`,
@@ -137,15 +158,19 @@ export class AutoUpdateService {
     }
 
     try {
-      this.broadcastState({ status: 'checking' });
+      if (manual) {
+        this.broadcastState({ status: 'checking' });
+      }
       const result = await autoUpdater.checkForUpdates();
-      Logger.info('AUTO_UPDATER', `Update check initiated successfully: ${result ? result.updateInfo.version : 'Complete'}`);
+      Logger.info('AUTO_UPDATER', `Update check query finished: ${result ? result.updateInfo.version : 'Done'}`);
       return { success: true };
     } catch (err: any) {
-      const errMsg = err?.message || 'Failed to check for updates';
-      Logger.error('AUTO_UPDATER', `Failed to check for updates: ${errMsg}`);
-      this.broadcastState({ status: 'error', error: errMsg });
-      return { success: false, message: errMsg };
+      const sanitized = this.sanitizeErrorMessage(err);
+      Logger.warn('AUTO_UPDATER', `Check for updates notice: ${sanitized}`);
+      if (manual) {
+        this.broadcastState({ status: 'error', error: sanitized });
+      }
+      return { success: false, message: sanitized };
     }
   }
 
@@ -155,11 +180,35 @@ export class AutoUpdateService {
   public static quitAndInstall(): void {
     Logger.info('AUTO_UPDATER', 'Executing quitAndInstall (silent=true, isRunAfter=true)...');
     try {
-      // isSilent: true (no wizard screens), isForceRunAfter: true (automatically launch updated app)
       autoUpdater.quitAndInstall(true, true);
     } catch (err: any) {
       Logger.error('AUTO_UPDATER', `quitAndInstall failed: ${err?.message}`);
     }
+  }
+
+  /**
+   * Converts raw HTTP/network errors into concise, user-friendly messages
+   */
+  private static sanitizeErrorMessage(rawError: any): string {
+    if (!rawError) return 'Unable to check for updates at this time.';
+    const msg = typeof rawError === 'string' ? rawError : rawError.message || String(rawError);
+
+    if (msg.includes('404') || msg.includes('releases.atom')) {
+      return 'No published updates found on the repository yet.';
+    }
+    if (msg.includes('ENOTFOUND') || msg.includes('ETIMEDOUT') || msg.includes('net::ERR') || msg.includes('ECONNREFUSED')) {
+      return 'Could not connect to update server. Please check your internet connection.';
+    }
+    if (msg.includes('401') || msg.includes('403') || msg.includes('authentication')) {
+      return 'Authentication required to access update repository.';
+    }
+
+    // Strip multiline headers, cookies, or JSON dumps
+    const firstLine = msg.split('\n')[0].replace(/Headers:.*/i, '').trim();
+    if (!firstLine || firstLine.length > 100) {
+      return 'No newer updates found at this time.';
+    }
+    return firstLine;
   }
 
   /**
