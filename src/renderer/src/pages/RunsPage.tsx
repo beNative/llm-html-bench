@@ -7,6 +7,8 @@ import { Modal } from '../components/common/Modal';
 import { IsolatedFrame } from '../components/preview/IsolatedFrame';
 import { MonacoCodeEditor } from '../components/editor/MonacoCodeEditor';
 import { EvaluationPanel } from '../components/evaluation/EvaluationPanel';
+import { EditOutputModal } from '../components/modals/EditOutputModal';
+import { ConfirmModal } from '../components/common/ConfirmModal';
 import {
   Search,
   Eye,
@@ -14,6 +16,8 @@ import {
   Check,
   Columns,
   Star,
+  Edit2,
+  Trash2,
 } from 'lucide-react';
 
 export const RunsPage: React.FC = () => {
@@ -27,6 +31,8 @@ export const RunsPage: React.FC = () => {
   const [selectedRun, setSelectedRun] = useState<ModelRun | null>(null);
   const [inspectTab, setInspectTab] = useState<'preview' | 'html' | 'raw' | 'metadata' | 'eval'>('preview');
   const [copiedType, setCopiedType] = useState<'html' | 'raw' | null>(null);
+  const [editingRun, setEditingRun] = useState<ModelRun | null>(null);
+  const [deletingRun, setDeletingRun] = useState<ModelRun | null>(null);
 
   const loadRuns = async () => {
     try {
@@ -36,6 +42,21 @@ export const RunsPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to load runs:', err);
+    }
+  };
+
+  const handleDeleteRun = async () => {
+    if (!deletingRun || !window.electronAPI) return;
+    try {
+      await window.electronAPI.deleteModelRun(deletingRun.id);
+      showToast('Model run deleted successfully', 'info');
+      if (selectedRun?.id === deletingRun.id) {
+        setSelectedRun(null);
+      }
+      setDeletingRun(null);
+      await loadRuns();
+    } catch (err: unknown) {
+      showToast(`Failed to delete run: ${err instanceof Error ? err.message : String(err)}`, 'error');
     }
   };
 
@@ -151,13 +172,27 @@ export const RunsPage: React.FC = () => {
                     <span className="badge">{r.provenance}</span>
                   </td>
                   <td style={{ padding: '10px 14px' }}>
-                    <div style={{ display: 'flex', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <Button size="sm" variant="ghost" icon={<Eye size={12} />} onClick={() => setSelectedRun(r)}>
                         Inspect
                       </Button>
                       <Button size="sm" variant="primary" icon={<Columns size={12} />} onClick={() => openCompareWithRuns([r.id])}>
                         Compare
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        icon={<Edit2 size={12} />}
+                        onClick={() => setEditingRun(r)}
+                        title="Edit HTML code or run notes"
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        icon={<Trash2 size={12} color="var(--accent-danger)" />}
+                        onClick={() => setDeletingRun(r)}
+                        title="Delete this run"
+                      />
                     </div>
                   </td>
                 </tr>
@@ -247,8 +282,26 @@ export const RunsPage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Copy Buttons */}
+              {/* Action & Copy Buttons */}
               <div style={{ display: 'flex', gap: '6px' }}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={<Edit2 size={12} />}
+                  onClick={() => setEditingRun(selectedRun)}
+                  title="Edit Output HTML or run notes"
+                >
+                  Edit Output
+                </Button>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  icon={<Trash2 size={12} />}
+                  onClick={() => setDeletingRun(selectedRun)}
+                  title="Delete this run"
+                >
+                  Delete Run
+                </Button>
                 <Button
                   size="sm"
                   variant="secondary"
@@ -321,6 +374,31 @@ export const RunsPage: React.FC = () => {
           </div>
         </Modal>
       )}
+
+      {/* Edit Output Modal */}
+      <EditOutputModal
+        isOpen={!!editingRun}
+        onClose={() => setEditingRun(null)}
+        modelRun={editingRun}
+        onUpdated={(updatedRun) => {
+          setRuns((prev) => prev.map((r) => (r.id === updatedRun.id ? updatedRun : r)));
+          if (selectedRun?.id === updatedRun.id) {
+            setSelectedRun(updatedRun);
+          }
+          loadRuns();
+        }}
+      />
+
+      {/* Delete Run Confirmation */}
+      <ConfirmModal
+        isOpen={!!deletingRun}
+        onClose={() => setDeletingRun(null)}
+        onConfirm={handleDeleteRun}
+        title="Delete Model Output & Run?"
+        message={`Are you sure you want to delete this benchmark generation run for "${deletingRun?.model_display_name || deletingRun?.model_name}" (${deletingRun?.prompt_name})? Its HTML output, screenshots, and evaluation scores will be removed.`}
+        confirmLabel="Delete Run"
+        confirmVariant="danger"
+      />
     </div>
   );
 };

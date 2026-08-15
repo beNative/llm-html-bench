@@ -62,6 +62,10 @@ The **Dashboard** serves as your central command view:
 5. Add comma-separated **Tags** and assign to **Collections** as desired.
 6. Click **Create Prompt (v1)**.
 
+### Editing & Deleting Prompts
+- **Editing Metadata**: Click the **Edit** button in the prompt header to open the Edit Prompt modal. You can update the prompt's Name, Category, Description, Tags (add/remove tags dynamically), and Suite Collections.
+- **Deleting a Prompt**: Click the **Delete** button (red trash icon) in the prompt header. A confirmation dialog will summarize the deletion. Confirming will permanently remove the prompt along with all its versions, benchmark runs, generated HTML outputs, screenshots, and evaluations via SQLite cascading deletion.
+
 ### Immutable Versioning System
 Prompt requirements evolve over time. LLM HTML Bench preserves historical integrity using immutable versioning:
 - Every prompt starts at **Version 1 (v1)**.
@@ -70,7 +74,7 @@ Prompt requirements evolve over time. LLM HTML Bench preserves historical integr
 
 ---
 
-## 4. Registering Models
+## 4. Registering & Managing Models
 
 Track generations across specific provider architectures, parameter sizes, and quantization formats:
 1. Click **New Model** (or navigate to the Models tab).
@@ -80,9 +84,13 @@ Track generations across specific provider architectures, parameter sizes, and q
 5. (Optional) Provide **Model Family**, **Parameter Count** (e.g., `27B`, `70B`, `MoE`), **Quantization** (e.g., `FP16`, `Q4_K_M`, `NVFP4`), and Architecture Notes.
 6. Click **Register Model**. The model appears immediately in the model catalog.
 
+### Editing & Deleting Models
+- **Editing Model Specs**: Select any model in the Models tab and click **Edit** to modify provider name, display name, family, parameter count, architecture, or deployment notes.
+- **Deleting a Model**: Click **Delete** in the model detail view. A confirmation dialog will prompt you to confirm deletion, which cascades to delete all runs and evaluations recorded for that model.
+
 ---
 
-## 5. Recording Benchmark Runs
+## 5. Recording & Editing Benchmark Runs
 
 You can record benchmark outputs via **Manual Paste** (for web chats, command-line local models, or proprietary UI runs):
 1. Click **Add Output** in the toolbar or inside a prompt view.
@@ -91,6 +99,17 @@ You can record benchmark outputs via **Manual Paste** (for web chats, command-li
 4. Paste the raw LLM response. The built-in parser automatically extracts clean HTML from markdown code fences (` ```html ... ``` `) while permanently preserving the original raw output.
 5. (Optional) Provide initial ratings or save to score later in the Comparison view.
 6. Click **Save Benchmark Output**.
+
+### Editing Generated Outputs & Run Notes
+- In the **Runs History** tab, the **Prompts** runs table, or the **Compare** laboratory view, click the **Edit** icon on any run card/row.
+- The **Edit Output Modal** allows you to:
+  - Modify the HTML source code directly in Monaco editor with live iframe preview.
+  - Tweak raw model responses or add run observations/notes.
+  - Choose between in-place updating or saving as a modified output iteration (`is_modified = 1`).
+
+### Deleting Benchmark Runs
+- Click the **Delete** button (trash icon) on any run row or inside the Output Inspection modal.
+- Confirming permanently removes the run, its extracted HTML, screenshots, and associated score evaluations.
 
 ---
 
@@ -113,6 +132,7 @@ The **Compare Mode** is the heart of the inspection laboratory:
 - **Isolated Sandboxed Execution**: Each run executes in an independent, security-isolated iframe with strict script sandboxing.
 - **Console & Error Drawer**: Real-time monitoring captures runtime JavaScript errors, warnings, and `console.log` statements for each model without polluting the main application.
 - **Source Code Inspection & Monaco Diff Viewer**: Compare raw code or extracted HTML side-by-side with visual line and word diff highlighting.
+- **In-Situ Output Editing**: Tweak HTML code and re-test directly inside comparison cards without navigating away.
 - **Head-to-Head Matchup Arena**: Declare winners between model pairs (Left Wins, Right Wins, or Tie) to drive Elo-style win-rate rankings.
 
 ---
@@ -130,10 +150,14 @@ The **Overall Benchmark Score** is calculated as the weighted average across all
 
 ---
 
-## 9. Collections & Tags
+## 9. Collections (Benchmark Suites) & Tags
 
 Organize your benchmarks systematically:
-- **Collections**: Curate prompt test suites (e.g., *Frontend Coding Benchmark Suite 2026*, *3D WebGL Stress Tests*, *Mobile UI Suite*).
+- **Collections (Benchmark Suites)**: Curate prompt test suites (e.g., *Frontend Coding Benchmark Suite 2026*, *3D WebGL Stress Tests*, *Mobile UI Suite*).
+  - **Create Suite**: Click **New Suite** to define a suite name and scope description.
+  - **Edit Suite**: Click **Edit Suite** to modify the suite name and description.
+  - **Delete Suite**: Click **Delete Suite** (deletes only the collection grouping; prompts remain safe in the library).
+  - **Manage Prompts**: Add prompts to suites during creation/editing, or click the **Remove (X)** button on any prompt in the suite view to unlink it.
 - **Tags**: Categorize tasks by technology or domain (`canvas`, `webgl`, `audio-api`, `single-file`, `game`, `reactive-state`).
 
 ---

@@ -3,7 +3,10 @@ import { useApp } from '../context/AppContext';
 import { ModelRun } from '@shared/types/entities';
 import { Button } from '../components/common/Button';
 import { ScoreBadge } from '../components/common/ScoreBadge';
-import { Plus } from 'lucide-react';
+import { EditModelModal } from '../components/modals/EditModelModal';
+import { EditOutputModal } from '../components/modals/EditOutputModal';
+import { ConfirmModal } from '../components/common/ConfirmModal';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 
 export const ModelsPage: React.FC = () => {
   const {
@@ -15,9 +18,43 @@ export const ModelsPage: React.FC = () => {
     setSelectedPromptId,
     setCurrentTab,
     openCompareWithRuns,
+    showToast,
   } = useApp();
 
   const [modelRuns, setModelRuns] = useState<ModelRun[]>([]);
+  const [isEditModelModalOpen, setIsEditModelModalOpen] = useState(false);
+  const [isDeleteModelModalOpen, setIsDeleteModelModalOpen] = useState(false);
+  const [editingRun, setEditingRun] = useState<ModelRun | null>(null);
+  const [deletingRun, setDeletingRun] = useState<ModelRun | null>(null);
+
+  const handleDeleteModel = async () => {
+    if (!selectedModel || !window.electronAPI) return;
+    try {
+      await window.electronAPI.deleteModel(selectedModel.id);
+      showToast(`Model "${selectedModel.display_name}" deleted successfully`, 'info');
+      setIsDeleteModelModalOpen(false);
+      setSelectedModelId(null);
+      await refreshModels();
+    } catch (err: unknown) {
+      showToast(`Failed to delete model: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    }
+  };
+
+  const handleDeleteRun = async () => {
+    if (!deletingRun || !window.electronAPI) return;
+    try {
+      await window.electronAPI.deleteModelRun(deletingRun.id);
+      showToast('Model run deleted successfully', 'info');
+      setDeletingRun(null);
+      if (selectedModel) {
+        const rList = await window.electronAPI.getRunsForModel(selectedModel.id);
+        setModelRuns(rList);
+        refreshModels();
+      }
+    } catch (err: unknown) {
+      showToast(`Failed to delete run: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    }
+  };
 
   useEffect(() => {
     refreshModels();
@@ -133,10 +170,33 @@ export const ModelsPage: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Average Overall Benchmark</div>
-                <div style={{ marginTop: '4px' }}>
-                  <ScoreBadge score={selectedModel.avg_overall_score} size="lg" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Average Overall Benchmark</div>
+                  <div style={{ marginTop: '4px' }}>
+                    <ScoreBadge score={selectedModel.avg_overall_score} size="lg" />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={<Edit2 size={13} />}
+                    onClick={() => setIsEditModelModalOpen(true)}
+                    title="Edit Model metadata and specs"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    icon={<Trash2 size={13} />}
+                    onClick={() => setIsDeleteModelModalOpen(true)}
+                    title="Delete Model and all its runs"
+                  >
+                    Delete
+                  </Button>
                 </div>
               </div>
             </div>
@@ -235,26 +295,41 @@ export const ModelsPage: React.FC = () => {
                         <ScoreBadge score={r.evaluation?.overall_score} size="sm" />
                       </td>
                       <td style={{ padding: '10px 14px' }}>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            if (r.prompt_id) {
-                              setSelectedPromptId(r.prompt_id);
-                              setCurrentTab('prompts');
-                            }
-                          }}
-                        >
-                          View Prompt →
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          onClick={() => openCompareWithRuns([r.id])}
-                          style={{ marginLeft: '4px' }}
-                        >
-                          Compare
-                        </Button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              if (r.prompt_id) {
+                                setSelectedPromptId(r.prompt_id);
+                                setCurrentTab('prompts');
+                              }
+                            }}
+                          >
+                            View Prompt →
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            onClick={() => openCompareWithRuns([r.id])}
+                          >
+                            Compare
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            icon={<Edit2 size={12} />}
+                            onClick={() => setEditingRun(r)}
+                            title="Edit HTML code or run notes"
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            icon={<Trash2 size={12} color="var(--accent-danger)" />}
+                            onClick={() => setDeletingRun(r)}
+                            title="Delete this run"
+                          />
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -264,6 +339,51 @@ export const ModelsPage: React.FC = () => {
           </div>
         </div>
       ) : null}
+
+      {/* Edit Model Modal */}
+      <EditModelModal
+        isOpen={isEditModelModalOpen}
+        onClose={() => setIsEditModelModalOpen(false)}
+        model={selectedModel}
+        onUpdated={() => {
+          refreshModels();
+        }}
+      />
+
+      {/* Delete Model Confirmation */}
+      <ConfirmModal
+        isOpen={isDeleteModelModalOpen}
+        onClose={() => setIsDeleteModelModalOpen(false)}
+        onConfirm={handleDeleteModel}
+        title={`Delete Model "${selectedModel?.display_name}"?`}
+        message="Are you sure you want to permanently delete this model? All benchmark runs, generated HTML outputs, screenshots, and evaluations associated with this model will also be permanently deleted."
+        confirmLabel="Delete Model"
+        confirmVariant="danger"
+      />
+
+      {/* Edit Output Modal */}
+      <EditOutputModal
+        isOpen={!!editingRun}
+        onClose={() => setEditingRun(null)}
+        modelRun={editingRun}
+        onUpdated={() => {
+          if (selectedModel && window.electronAPI) {
+            window.electronAPI.getRunsForModel(selectedModel.id).then((rList) => setModelRuns(rList));
+            refreshModels();
+          }
+        }}
+      />
+
+      {/* Delete Run Confirmation */}
+      <ConfirmModal
+        isOpen={!!deletingRun}
+        onClose={() => setDeletingRun(null)}
+        onConfirm={handleDeleteRun}
+        title="Delete Model Output & Run?"
+        message={`Are you sure you want to delete this benchmark run? Its HTML output, screenshots, and evaluation scores will be removed.`}
+        confirmLabel="Delete Run"
+        confirmVariant="danger"
+      />
     </div>
   );
 };

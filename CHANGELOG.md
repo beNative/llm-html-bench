@@ -36,3 +36,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Comprehensive Documentation Suite**: Integrated built-in Documentation & Info tab providing instant access to the Project Readme, Functional User Manual, Technical Architecture Manual, and Version Log.
 - **VSCode-Inspired Frameless Title Bar**: Implemented modern borderless desktop window design with custom window controls (minimize, maximize/restore, close), native window dragging, command palette search bar, and integrated File, View, Benchmark, and Help dropdown menus.
 - **Application Logging Subsystem & Live Panel**: Added real-time log streaming with level filtering for DEBUG (green), INFO (blue), WARNING (orange), and ERROR (red), source & text filtering, automatic log file storage in the executable directory (`llm-html-bench-YYYY-MM-DD.log`), and collapsible bottom panel drawer.
+- **Full CRUD & Cascade Deletion Management**:
+  - **Prompts**: Added `EditPromptModal` for modifying prompt titles, categories, descriptions, tag chips, and suite assignments. Added `ConfirmModal` for permanent prompt deletion with cascading clean-up of child versions, runs, outputs, and evaluations.
+  - **Models**: Added `EditModelModal` for updating model provider, identifier, display name, family, parameter count, architecture, quantization, and deployment notes. Added safe model deletion.
+  - **Outputs & Runs**: Added `EditOutputModal` enabling in-place or versioned modification of generated HTML code (with live preview and syntax editing), raw responses, and notes. Added run deletion across Prompts, Models, and Runs tabs.
+  - **Benchmark Suites**: Added Suite editing (name & description), deletion, and individual prompt unlinking.
+  - **Compare Lab In-Situ Actions**: Added one-click output editing and slot removal directly within side-by-side comparison cards.

@@ -94,14 +94,23 @@ The application embeds SQLite via `better-sqlite3` operating in **Write-Ahead Lo
                                                       └─────────────────────┘
 ```
 
-### Key Tables
-1. `prompts`: Master records containing prompt name, description, category, and metadata.
+### Key Tables & Cascade Deletion Rules
+All foreign key relations enforce `ON DELETE CASCADE`:
+1. `prompts`: Master records. Deleting a prompt cascades to delete its `prompt_versions`, all linked `model_runs`, `outputs`, `evaluations`, `screenshots`, `prompt_tags`, and `prompt_collections`.
 2. `prompt_versions`: Immutable historical versions (`v1`, `v2`, etc.) containing the exact task prompt text.
-3. `models`: Registered LLM architectures, providers, parameter counts, quantizations, and deployment types.
-4. `model_runs`: Benchmark runs capturing the raw LLM response, extracted HTML, sampling temperature, output tokens, tokens/sec, and timing.
-5. `evaluations`: Multi-dimensional score breakdown (`visual_score`, `prompt_adherence_score`, `functionality_score`, `code_quality_score`, `creativity_score`, `overall_score`).
-6. `head_to_head_comparisons`: Direct pairwise winner matchups driving model leaderboard win-rates.
-7. `provider_configs`: Saved endpoint configurations with encrypted API keys.
+3. `models`: Registered LLM architectures, providers, parameter counts, quantizations, and deployment types. Deleting a model cascades to delete all associated `model_runs`.
+4. `model_runs`: Benchmark runs capturing the raw LLM response, extracted HTML, sampling temperature, output tokens, tokens/sec, and timing. Deleting a run cascades to delete `outputs`, `evaluations`, `screenshots`, and `head_to_head_comparisons`.
+5. `outputs`: Extracted HTML and raw output text (`is_modified` iteration support).
+6. `evaluations`: Multi-dimensional score breakdown (`visual_score`, `prompt_adherence_score`, `functionality_score`, `code_quality_score`, `creativity_score`, `overall_score`).
+7. `head_to_head_comparisons`: Direct pairwise winner matchups driving model leaderboard win-rates.
+8. `collections` & `prompt_collections`: Grouping suites; deleting a suite safely unlinks prompt relationships without deleting prompts.
+9. `provider_configs`: Saved endpoint configurations with encrypted API keys.
+
+### Typed CRUD IPC API Surface
+- **Prompts**: `prompts:get`, `prompts:get-by-id`, `prompts:create`, `prompts:update`, `prompts:archive`, `prompts:delete`, `prompts:create-version`, `prompts:get-versions`.
+- **Models**: `models:get`, `models:get-by-id`, `models:create`, `models:update`, `models:delete`.
+- **Runs & Outputs**: `runs:get-for-prompt`, `runs:get-for-model`, `runs:get-all`, `runs:create`, `runs:update`, `runs:delete`, `runs:save-modified-output`, `outputs:update`.
+- **Collections & Suites**: `collections:get`, `collections:create`, `collections:update`, `collections:delete`, `collections:remove-prompt`.
 
 ### Migration Engine (`src/main/database/migrator.ts`)
 Tracks schema versions via SQLite `PRAGMA user_version`. Migrations run sequentially in atomic transactions upon application startup.

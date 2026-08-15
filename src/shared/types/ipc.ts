@@ -184,8 +184,10 @@ export interface ElectronAPI {
   getRunsByIds: (ids: string[]) => Promise<ModelRun[]>;
   getAllRuns: (limit?: number, offset?: number) => Promise<ModelRun[]>;
   createModelRun: (input: CreateModelRunInput) => Promise<ModelRun>;
+  updateModelRun: (id: string, input: { notes?: string; temperature?: number; topP?: number; maxTokens?: number }) => Promise<ModelRun>;
   deleteModelRun: (id: string) => Promise<void>;
   saveModifiedOutput: (input: SaveModifiedOutputInput) => Promise<Output>;
+  updateOutput: (outputId: string, html: string, rawOutput?: string) => Promise<Output>;
 
   // Evaluations & Comparisons
   saveEvaluation: (input: SaveEvaluationInput) => Promise<Evaluation>;
@@ -199,6 +201,7 @@ export interface ElectronAPI {
   createCollection: (name: string, description?: string) => Promise<Collection>;
   updateCollection: (id: string, name: string, description?: string) => Promise<Collection>;
   deleteCollection: (id: string) => Promise<void>;
+  removePromptFromCollection: (promptId: string, collectionId: string) => Promise<void>;
 
   // Dashboard & Stats
   getBenchmarkStats: () => Promise<BenchmarkStats>;

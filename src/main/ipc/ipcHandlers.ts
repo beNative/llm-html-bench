@@ -88,9 +88,13 @@ export function registerIpcHandlers(services: {
   ipcMain.handle(IPC_CHANNELS.RUNS_GET_BY_IDS, (_, ids: string[]) => runRepo.getRunsByIds(ids));
   ipcMain.handle(IPC_CHANNELS.RUNS_GET_ALL, (_, limit?: number, offset?: number) => runRepo.getAllRuns(limit, offset));
   ipcMain.handle(IPC_CHANNELS.RUNS_CREATE, (_, input: CreateModelRunInput) => runRepo.createModelRun(input));
+  ipcMain.handle(IPC_CHANNELS.RUNS_UPDATE, (_, id: string, input: any) => runRepo.updateModelRun(id, input));
   ipcMain.handle(IPC_CHANNELS.RUNS_DELETE, (_, id: string) => runRepo.deleteModelRun(id));
   ipcMain.handle(IPC_CHANNELS.RUNS_SAVE_MODIFIED_OUTPUT, (_, input: SaveModifiedOutputInput) =>
     runRepo.saveModifiedOutput(input)
+  );
+  ipcMain.handle(IPC_CHANNELS.OUTPUTS_UPDATE, (_, outputId: string, html: string, rawOutput?: string) =>
+    runRepo.updateOutput(outputId, html, rawOutput)
   );
 
   // Evaluations & Comparisons
@@ -113,6 +117,9 @@ export function registerIpcHandlers(services: {
     collectionRepo.updateCollection(id, name, desc)
   );
   ipcMain.handle(IPC_CHANNELS.COLLECTIONS_DELETE, (_, id: string) => collectionRepo.deleteCollection(id));
+  ipcMain.handle(IPC_CHANNELS.COLLECTIONS_REMOVE_PROMPT, (_, promptId: string, colId: string) =>
+    collectionRepo.removePromptFromCollection(promptId, colId)
+  );
 
   // Stats
   ipcMain.handle(IPC_CHANNELS.STATS_GET, () => statsRepo.getBenchmarkStats());

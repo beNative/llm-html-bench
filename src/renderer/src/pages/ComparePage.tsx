@@ -10,6 +10,7 @@ import { EvaluationPanel } from '../components/evaluation/EvaluationPanel';
 import { HeadToHeadSelector } from '../components/evaluation/HeadToHeadSelector';
 import { ScoreBadge } from '../components/common/ScoreBadge';
 import { Button } from '../components/common/Button';
+import { EditOutputModal } from '../components/modals/EditOutputModal';
 import {
   Eye,
   Code2,
@@ -18,6 +19,7 @@ import {
   Award,
   Trash2,
   RefreshCw,
+  Edit2,
 } from 'lucide-react';
 
 type ViewMode = 'preview' | 'source' | 'split' | 'diff';
@@ -53,6 +55,7 @@ export const ComparePage: React.FC = () => {
 
   // Evaluation Drawers State
   const [evalOpenSlots, setEvalOpenSlots] = useState<Record<string, boolean>>({});
+  const [editingRun, setEditingRun] = useState<ModelRun | null>(null);
 
   const loadRuns = async () => {
     if (compareRunIds.length === 0) {
@@ -383,6 +386,25 @@ export const ComparePage: React.FC = () => {
                   {/* Slot Controls */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <button
+                      onClick={() => setEditingRun(run)}
+                      title="Edit HTML code or run notes"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        padding: '3px 6px',
+                        fontSize: '10px',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'var(--bg-tertiary)',
+                        color: 'var(--text-secondary)',
+                        border: '1px solid var(--border-subtle)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Edit2 size={11} /> Edit
+                    </button>
+
+                    <button
                       onClick={() =>
                         setEvalOpenSlots((prev) => ({ ...prev, [run.id]: !prev[run.id] }))
                       }
@@ -397,6 +419,7 @@ export const ComparePage: React.FC = () => {
                         backgroundColor: isEvalOpen ? 'var(--accent-primary-light)' : 'var(--bg-tertiary)',
                         color: isEvalOpen ? 'var(--accent-primary)' : 'var(--text-secondary)',
                         border: `1px solid ${isEvalOpen ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                        cursor: 'pointer',
                       }}
                     >
                       <Award size={11} /> Score
@@ -408,6 +431,9 @@ export const ComparePage: React.FC = () => {
                       style={{
                         padding: '3px',
                         color: 'var(--text-muted)',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
                       }}
                     >
                       <Trash2 size={12} />
@@ -479,6 +505,16 @@ export const ComparePage: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* Edit Output Modal */}
+      <EditOutputModal
+        isOpen={!!editingRun}
+        onClose={() => setEditingRun(null)}
+        modelRun={editingRun}
+        onUpdated={() => {
+          loadRuns();
+        }}
+      />
     </div>
   );
 };

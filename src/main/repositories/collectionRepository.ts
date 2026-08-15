@@ -47,6 +47,10 @@ export class CollectionRepository {
       .get(id) as Collection;
   }
 
+  public removePromptFromCollection(promptId: string, collectionId: string): void {
+    this.db.prepare('DELETE FROM prompt_collections WHERE prompt_id = ? AND collection_id = ?').run(promptId, collectionId);
+  }
+
   public deleteCollection(id: string): void {
     this.db.prepare('DELETE FROM collections WHERE id = ?').run(id);
   }

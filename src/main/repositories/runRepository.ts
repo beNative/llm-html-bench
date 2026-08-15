@@ -273,6 +273,43 @@ export class RunRepository {
     return this.db.prepare('SELECT * FROM outputs WHERE id = ?').get(newOutputId) as Output;
   }
 
+  public updateModelRun(
+    id: string,
+    input: { notes?: string; temperature?: number; topP?: number; maxTokens?: number }
+  ): ModelRun {
+    this.db
+      .prepare(`
+        UPDATE model_runs SET
+          notes = COALESCE(?, notes),
+          temperature = COALESCE(?, temperature),
+          top_p = COALESCE(?, top_p),
+          max_tokens = COALESCE(?, max_tokens)
+        WHERE id = ?
+      `)
+      .run(
+        input.notes ?? null,
+        input.temperature ?? null,
+        input.topP ?? null,
+        input.maxTokens ?? null,
+        id
+      );
+
+    return this.getRunById(id)!;
+  }
+
+  public updateOutput(outputId: string, html: string, rawOutput?: string): Output {
+    if (rawOutput !== undefined) {
+      this.db
+        .prepare('UPDATE outputs SET html = ?, raw_output = ? WHERE id = ?')
+        .run(html, rawOutput, outputId);
+    } else {
+      this.db
+        .prepare('UPDATE outputs SET html = ? WHERE id = ?')
+        .run(html, outputId);
+    }
+    return this.db.prepare('SELECT * FROM outputs WHERE id = ?').get(outputId) as Output;
+  }
+
   public deleteModelRun(id: string): void {
     this.db.prepare('DELETE FROM model_runs WHERE id = ?').run(id);
   }

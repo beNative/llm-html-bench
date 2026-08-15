@@ -24,8 +24,10 @@ export const IPC_CHANNELS = {
   RUNS_GET_BY_IDS: 'runs:get-by-ids',
   RUNS_GET_ALL: 'runs:get-all',
   RUNS_CREATE: 'runs:create',
+  RUNS_UPDATE: 'runs:update',
   RUNS_DELETE: 'runs:delete',
   RUNS_SAVE_MODIFIED_OUTPUT: 'runs:save-modified-output',
+  OUTPUTS_UPDATE: 'outputs:update',
 
   // Evaluations & Comparisons
   EVALUATIONS_SAVE: 'evaluations:save',
@@ -39,6 +41,7 @@ export const IPC_CHANNELS = {
   COLLECTIONS_CREATE: 'collections:create',
   COLLECTIONS_UPDATE: 'collections:update',
   COLLECTIONS_DELETE: 'collections:delete',
+  COLLECTIONS_REMOVE_PROMPT: 'collections:remove-prompt',
 
   // Stats
   STATS_GET: 'stats:get',

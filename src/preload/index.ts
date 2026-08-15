@@ -28,8 +28,10 @@ const api: ElectronAPI = {
   getRunsByIds: (ids) => ipcRenderer.invoke(IPC_CHANNELS.RUNS_GET_BY_IDS, ids),
   getAllRuns: (limit, offset) => ipcRenderer.invoke(IPC_CHANNELS.RUNS_GET_ALL, limit, offset),
   createModelRun: (input) => ipcRenderer.invoke(IPC_CHANNELS.RUNS_CREATE, input),
+  updateModelRun: (id, input) => ipcRenderer.invoke(IPC_CHANNELS.RUNS_UPDATE, id, input),
   deleteModelRun: (id) => ipcRenderer.invoke(IPC_CHANNELS.RUNS_DELETE, id),
   saveModifiedOutput: (input) => ipcRenderer.invoke(IPC_CHANNELS.RUNS_SAVE_MODIFIED_OUTPUT, input),
+  updateOutput: (outputId, html, rawOutput) => ipcRenderer.invoke(IPC_CHANNELS.OUTPUTS_UPDATE, outputId, html, rawOutput),
 
   // Evaluations & Comparisons
   saveEvaluation: (input) => ipcRenderer.invoke(IPC_CHANNELS.EVALUATIONS_SAVE, input),
@@ -43,6 +45,8 @@ const api: ElectronAPI = {
   createCollection: (name, desc) => ipcRenderer.invoke(IPC_CHANNELS.COLLECTIONS_CREATE, name, desc),
   updateCollection: (id, name, desc) => ipcRenderer.invoke(IPC_CHANNELS.COLLECTIONS_UPDATE, id, name, desc),
   deleteCollection: (id) => ipcRenderer.invoke(IPC_CHANNELS.COLLECTIONS_DELETE, id),
+  removePromptFromCollection: (promptId, colId) =>
+    ipcRenderer.invoke(IPC_CHANNELS.COLLECTIONS_REMOVE_PROMPT, promptId, colId),
 
   // Dashboard & Stats
   getBenchmarkStats: () => ipcRenderer.invoke(IPC_CHANNELS.STATS_GET),

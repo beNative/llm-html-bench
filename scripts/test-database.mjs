@@ -192,10 +192,11 @@ db.prepare(`
   VALUES (?, ?, ?, 1, 0.7, CURRENT_TIMESTAMP, '1.0.0', 'manual-paste')
 `).run(run1Id, v1Id, m1Id);
 
+const out1Id = uuidv4();
 db.prepare(`
   INSERT INTO outputs (id, model_run_id, output_type, raw_output, html)
   VALUES (?, ?, 'html', 'raw output qwen', '<!DOCTYPE html><html><body><h1>Solar System Qwen</h1></body></html>')
-`).run(uuidv4(), run1Id);
+`).run(out1Id, run1Id);
 
 db.prepare(`
   INSERT INTO evaluations (id, model_run_id, visual_score, prompt_adherence_score, functionality_score, code_quality_score, creativity_score, overall_score)
@@ -261,8 +262,46 @@ const parsed = JSON.parse(jsonStr);
 if (parsed.format !== 'llm-html-bench' || parsed.runs.length !== 2) {
   throw new Error('Export JSON format failed');
 }
-console.log('✓ Export / Import round-trip dataset verified successfully.');
+// 6. Test Model, Prompt, Output, Run, and Collection CRUD & Cascade Deletions
+// 6a. Output update
+db.prepare('UPDATE outputs SET html = ? WHERE id = ?').run('<html><body>Updated HTML</body></html>', out1Id);
+const updatedOut = db.prepare('SELECT html FROM outputs WHERE id = ?').get(out1Id);
+if (updatedOut.html !== '<html><body>Updated HTML</body></html>') {
+  throw new Error('Output update in place failed');
+}
+
+// 6b. Model update
+db.prepare('UPDATE models SET display_name = ? WHERE id = ?').run('Claude 3.7 Sonnet (Updated)', m1Id);
+const updatedModel = db.prepare('SELECT display_name FROM models WHERE id = ?').get(m1Id);
+if (updatedModel.display_name !== 'Claude 3.7 Sonnet (Updated)') {
+  throw new Error('Model update failed');
+}
+
+// 6c. Run deletion
+db.prepare('DELETE FROM model_runs WHERE id = ?').run(run1Id);
+const remainingRuns = db.prepare('SELECT COUNT(*) as c FROM model_runs WHERE id = ?').get(run1Id);
+const remainingOutputs = db.prepare('SELECT COUNT(*) as c FROM outputs WHERE model_run_id = ?').get(run1Id);
+if (remainingRuns.c !== 0 || remainingOutputs.c !== 0) {
+  throw new Error('Model run delete / cascade output delete failed');
+}
+
+// 6d. Prompt deletion with cascade
+db.prepare('DELETE FROM prompts WHERE id = ?').run(promptId);
+const remainingPrompts = db.prepare('SELECT COUNT(*) as c FROM prompts WHERE id = ?').get(promptId);
+const remainingVersions = db.prepare('SELECT COUNT(*) as c FROM prompt_versions WHERE prompt_id = ?').get(promptId);
+const remainingRunsForPrompt = db.prepare('SELECT COUNT(*) as c FROM model_runs WHERE prompt_version_id = ?').get(v1Id);
+if (remainingPrompts.c !== 0 || remainingVersions.c !== 0 || remainingRunsForPrompt.c !== 0) {
+  throw new Error('Prompt cascade deletion failed');
+}
+
+// 6e. Model deletion
+db.prepare('DELETE FROM models WHERE id = ?').run(m1Id);
+const remainingModels = db.prepare('SELECT COUNT(*) as c FROM models WHERE id = ?').get(m1Id);
+if (remainingModels.c !== 0) {
+  throw new Error('Model deletion failed');
+}
+console.log('✓ Model, Prompt, Output, Run CRUD and cascade deletion verified.');
 
 db.close();
-console.log('=== ALL 5 BENCHMARK INTEGRATION CHECKS PASSED (100%) ===');
+console.log('=== ALL 6 BENCHMARK INTEGRATION CHECKS PASSED (100%) ===');
 process.exit(0);

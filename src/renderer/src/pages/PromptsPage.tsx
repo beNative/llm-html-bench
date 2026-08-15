@@ -5,6 +5,9 @@ import { DEFAULT_CATEGORIES } from '@shared/constants/defaults';
 import { Button } from '../components/common/Button';
 import { ScoreBadge } from '../components/common/ScoreBadge';
 import { MonacoCodeEditor } from '../components/editor/MonacoCodeEditor';
+import { EditPromptModal } from '../components/modals/EditPromptModal';
+import { EditOutputModal } from '../components/modals/EditOutputModal';
+import { ConfirmModal } from '../components/common/ConfirmModal';
 import {
   Search,
   Plus,
@@ -14,6 +17,8 @@ import {
   Star,
   FileCode,
   Trophy,
+  Edit2,
+  Trash2,
 } from 'lucide-react';
 
 export const PromptsPage: React.FC = () => {
@@ -43,10 +48,43 @@ export const PromptsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [sortBy, setSortBy] = useState<'name' | 'created_at' | 'last_tested' | 'run_count'>('last_tested');
 
-  // Prompt Editing State
+  // Prompt Editing & Deletion State
   const [editedPromptText, setEditedPromptText] = useState<string>('');
   const [versionNotes, setVersionNotes] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [isEditPromptModalOpen, setIsEditPromptModalOpen] = useState<boolean>(false);
+  const [isDeletePromptModalOpen, setIsDeletePromptModalOpen] = useState<boolean>(false);
+  const [editingRun, setEditingRun] = useState<ModelRun | null>(null);
+  const [deletingRun, setDeletingRun] = useState<ModelRun | null>(null);
+
+  const handleDeletePrompt = async () => {
+    if (!activePrompt || !window.electronAPI) return;
+    try {
+      await window.electronAPI.deletePrompt(activePrompt.id);
+      showToast(`Prompt "${activePrompt.name}" deleted successfully`, 'info');
+      setIsDeletePromptModalOpen(false);
+      setSelectedPromptId(null);
+      await loadPrompts();
+    } catch (err: unknown) {
+      showToast(`Failed to delete prompt: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    }
+  };
+
+  const handleDeleteRun = async () => {
+    if (!deletingRun || !window.electronAPI) return;
+    try {
+      await window.electronAPI.deleteModelRun(deletingRun.id);
+      showToast('Model run deleted successfully', 'info');
+      setDeletingRun(null);
+      if (activePrompt) {
+        const rList = await window.electronAPI.getRunsForPrompt(activePrompt.id);
+        setRuns(rList);
+        loadPrompts();
+      }
+    } catch (err: unknown) {
+      showToast(`Failed to delete run: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    }
+  };
 
   const loadPrompts = async () => {
     try {
@@ -333,11 +371,31 @@ export const PromptsPage: React.FC = () => {
               <Button
                 size="sm"
                 variant="secondary"
+                icon={<Edit2 size={13} />}
+                onClick={() => setIsEditPromptModalOpen(true)}
+                title="Edit Prompt metadata, category, and tags"
+              >
+                Edit
+              </Button>
+
+              <Button
+                size="sm"
+                variant="secondary"
                 icon={<Archive size={13} />}
                 onClick={handleArchive}
                 title={activePrompt.archived ? 'Restore Prompt' : 'Archive Prompt'}
               >
                 {activePrompt.archived ? 'Restore' : 'Archive'}
+              </Button>
+
+              <Button
+                size="sm"
+                variant="danger"
+                icon={<Trash2 size={13} />}
+                onClick={() => setIsDeletePromptModalOpen(true)}
+                title="Delete this Prompt and all its benchmark runs"
+              >
+                Delete
               </Button>
             </div>
           </div>
@@ -501,13 +559,30 @@ export const PromptsPage: React.FC = () => {
                               {r.evaluation?.functionality_score ?? '—'}
                             </td>
                             <td style={{ padding: '8px 12px' }}>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => openCompareWithRuns([r.id])}
-                              >
-                                Preview & Score
-                              </Button>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => openCompareWithRuns([r.id])}
+                                  title="Preview and score output"
+                                >
+                                  Preview & Score
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  icon={<Edit2 size={12} />}
+                                  onClick={() => setEditingRun(r)}
+                                  title="Edit HTML code or run notes"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  icon={<Trash2 size={12} color="var(--accent-danger)" />}
+                                  onClick={() => setDeletingRun(r)}
+                                  title="Delete this run"
+                                />
+                              </div>
                             </td>
                           </tr>
                         );
@@ -664,6 +739,51 @@ export const PromptsPage: React.FC = () => {
           Select a prompt from the library on the left.
         </div>
       )}
+
+      {/* Edit Prompt Modal */}
+      <EditPromptModal
+        isOpen={isEditPromptModalOpen}
+        onClose={() => setIsEditPromptModalOpen(false)}
+        prompt={activePrompt}
+        onUpdated={(updated) => {
+          setActivePrompt(updated);
+          loadPrompts();
+        }}
+      />
+
+      {/* Delete Prompt Confirmation */}
+      <ConfirmModal
+        isOpen={isDeletePromptModalOpen}
+        onClose={() => setIsDeletePromptModalOpen(false)}
+        onConfirm={handleDeletePrompt}
+        title={`Delete Prompt "${activePrompt?.name}"?`}
+        message="Are you sure you want to permanently delete this benchmark prompt? All prompt versions, benchmark runs, generated HTML outputs, screenshots, and evaluations associated with this prompt will also be permanently deleted."
+        confirmLabel="Delete Prompt"
+        confirmVariant="danger"
+      />
+
+      {/* Edit Output Modal */}
+      <EditOutputModal
+        isOpen={!!editingRun}
+        onClose={() => setEditingRun(null)}
+        modelRun={editingRun}
+        onUpdated={() => {
+          if (activePrompt && window.electronAPI) {
+            window.electronAPI.getRunsForPrompt(activePrompt.id).then((rList) => setRuns(rList));
+          }
+        }}
+      />
+
+      {/* Delete Run Confirmation */}
+      <ConfirmModal
+        isOpen={!!deletingRun}
+        onClose={() => setDeletingRun(null)}
+        onConfirm={handleDeleteRun}
+        title="Delete Model Output & Run?"
+        message={`Are you sure you want to delete this benchmark generation run for "${deletingRun?.model_display_name || deletingRun?.model_name}"? Its HTML output, screenshots, and evaluation scores will be removed.`}
+        confirmLabel="Delete Run"
+        confirmVariant="danger"
+      />
     </div>
   );
 };
