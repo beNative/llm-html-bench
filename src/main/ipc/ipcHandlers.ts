@@ -14,8 +14,10 @@ import { ExportImportService } from '../services/exportImportService';
 import { ScreenshotService } from '../services/screenshotService';
 import { SettingsService } from '../services/settingsService';
 import { ProviderRegistry } from '../providers/providerRegistry';
+import { Logger } from '../utils/logger';
 import { extractHtml } from '../../shared/utils/htmlExtractor';
 import { APP_VERSION } from '../../shared/constants/defaults';
+import { LogLevel } from '../../shared/types/ipc';
 import {
   CreatePromptInput,
   UpdatePromptInput,
@@ -306,6 +308,26 @@ export function registerIpcHandlers(services: {
     if (found) {
       shell.showItemInFolder(found);
     }
+  });
+
+  // Application Logging System
+  ipcMain.handle(IPC_CHANNELS.LOGS_GET_ENTRIES, () => Logger.getEntries());
+  ipcMain.handle(IPC_CHANNELS.LOGS_CLEAR, () => Logger.clear());
+  ipcMain.handle(IPC_CHANNELS.LOGS_GET_CONFIG, () => Logger.getLogConfig());
+  ipcMain.handle(IPC_CHANNELS.LOGS_SET_AUTO_SAVE, (_, enabled: boolean) => Logger.setAutoSaveToFile(enabled));
+  ipcMain.handle(IPC_CHANNELS.LOGS_OPEN_FOLDER, () => {
+    const logPath = Logger.getLogConfig().logFilePath;
+    if (fs.existsSync(logPath)) {
+      shell.showItemInFolder(logPath);
+    } else {
+      shell.showItemInFolder(Logger.getLogConfig().logDirectory);
+    }
+  });
+  ipcMain.handle(IPC_CHANNELS.LOGS_ADD_ENTRY, (_, level: LogLevel, source: string, message: string, details?: string) => {
+    if (level === 'DEBUG') Logger.debug(source, message, details);
+    else if (level === 'INFO') Logger.info(source, message, details);
+    else if (level === 'WARNING') Logger.warn(source, message, details);
+    else if (level === 'ERROR') Logger.error(source, message, details);
   });
 
   // System

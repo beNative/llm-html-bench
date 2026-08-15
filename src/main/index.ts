@@ -33,7 +33,7 @@ function createWindow(): void {
   Logger.info('Creating main application window...');
 
   const preloadPath = path.join(__dirname, '../preload/index.js');
-  Logger.info('Preload script path:', preloadPath, 'Exists:', fs.existsSync(preloadPath));
+  Logger.info('MAIN', `Preload script path: ${preloadPath} (Exists: ${fs.existsSync(preloadPath)})`);
 
   // Resolve application icon across dev and packaged distributions
   const iconCandidates = [
@@ -74,10 +74,26 @@ function createWindow(): void {
     mainWindow?.webContents.send(IPC_CHANNELS.WINDOW_STATE_CHANGED, false);
   });
 
+  // Stream all live logs directly to the renderer process
+  Logger.setBroadcastHandler((entry) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(IPC_CHANNELS.LOGS_NEW_ENTRY_EVENT, entry);
+    }
+  });
+
   // Intercept renderer console messages and write to main logger
   mainWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {
-    const levelName = ['DEBUG', 'INFO', 'WARN', 'ERROR'][level] || 'LOG';
-    Logger.info(`[RENDERER ${levelName}] (${path.basename(sourceId)}:${line}) ${message}`);
+    const srcFile = sourceId ? path.basename(sourceId) : 'renderer';
+    const loc = line ? `(${srcFile}:${line})` : `(${srcFile})`;
+    if (level === 3) {
+      Logger.error('RENDERER', `${loc} ${message}`);
+    } else if (level === 2) {
+      Logger.warn('RENDERER', `${loc} ${message}`);
+    } else if (level === 0) {
+      Logger.debug('RENDERER', `${loc} ${message}`);
+    } else {
+      Logger.info('RENDERER', `${loc} ${message}`);
+    }
   });
 
   // Track renderer page loading

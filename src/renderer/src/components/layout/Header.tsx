@@ -31,6 +31,7 @@ export const Header: React.FC = () => {
     setIsRunBenchmarkModalOpen,
     openAddOutputModal,
     showToast,
+    toggleLogPanel,
   } = useApp();
 
   const { theme, toggleTheme } = useTheme();
@@ -264,6 +265,9 @@ export const Header: React.FC = () => {
                   <span>Documentation & Info</span>
                 </div>
                 <div className="titlebar-dropdown-divider" />
+                <div className="titlebar-dropdown-item" onClick={() => { setActiveMenu(null); toggleLogPanel(); }}>
+                  <span>Toggle Application Logs</span>
+                </div>
                 <div className="titlebar-dropdown-item" onClick={() => { setActiveMenu(null); toggleTheme(); }}>
                   <span>Switch to {theme === 'dark' ? 'Light' : 'Dark'} Theme</span>
                 </div>

@@ -12,6 +12,7 @@ import { CollectionsPage } from './pages/CollectionsPage';
 import { RunsPage } from './pages/RunsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { InfoPage } from './pages/InfoPage';
+import { LoggingPanel } from './components/logging/LoggingPanel';
 import { NewPromptModal } from './components/modals/NewPromptModal';
 import { AddOutputModal } from './components/modals/AddOutputModal';
 import { NewModelModal } from './components/modals/NewModelModal';
@@ -64,6 +65,8 @@ export const MainApp: React.FC = () => {
           {renderActivePage()}
         </main>
       </div>
+
+      <LoggingPanel />
 
       <StatusBar />
 

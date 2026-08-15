@@ -243,9 +243,37 @@ export interface ElectronAPI {
   isWindowMaximized: () => Promise<boolean>;
   onWindowStateChange: (callback: (isMaximized: boolean) => void) => () => void;
 
+  // Application Logging System
+  getLogs: () => Promise<LogEntry[]>;
+  clearLogs: () => Promise<void>;
+  getLogConfig: () => Promise<LogConfig>;
+  setLogAutoSave: (enabled: boolean) => Promise<{ success: boolean; logFilePath: string }>;
+  openLogFolder: () => Promise<void>;
+  addLog: (level: LogLevel, source: string, message: string, details?: string) => Promise<void>;
+  onNewLog: (callback: (entry: LogEntry) => void) => () => void;
+
   // System
   getAppVersion: () => Promise<string>;
   extractHtml: (raw: string) => Promise<string>;
+}
+
+export type LogLevel = 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR';
+
+export interface LogEntry {
+  id: string;
+  timestamp: string; // Full ISO string
+  timeFormatted: string; // HH:mm:ss.SSS
+  level: LogLevel;
+  source: string;
+  message: string;
+  details?: string;
+}
+
+export interface LogConfig {
+  autoSaveToFile: boolean;
+  logFilePath: string;
+  logFileName: string;
+  logDirectory: string;
 }
 
 export interface DocumentationDocs {

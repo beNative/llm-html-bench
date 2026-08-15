@@ -76,6 +76,15 @@ export const IPC_CHANNELS = {
   WINDOW_IS_MAXIMIZED: 'window:is-maximized',
   WINDOW_STATE_CHANGED: 'window:state-changed',
 
+  // Application Logging System
+  LOGS_GET_ENTRIES: 'logs:get-entries',
+  LOGS_CLEAR: 'logs:clear',
+  LOGS_GET_CONFIG: 'logs:get-config',
+  LOGS_SET_AUTO_SAVE: 'logs:set-auto-save',
+  LOGS_OPEN_FOLDER: 'logs:open-folder',
+  LOGS_ADD_ENTRY: 'logs:add-entry',
+  LOGS_NEW_ENTRY_EVENT: 'logs:new-entry-event',
+
   // System
   APP_GET_VERSION: 'app:get-version',
   EXTRACT_HTML: 'app:extract-html',

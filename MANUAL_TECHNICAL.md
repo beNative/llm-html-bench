@@ -176,3 +176,16 @@ This isolates and mirrors console messages in the application's **Console Drawer
 - **Packager**: `electron-builder` with configuration defined in `electron-builder.json5`.
 - **Target Platforms**: Windows (NSIS installer), macOS (DMG), Linux (AppImage).
 - **Executable Accompanying Documentation**: `extraFiles` directive automatically copies `README.md`, `MANUAL_FUNCTIONAL.md`, `MANUAL_TECHNICAL.md`, and `CHANGELOG.md` directly next to the distributed application binary.
+
+---
+
+## 9. Logging Subsystem Architecture & Persistence
+
+- **Core Module**: `src/main/utils/logger.ts`
+- **In-Memory Ring Buffer**: Retains the last 2,000 log entries with millisecond timestamps (`HH:mm:ss.SSS`), log levels (`DEBUG`, `INFO`, `WARNING`, `ERROR`), and subsystem tags (`MAIN`, `RENDERER`, `DATABASE`, `PROVIDER`, `BENCHMARK`).
+- **Real-Time IPC Streaming**: The main logger utilizes a broadcast callback to stream log events in real-time over the `logs:new-entry-event` channel to the renderer.
+- **Log File Storage & Naming**:
+  - In production (packaged Electron app), log files are saved directly in the executable root folder (`path.dirname(process.execPath)`).
+  - In development mode, logs are stored in `<workspace>/logs/`.
+  - Daily dated file naming convention: `llm-html-bench-YYYY-MM-DD.log`.
+  - Format per line: `[YYYY-MM-DDTHH:mm:ss.SSSZ] [LEVEL] [SOURCE] message | Details: ...`

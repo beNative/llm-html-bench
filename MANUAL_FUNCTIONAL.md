@@ -147,7 +147,25 @@ Organize your benchmarks systematically:
 
 ---
 
-## 11. Keyboard Shortcuts
+## 11. Application Logging & Diagnostic Panel
+
+LLM HTML Bench features a dedicated real-time diagnostic and logging panel accessible from the bottom status bar or via **View &rarr; Toggle Application Logs**:
+
+- **Real-Time Log Stream**: View system events, database queries, provider responses, and renderer diagnostics with precise timestamps.
+- **Log Level Filtering**:
+  - `DEBUG` (Green): Verbose developer and runtime lifecycle events.
+  - `INFO` (Blue): Standard operational events, model creations, and database queries.
+  - `WARNING` (Orange): Non-fatal API warnings and fallback notices.
+  - `ERROR` (Red): Runtime exceptions, failed API calls, and validation errors (with expandable stack trace drawers).
+- **Source & Text Filtering**: Filter entries by message substring or subsystem source (`MAIN`, `RENDERER`, `DATABASE`, `PROVIDER`, `BENCHMARK`).
+- **Automatic Log File Persistence**:
+  - Toggle **Save to Logfile** to automatically record all session events to a daily log file (`llm-html-bench-YYYY-MM-DD.log`).
+  - When running as an Electron packaged application, log files are stored directly in the executable directory.
+  - Click **Log Folder** to instantly locate the active log file on disk.
+
+---
+
+## 12. Keyboard Shortcuts
 
 | Shortcut | Action |
 | :--- | :--- |

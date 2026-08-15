@@ -86,6 +86,21 @@ const api: ElectronAPI = {
     };
   },
 
+  // Application Logging System
+  getLogs: () => ipcRenderer.invoke(IPC_CHANNELS.LOGS_GET_ENTRIES),
+  clearLogs: () => ipcRenderer.invoke(IPC_CHANNELS.LOGS_CLEAR),
+  getLogConfig: () => ipcRenderer.invoke(IPC_CHANNELS.LOGS_GET_CONFIG),
+  setLogAutoSave: (enabled) => ipcRenderer.invoke(IPC_CHANNELS.LOGS_SET_AUTO_SAVE, enabled),
+  openLogFolder: () => ipcRenderer.invoke(IPC_CHANNELS.LOGS_OPEN_FOLDER),
+  addLog: (level, source, message, details) => ipcRenderer.invoke(IPC_CHANNELS.LOGS_ADD_ENTRY, level, source, message, details),
+  onNewLog: (callback) => {
+    const handler = (_: any, entry: any) => callback(entry);
+    ipcRenderer.on(IPC_CHANNELS.LOGS_NEW_ENTRY_EVENT, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.LOGS_NEW_ENTRY_EVENT, handler);
+    };
+  },
+
   // System
   getAppVersion: () => ipcRenderer.invoke(IPC_CHANNELS.APP_GET_VERSION),
   extractHtml: (raw) => ipcRenderer.invoke(IPC_CHANNELS.EXTRACT_HTML, raw),

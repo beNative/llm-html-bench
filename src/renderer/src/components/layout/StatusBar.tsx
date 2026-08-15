@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
-import { HardDrive, Sun, Moon } from 'lucide-react';
+import { HardDrive, Sun, Moon, Terminal, AlertCircle } from 'lucide-react';
 import { DatabaseInfo } from '@shared/types/ipc';
 
 export const StatusBar: React.FC = () => {
-  const { compareRunIds, clearCompareRunIds, setCurrentTab } = useApp();
+  const {
+    compareRunIds,
+    clearCompareRunIds,
+    setCurrentTab,
+    isLogPanelOpen,
+    toggleLogPanel,
+    logCounts,
+  } = useApp();
   const { theme, toggleTheme } = useTheme();
   const [dbInfo, setDbInfo] = useState<DatabaseInfo | null>(null);
 
@@ -31,8 +38,8 @@ export const StatusBar: React.FC = () => {
         zIndex: 50,
       }}
     >
-      {/* Left: DB & Bench status */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      {/* Left: DB & Bench status & Logs trigger */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
         <div
           onClick={() => setCurrentTab('settings')}
           style={{
@@ -48,6 +55,41 @@ export const StatusBar: React.FC = () => {
           <span>
             SQLite: {dbInfo ? `${(dbInfo.sizeBytes / 1024).toFixed(0)} KB (${dbInfo.counts.runs} runs)` : 'Ready'}
           </span>
+        </div>
+
+        {/* Live Logs Toggle in StatusBar */}
+        <div
+          onClick={toggleLogPanel}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            cursor: 'pointer',
+            color: isLogPanelOpen ? 'var(--accent-primary)' : 'var(--text-secondary)',
+            backgroundColor: isLogPanelOpen ? 'var(--accent-primary-light)' : 'transparent',
+            padding: '1px 6px',
+            borderRadius: 'var(--radius-sm)',
+            transition: 'all 0.1s ease',
+          }}
+          title="Toggle Application Logging Panel"
+        >
+          <Terminal size={11} color={isLogPanelOpen ? 'var(--accent-primary)' : 'var(--text-muted)'} />
+          <span>Logs ({logCounts.total})</span>
+          {logCounts.error > 0 && (
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2px',
+                color: '#ef4444',
+                fontWeight: 700,
+                fontSize: '10px',
+              }}
+            >
+              <AlertCircle size={10} color="#ef4444" />
+              {logCounts.error}
+            </span>
+          )}
         </div>
 
         {compareRunIds.length > 0 && (

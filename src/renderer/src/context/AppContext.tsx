@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { Collection, Tag, Model } from '@shared/types/entities';
+import { LogEntry, LogLevel, LogConfig } from '@shared/types/ipc';
 
 export type NavTab = 'dashboard' | 'prompts' | 'compare' | 'models' | 'collections' | 'runs' | 'settings' | 'info';
 
@@ -43,6 +44,18 @@ interface AppContextType {
   refreshCollectionsAndTags: () => Promise<void>;
   refreshModels: () => Promise<Model[]>;
 
+  // Logging Panel & Stream
+  isLogPanelOpen: boolean;
+  setIsLogPanelOpen: (open: boolean) => void;
+  toggleLogPanel: () => void;
+  logs: LogEntry[];
+  logConfig: LogConfig | null;
+  logCounts: { total: number; debug: number; info: number; warning: number; error: number };
+  addLog: (level: LogLevel, source: string, message: string, details?: string) => Promise<void>;
+  clearLogs: () => Promise<void>;
+  setLogAutoSave: (enabled: boolean) => Promise<void>;
+  openLogFolder: () => Promise<void>;
+
   // Toasts
   toasts: ToastMessage[];
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -68,6 +81,58 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tags, setTags] = useState<Tag[]>([]);
   const [models, setModels] = useState<Model[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Logging Panel State
+  const [isLogPanelOpen, setIsLogPanelOpen] = useState<boolean>(false);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [logConfig, setLogConfig] = useState<LogConfig | null>(null);
+
+  const toggleLogPanel = () => {
+    setIsLogPanelOpen((prev) => !prev);
+  };
+
+  const logCounts = useMemo(() => {
+    let debug = 0;
+    let info = 0;
+    let warning = 0;
+    let error = 0;
+    for (const log of logs) {
+      if (log.level === 'DEBUG') debug++;
+      else if (log.level === 'INFO') info++;
+      else if (log.level === 'WARNING') warning++;
+      else if (log.level === 'ERROR') error++;
+    }
+    return { total: logs.length, debug, info, warning, error };
+  }, [logs]);
+
+  const addLog = async (level: LogLevel, source: string, message: string, details?: string) => {
+    if (window.electronAPI) {
+      await window.electronAPI.addLog(level, source, message, details);
+    }
+  };
+
+  const clearLogs = async () => {
+    if (window.electronAPI) {
+      await window.electronAPI.clearLogs();
+      setLogs([]);
+    }
+  };
+
+  const setLogAutoSave = async (enabled: boolean) => {
+    if (window.electronAPI) {
+      const res = await window.electronAPI.setLogAutoSave(enabled);
+      setLogConfig((prev) =>
+        prev ? { ...prev, autoSaveToFile: enabled, logFilePath: res.logFilePath } : null
+      );
+      showToast(`Log file persistence ${enabled ? 'enabled' : 'disabled'}`, 'info');
+    }
+  };
+
+  const openLogFolder = async () => {
+    if (window.electronAPI) {
+      await window.electronAPI.openLogFolder();
+    }
+  };
 
   const refreshCollectionsAndTags = async () => {
     try {
@@ -100,6 +165,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     refreshCollectionsAndTags();
     refreshModels();
+
+    if (window.electronAPI) {
+      // Load initial logs and config
+      window.electronAPI.getLogs().then((initialLogs) => setLogs(initialLogs)).catch(() => {});
+      window.electronAPI.getLogConfig().then((cfg) => setLogConfig(cfg)).catch(() => {});
+
+      // Subscribe to real-time log broadcasts
+      const cleanupLogs = window.electronAPI.onNewLog((entry) => {
+        setLogs((prev) => [...prev.slice(-1999), entry]);
+      });
+
+      return () => {
+        cleanupLogs();
+      };
+    }
   }, []);
 
   const toggleCompareRunId = (runId: string) => {
@@ -172,6 +252,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         models,
         refreshCollectionsAndTags,
         refreshModels,
+        isLogPanelOpen,
+        setIsLogPanelOpen,
+        toggleLogPanel,
+        logs,
+        logConfig,
+        logCounts,
+        addLog,
+        clearLogs,
+        setLogAutoSave,
+        openLogFolder,
         toasts,
         showToast,
         dismissToast,
