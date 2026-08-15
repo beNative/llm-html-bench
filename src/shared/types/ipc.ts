@@ -236,6 +236,13 @@ export interface ElectronAPI {
   getDocs: () => Promise<DocumentationDocs>;
   openDocsFolder: () => Promise<void>;
 
+  // Window Controls (Frameless Title Bar)
+  minimizeWindow: () => Promise<void>;
+  maximizeWindow: () => Promise<void>;
+  closeWindow: () => Promise<void>;
+  isWindowMaximized: () => Promise<boolean>;
+  onWindowStateChange: (callback: (isMaximized: boolean) => void) => () => void;
+
   // System
   getAppVersion: () => Promise<string>;
   extractHtml: (raw: string) => Promise<string>;

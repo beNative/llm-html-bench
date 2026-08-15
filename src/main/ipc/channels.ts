@@ -69,6 +69,13 @@ export const IPC_CHANNELS = {
   DOCS_GET: 'docs:get',
   DOCS_OPEN_FOLDER: 'docs:open-folder',
 
+  // Window Controls (Frameless Title Bar)
+  WINDOW_MINIMIZE: 'window:minimize',
+  WINDOW_MAXIMIZE: 'window:maximize',
+  WINDOW_CLOSE: 'window:close',
+  WINDOW_IS_MAXIMIZED: 'window:is-maximized',
+  WINDOW_STATE_CHANGED: 'window:state-changed',
+
   // System
   APP_GET_VERSION: 'app:get-version',
   EXTRACT_HTML: 'app:extract-html',

@@ -1,9 +1,10 @@
-import { app, BrowserWindow, shell, session, globalShortcut } from 'electron';
+import { app, BrowserWindow, shell, session, globalShortcut, ipcMain } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { Logger } from './utils/logger';
 import { initializeDatabase, closeDatabase } from './database/connection';
 import { registerIpcHandlers } from './ipc/ipcHandlers';
+import { IPC_CHANNELS } from './ipc/channels';
 import { PromptRepository } from './repositories/promptRepository';
 import { ModelRepository } from './repositories/modelRepository';
 import { RunRepository } from './repositories/runRepository';
@@ -50,6 +51,8 @@ function createWindow(): void {
     minHeight: 700,
     title: 'LLM HTML Bench',
     icon: windowIcon,
+    frame: false,
+    titleBarStyle: 'hidden',
     backgroundColor: '#0f172a',
     show: false,
     autoHideMenuBar: true,
@@ -60,6 +63,15 @@ function createWindow(): void {
       sandbox: false,
       webSecurity: true,
     },
+  });
+
+  // Track window state changes (maximize/unmaximize) and notify renderer
+  mainWindow.on('maximize', () => {
+    mainWindow?.webContents.send(IPC_CHANNELS.WINDOW_STATE_CHANGED, true);
+  });
+
+  mainWindow.on('unmaximize', () => {
+    mainWindow?.webContents.send(IPC_CHANNELS.WINDOW_STATE_CHANGED, false);
   });
 
   // Intercept renderer console messages and write to main logger
@@ -163,6 +175,28 @@ app.whenReady().then(() => {
       screenshotService,
       settingsService,
     });
+
+    // Window controls for custom frameless title bar
+    ipcMain.handle(IPC_CHANNELS.WINDOW_MINIMIZE, () => {
+      mainWindow?.minimize();
+    });
+
+    ipcMain.handle(IPC_CHANNELS.WINDOW_MAXIMIZE, () => {
+      if (mainWindow?.isMaximized()) {
+        mainWindow.unmaximize();
+      } else {
+        mainWindow?.maximize();
+      }
+    });
+
+    ipcMain.handle(IPC_CHANNELS.WINDOW_CLOSE, () => {
+      mainWindow?.close();
+    });
+
+    ipcMain.handle(IPC_CHANNELS.WINDOW_IS_MAXIMIZED, () => {
+      return mainWindow?.isMaximized() ?? false;
+    });
+
     Logger.info('IPC handlers registered.');
   } catch (err) {
     Logger.error('CRITICAL ERROR during app initialization:', err);

@@ -73,6 +73,19 @@ const api: ElectronAPI = {
   getDocs: () => ipcRenderer.invoke(IPC_CHANNELS.DOCS_GET),
   openDocsFolder: () => ipcRenderer.invoke(IPC_CHANNELS.DOCS_OPEN_FOLDER),
 
+  // Window Controls (Frameless Title Bar)
+  minimizeWindow: () => ipcRenderer.invoke(IPC_CHANNELS.WINDOW_MINIMIZE),
+  maximizeWindow: () => ipcRenderer.invoke(IPC_CHANNELS.WINDOW_MAXIMIZE),
+  closeWindow: () => ipcRenderer.invoke(IPC_CHANNELS.WINDOW_CLOSE),
+  isWindowMaximized: () => ipcRenderer.invoke(IPC_CHANNELS.WINDOW_IS_MAXIMIZED),
+  onWindowStateChange: (callback: (isMaximized: boolean) => void) => {
+    const handler = (_: any, isMaximized: boolean) => callback(isMaximized);
+    ipcRenderer.on(IPC_CHANNELS.WINDOW_STATE_CHANGED, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.WINDOW_STATE_CHANGED, handler);
+    };
+  },
+
   // System
   getAppVersion: () => ipcRenderer.invoke(IPC_CHANNELS.APP_GET_VERSION),
   extractHtml: (raw) => ipcRenderer.invoke(IPC_CHANNELS.EXTRACT_HTML, raw),

@@ -1,128 +1,541 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
-import { Layers, Plus, Columns, Sun, Moon, Sparkles, Play } from 'lucide-react';
+import {
+  Layers,
+  Plus,
+  Columns,
+  Sun,
+  Moon,
+  Sparkles,
+  Play,
+  Minus,
+  Square,
+  Copy,
+  X,
+  Search,
+  FolderOpen,
+  FileCode2,
+  Database,
+  BookOpen,
+} from 'lucide-react';
 import { Button } from '../common/Button';
 
 export const Header: React.FC = () => {
   const {
     compareRunIds,
+    clearCompareRunIds,
     setCurrentTab,
     setIsNewPromptModalOpen,
     setIsNewModelModalOpen,
     setIsRunBenchmarkModalOpen,
+    openAddOutputModal,
+    showToast,
   } = useApp();
 
   const { theme, toggleTheme } = useTheme();
 
+  // Window State Management
+  const [isMaximized, setIsMaximized] = useState<boolean>(false);
+  const [activeMenu, setActiveMenu] = useState<'file' | 'view' | 'benchmark' | 'help' | null>(null);
+  const menuBarRef = useRef<HTMLDivElement>(null);
+
+  // Initialize and track window maximization state
+  useEffect(() => {
+    if (window.electronAPI) {
+      window.electronAPI.isWindowMaximized().then((max) => setIsMaximized(max));
+
+      const cleanup = window.electronAPI.onWindowStateChange((max) => {
+        setIsMaximized(max);
+      });
+      return cleanup;
+    }
+  }, []);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuBarRef.current && !menuBarRef.current.contains(e.target as Node)) {
+        setActiveMenu(null);
+      }
+    };
+    window.addEventListener('mousedown', handleClickOutside);
+    return () => window.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleMinimize = () => {
+    window.electronAPI?.minimizeWindow();
+  };
+
+  const handleMaximizeToggle = () => {
+    window.electronAPI?.maximizeWindow();
+  };
+
+  const handleClose = () => {
+    window.electronAPI?.closeWindow();
+  };
+
   return (
     <header
       style={{
-        height: 'var(--header-height)',
+        height: 'var(--header-height, 38px)',
         backgroundColor: 'var(--bg-secondary)',
         borderBottom: '1px solid var(--border-color)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 16px',
-        zIndex: 10,
-      }}
+        padding: '0 0 0 10px',
+        zIndex: 100,
+        userSelect: 'none',
+        // Enable native window dragging across the entire title bar
+        WebkitAppRegion: 'drag',
+      } as React.CSSProperties}
+      onDoubleClick={handleMaximizeToggle}
     >
-      {/* Brand & Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      {/* Left Section: App Logo, Product Title, and VSCode Dropdown Menus */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          height: '100%',
+          WebkitAppRegion: 'no-drag',
+        } as React.CSSProperties}
+        ref={menuBarRef}
+      >
+        {/* App Icon */}
         <div
           style={{
-            width: '28px',
-            height: '28px',
-            borderRadius: 'var(--radius-md)',
+            width: '22px',
+            height: '22px',
+            borderRadius: 'var(--radius-sm)',
             backgroundColor: 'var(--accent-primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#ffffff',
-            boxShadow: '0 0 10px rgba(59, 130, 246, 0.5)',
+            boxShadow: '0 0 8px rgba(59, 130, 246, 0.4)',
+            cursor: 'pointer',
+          }}
+          onClick={() => setCurrentTab('dashboard')}
+          title="LLM HTML Bench — Dashboard"
+        >
+          <Layers size={13} />
+        </div>
+
+        {/* Product Brand */}
+        <span
+          onClick={() => setCurrentTab('dashboard')}
+          style={{
+            fontSize: '12px',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.02em',
+            marginRight: '6px',
+            cursor: 'pointer',
           }}
         >
-          <Layers size={16} />
+          LLM HTML Bench
+        </span>
+
+        {/* VSCode-style Top Menu Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1px', position: 'relative' }}>
+          {/* File Menu */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setActiveMenu(activeMenu === 'file' ? null : 'file')}
+              onMouseEnter={() => activeMenu && setActiveMenu('file')}
+              style={{
+                padding: '3px 7px',
+                fontSize: '11px',
+                color: activeMenu === 'file' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                backgroundColor: activeMenu === 'file' ? 'var(--bg-tertiary)' : 'transparent',
+                borderRadius: 'var(--radius-sm)',
+              }}
+            >
+              File
+            </button>
+            {activeMenu === 'file' && (
+              <div className="titlebar-dropdown-menu">
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={() => {
+                    setActiveMenu(null);
+                    setIsNewPromptModalOpen(true);
+                  }}
+                >
+                  <Plus size={13} />
+                  <span>New Benchmark Prompt</span>
+                  <span className="titlebar-dropdown-shortcut">Ctrl+N</span>
+                </div>
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={() => {
+                    setActiveMenu(null);
+                    openAddOutputModal('');
+                  }}
+                >
+                  <FileCode2 size={13} />
+                  <span>Add Model Output...</span>
+                </div>
+                <div className="titlebar-dropdown-divider" />
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={async () => {
+                    setActiveMenu(null);
+                    if (window.electronAPI) {
+                      const res = await window.electronAPI.exportDatasetToFile();
+                      if (res.success) showToast('Benchmark dataset exported successfully!', 'success');
+                    }
+                  }}
+                >
+                  <Database size={13} />
+                  <span>Export Dataset to JSON...</span>
+                </div>
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={async () => {
+                    setActiveMenu(null);
+                    if (window.electronAPI) {
+                      const res = await window.electronAPI.importDatasetFromFile();
+                      if (res.success) showToast(`Imported ${res.importedCount} benchmark items!`, 'success');
+                    }
+                  }}
+                >
+                  <FolderOpen size={13} />
+                  <span>Import Dataset from JSON...</span>
+                </div>
+                <div className="titlebar-dropdown-divider" />
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={() => {
+                    setActiveMenu(null);
+                    handleClose();
+                  }}
+                >
+                  <X size={13} />
+                  <span>Exit Application</span>
+                  <span className="titlebar-dropdown-shortcut">Alt+F4</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* View Menu */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setActiveMenu(activeMenu === 'view' ? null : 'view')}
+              onMouseEnter={() => activeMenu && setActiveMenu('view')}
+              style={{
+                padding: '3px 7px',
+                fontSize: '11px',
+                color: activeMenu === 'view' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                backgroundColor: activeMenu === 'view' ? 'var(--bg-tertiary)' : 'transparent',
+                borderRadius: 'var(--radius-sm)',
+              }}
+            >
+              View
+            </button>
+            {activeMenu === 'view' && (
+              <div className="titlebar-dropdown-menu">
+                <div className="titlebar-dropdown-item" onClick={() => { setActiveMenu(null); setCurrentTab('dashboard'); }}>
+                  <span>Dashboard Overview</span>
+                </div>
+                <div className="titlebar-dropdown-item" onClick={() => { setActiveMenu(null); setCurrentTab('prompts'); }}>
+                  <span>Prompt Library</span>
+                </div>
+                <div className="titlebar-dropdown-item" onClick={() => { setActiveMenu(null); setCurrentTab('compare'); }}>
+                  <span>Compare Laboratory</span>
+                  <span className="titlebar-dropdown-shortcut">Ctrl+Shift+C</span>
+                </div>
+                <div className="titlebar-dropdown-item" onClick={() => { setActiveMenu(null); setCurrentTab('models'); }}>
+                  <span>Models Catalog</span>
+                </div>
+                <div className="titlebar-dropdown-item" onClick={() => { setActiveMenu(null); setCurrentTab('collections'); }}>
+                  <span>Collections</span>
+                </div>
+                <div className="titlebar-dropdown-item" onClick={() => { setActiveMenu(null); setCurrentTab('runs'); }}>
+                  <span>Run History</span>
+                </div>
+                <div className="titlebar-dropdown-item" onClick={() => { setActiveMenu(null); setCurrentTab('settings'); }}>
+                  <span>Settings & Database</span>
+                </div>
+                <div className="titlebar-dropdown-item" onClick={() => { setActiveMenu(null); setCurrentTab('info'); }}>
+                  <span>Documentation & Info</span>
+                </div>
+                <div className="titlebar-dropdown-divider" />
+                <div className="titlebar-dropdown-item" onClick={() => { setActiveMenu(null); toggleTheme(); }}>
+                  <span>Switch to {theme === 'dark' ? 'Light' : 'Dark'} Theme</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Benchmark Menu */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setActiveMenu(activeMenu === 'benchmark' ? null : 'benchmark')}
+              onMouseEnter={() => activeMenu && setActiveMenu('benchmark')}
+              style={{
+                padding: '3px 7px',
+                fontSize: '11px',
+                color: activeMenu === 'benchmark' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                backgroundColor: activeMenu === 'benchmark' ? 'var(--bg-tertiary)' : 'transparent',
+                borderRadius: 'var(--radius-sm)',
+              }}
+            >
+              Benchmark
+            </button>
+            {activeMenu === 'benchmark' && (
+              <div className="titlebar-dropdown-menu">
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={() => {
+                    setActiveMenu(null);
+                    setIsRunBenchmarkModalOpen(true);
+                  }}
+                >
+                  <Play size={13} color="var(--accent-success)" />
+                  <span>Execute Live Run...</span>
+                </div>
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={() => {
+                    setActiveMenu(null);
+                    setIsNewModelModalOpen(true);
+                  }}
+                >
+                  <Sparkles size={13} color="var(--accent-primary)" />
+                  <span>Register New Model...</span>
+                </div>
+                {compareRunIds.length > 0 && (
+                  <div
+                    className="titlebar-dropdown-item"
+                    onClick={() => {
+                      setActiveMenu(null);
+                      clearCompareRunIds();
+                      showToast('Comparison list cleared', 'info');
+                    }}
+                  >
+                    <span>Clear Compare Selection ({compareRunIds.length})</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Help Menu */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setActiveMenu(activeMenu === 'help' ? null : 'help')}
+              onMouseEnter={() => activeMenu && setActiveMenu('help')}
+              style={{
+                padding: '3px 7px',
+                fontSize: '11px',
+                color: activeMenu === 'help' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                backgroundColor: activeMenu === 'help' ? 'var(--bg-tertiary)' : 'transparent',
+                borderRadius: 'var(--radius-sm)',
+              }}
+            >
+              Help
+            </button>
+            {activeMenu === 'help' && (
+              <div className="titlebar-dropdown-menu">
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={() => {
+                    setActiveMenu(null);
+                    setCurrentTab('info');
+                  }}
+                >
+                  <BookOpen size={13} />
+                  <span>Functional & Technical Manuals</span>
+                </div>
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={() => {
+                    setActiveMenu(null);
+                    if (window.electronAPI) window.electronAPI.openDocsFolder();
+                  }}
+                >
+                  <FolderOpen size={13} />
+                  <span>Open Documentation Folder</span>
+                </div>
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={() => {
+                    setActiveMenu(null);
+                    if (window.electronAPI) window.electronAPI.openDatabaseFolder();
+                  }}
+                >
+                  <Database size={13} />
+                  <span>Open Database Location</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        <div>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-            LLM HTML Bench
-          </span>
-          <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginLeft: '6px' }}>
-            v1.0
+      </div>
+
+      {/* Center Section: VSCode Command Bar / Search Center */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flex: 1,
+          maxWidth: '420px',
+          margin: '0 12px',
+          WebkitAppRegion: 'no-drag',
+        } as React.CSSProperties}
+      >
+        <div
+          onClick={() => setCurrentTab('prompts')}
+          style={{
+            width: '100%',
+            height: '24px',
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-sm)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 8px',
+            cursor: 'pointer',
+            color: 'var(--text-muted)',
+            fontSize: '11px',
+            transition: 'border-color 0.15s ease',
+          }}
+          title="Search prompts, models, and benchmark runs"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Search size={12} />
+            <span>LLM HTML Bench — Search prompts, models, runs...</span>
+          </div>
+          <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', padding: '1px 4px', backgroundColor: 'var(--bg-tertiary)', borderRadius: '3px' }}>
+            Ctrl+N
           </span>
         </div>
       </div>
 
-      {/* Global Quick Action Toolbar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Button
-          size="sm"
-          variant="primary"
-          icon={<Plus size={14} />}
-          onClick={() => setIsNewPromptModalOpen(true)}
-          title="Create New Benchmark Prompt (Ctrl+N)"
-        >
-          New Prompt
-        </Button>
+      {/* Right Section: Quick Action Buttons, Theme Switcher & Frameless Window Controls */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          height: '100%',
+          WebkitAppRegion: 'no-drag',
+        } as React.CSSProperties}
+      >
+        {/* Quick Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginRight: '4px' }}>
+          <Button
+            size="sm"
+            variant="primary"
+            icon={<Plus size={12} />}
+            onClick={() => setIsNewPromptModalOpen(true)}
+            style={{ padding: '3px 8px', fontSize: '11px', height: '24px' }}
+            title="Create New Benchmark Prompt (Ctrl+N)"
+          >
+            Prompt
+          </Button>
 
-        <Button
-          size="sm"
-          variant="secondary"
-          icon={<Sparkles size={14} />}
-          onClick={() => setIsNewModelModalOpen(true)}
-          title="Add / Register Model"
-        >
-          New Model
-        </Button>
-
-        <Button
-          size="sm"
-          variant="secondary"
-          icon={<Play size={13} color="var(--accent-success)" />}
-          onClick={() => setIsRunBenchmarkModalOpen(true)}
-          title="Run API Benchmark"
-        >
-          Run Benchmark
-        </Button>
-
-        {compareRunIds.length > 0 && (
           <Button
             size="sm"
             variant="secondary"
-            icon={<Columns size={14} />}
-            onClick={() => setCurrentTab('compare')}
-            style={{
-              borderColor: 'var(--accent-primary)',
-              color: 'var(--accent-primary)',
-              backgroundColor: 'var(--accent-primary-light)',
-            }}
-            title="Open Comparison View (Ctrl+Shift+C)"
+            icon={<Sparkles size={12} />}
+            onClick={() => setIsNewModelModalOpen(true)}
+            style={{ padding: '3px 8px', fontSize: '11px', height: '24px' }}
+            title="Register New Model"
           >
-            Compare ({compareRunIds.length})
+            Model
           </Button>
-        )}
 
-        <div style={{ width: '1px', height: '18px', backgroundColor: 'var(--border-color)', margin: '0 4px' }} />
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<Play size={11} color="var(--accent-success)" />}
+            onClick={() => setIsRunBenchmarkModalOpen(true)}
+            style={{ padding: '3px 8px', fontSize: '11px', height: '24px' }}
+            title="Execute Live API Benchmark"
+          >
+            Run
+          </Button>
 
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} theme`}
-          style={{
-            padding: '6px',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--text-secondary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'var(--bg-tertiary)',
-            border: '1px solid var(--border-subtle)',
-          }}
-        >
-          {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-        </button>
+          {compareRunIds.length > 0 && (
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<Columns size={12} />}
+              onClick={() => setCurrentTab('compare')}
+              style={{
+                borderColor: 'var(--accent-primary)',
+                color: 'var(--accent-primary)',
+                backgroundColor: 'var(--accent-primary-light)',
+                padding: '3px 8px',
+                fontSize: '11px',
+                height: '24px',
+              }}
+              title="Open Comparison View (Ctrl+Shift+C)"
+            >
+              Compare ({compareRunIds.length})
+            </Button>
+          )}
+
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} theme`}
+            style={{
+              padding: '4px',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'transparent',
+              border: 'none',
+              marginLeft: '2px',
+              height: '24px',
+              width: '24px',
+            }}
+          >
+            {theme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}
+          </button>
+        </div>
+
+        <div style={{ width: '1px', height: '18px', backgroundColor: 'var(--border-color)', margin: '0 2px' }} />
+
+        {/* VSCode-inspired Custom Window Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          {/* Minimize */}
+          <button
+            onClick={handleMinimize}
+            className="window-control-button"
+            title="Minimize"
+          >
+            <Minus size={14} />
+          </button>
+
+          {/* Maximize / Restore */}
+          <button
+            onClick={handleMaximizeToggle}
+            className="window-control-button"
+            title={isMaximized ? 'Restore' : 'Maximize'}
+          >
+            {isMaximized ? <Copy size={11} /> : <Square size={12} />}
+          </button>
+
+          {/* Close */}
+          <button
+            onClick={handleClose}
+            className="window-control-button window-control-close"
+            title="Close"
+          >
+            <X size={15} />
+          </button>
+        </div>
       </div>
     </header>
   );

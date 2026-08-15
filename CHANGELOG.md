@@ -34,3 +34,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Reactive Model Synchronization**: Connected `NewModelModal` directly with `AppContext` and `ModelsPage` so newly registered models immediately populate and highlight without requiring a manual refresh.
 - **Keyboard Shortcut Guards**: Added input focus protection to prevent global shortcuts (`Ctrl+N`, `Ctrl+Shift+C`) from intercepting text editing inside input fields and textareas.
 - **Comprehensive Documentation Suite**: Integrated built-in Documentation & Info tab providing instant access to the Project Readme, Functional User Manual, Technical Architecture Manual, and Version Log.
+- **VSCode-Inspired Frameless Title Bar**: Implemented modern borderless desktop window design with custom window controls (minimize, maximize/restore, close), native window dragging, command palette search bar, and integrated File, View, Benchmark, and Help dropdown menus.
