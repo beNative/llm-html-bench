@@ -17,6 +17,14 @@
     "package.json"
   ],
 
+  // Markdown Documentation copied directly next to the executable
+  "extraFiles": [
+    { "from": "README.md", "to": "README.md" },
+    { "from": "MANUAL_FUNCTIONAL.md", "to": "MANUAL_FUNCTIONAL.md" },
+    { "from": "MANUAL_TECHNICAL.md", "to": "MANUAL_TECHNICAL.md" },
+    { "from": "CHANGELOG.md", "to": "CHANGELOG.md" }
+  ],
+
   // Windows Platform Icon Configuration (Multi-size ICO generated from SVG)
   "win": {
     "target": "nsis",

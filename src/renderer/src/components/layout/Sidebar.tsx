@@ -8,6 +8,7 @@ import {
   FolderKanban,
   History,
   Settings,
+  BookOpen,
 } from 'lucide-react';
 
 interface NavItem {
@@ -33,6 +34,7 @@ export const Sidebar: React.FC = () => {
     { id: 'collections', label: 'Collections', icon: <FolderKanban size={16} /> },
     { id: 'runs', label: 'Run History', icon: <History size={16} /> },
     { id: 'settings', label: 'Settings & DB', icon: <Settings size={16} /> },
+    { id: 'info', label: 'Documentation & Info', icon: <BookOpen size={16} /> },
   ];
 
   return (

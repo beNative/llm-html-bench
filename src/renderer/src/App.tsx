@@ -11,6 +11,7 @@ import { ModelsPage } from './pages/ModelsPage';
 import { CollectionsPage } from './pages/CollectionsPage';
 import { RunsPage } from './pages/RunsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { InfoPage } from './pages/InfoPage';
 import { NewPromptModal } from './components/modals/NewPromptModal';
 import { AddOutputModal } from './components/modals/AddOutputModal';
 import { NewModelModal } from './components/modals/NewModelModal';
@@ -37,6 +38,8 @@ export const MainApp: React.FC = () => {
         return <RunsPage />;
       case 'settings':
         return <SettingsPage />;
+      case 'info':
+        return <InfoPage />;
       default:
         return <DashboardPage />;
     }

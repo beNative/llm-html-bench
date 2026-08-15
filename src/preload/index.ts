@@ -69,6 +69,10 @@ const api: ElectronAPI = {
   // Screenshots
   saveScreenshot: (runId, base64, w, h) => ipcRenderer.invoke(IPC_CHANNELS.SCREENSHOT_SAVE, runId, base64, w, h),
 
+  // Documentation
+  getDocs: () => ipcRenderer.invoke(IPC_CHANNELS.DOCS_GET),
+  openDocsFolder: () => ipcRenderer.invoke(IPC_CHANNELS.DOCS_OPEN_FOLDER),
+
   // System
   getAppVersion: () => ipcRenderer.invoke(IPC_CHANNELS.APP_GET_VERSION),
   extractHtml: (raw) => ipcRenderer.invoke(IPC_CHANNELS.EXTRACT_HTML, raw),

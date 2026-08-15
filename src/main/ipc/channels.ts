@@ -65,6 +65,10 @@ export const IPC_CHANNELS = {
   // Screenshots
   SCREENSHOT_SAVE: 'screenshot:save',
 
+  // Documentation
+  DOCS_GET: 'docs:get',
+  DOCS_OPEN_FOLDER: 'docs:open-folder',
+
   // System
   APP_GET_VERSION: 'app:get-version',
   EXTRACT_HTML: 'app:extract-html',

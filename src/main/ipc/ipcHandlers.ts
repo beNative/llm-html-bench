@@ -1,4 +1,6 @@
-import { ipcMain, dialog, shell } from 'electron';
+import { ipcMain, dialog, shell, app } from 'electron';
+import path from 'path';
+import fs from 'fs';
 import { IPC_CHANNELS } from './channels';
 import { PromptRepository } from '../repositories/promptRepository';
 import { ModelRepository } from '../repositories/modelRepository';
@@ -263,6 +265,48 @@ export function registerIpcHandlers(services: {
   ipcMain.handle(IPC_CHANNELS.SCREENSHOT_SAVE, (_, runId: string, base64: string, w: number, h: number) =>
     screenshotService.saveScreenshot(runId, base64, w, h)
   );
+
+  // Documentation
+  ipcMain.handle(IPC_CHANNELS.DOCS_GET, () => {
+    function readDocFile(filename: string): string {
+      const searchPaths = [
+        path.join(process.cwd(), filename),
+        path.join(__dirname, '../../', filename),
+        path.join(path.dirname(process.execPath), filename),
+        path.join(process.resourcesPath || '', filename),
+        path.join(app.getAppPath(), filename),
+      ];
+      for (const p of searchPaths) {
+        if (fs.existsSync(p)) {
+          try {
+            return fs.readFileSync(p, 'utf-8');
+          } catch (err) {
+            console.error(`Failed to read doc from ${p}:`, err);
+          }
+        }
+      }
+      return `# ${filename}\n\nDocument file could not be located in standard search paths.`;
+    }
+
+    return {
+      readme: readDocFile('README.md'),
+      functionalManual: readDocFile('MANUAL_FUNCTIONAL.md'),
+      technicalManual: readDocFile('MANUAL_TECHNICAL.md'),
+      versionLog: readDocFile('CHANGELOG.md'),
+    };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DOCS_OPEN_FOLDER, () => {
+    const candidatePaths = [
+      path.join(process.cwd(), 'README.md'),
+      path.join(path.dirname(process.execPath), 'README.md'),
+      path.join(__dirname, '../../README.md'),
+    ];
+    const found = candidatePaths.find((p) => fs.existsSync(p));
+    if (found) {
+      shell.showItemInFolder(found);
+    }
+  });
 
   // System
   ipcMain.handle(IPC_CHANNELS.APP_GET_VERSION, () => APP_VERSION);

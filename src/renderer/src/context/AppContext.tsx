@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Collection, Tag, Model } from '@shared/types/entities';
 
-export type NavTab = 'dashboard' | 'prompts' | 'compare' | 'models' | 'collections' | 'runs' | 'settings';
+export type NavTab = 'dashboard' | 'prompts' | 'compare' | 'models' | 'collections' | 'runs' | 'settings' | 'info';
 
 export interface ToastMessage {
   id: string;

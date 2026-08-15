@@ -232,9 +232,20 @@ export interface ElectronAPI {
   // Screenshots
   saveScreenshot: (runId: string, base64Data: string, width: number, height: number) => Promise<Screenshot>;
 
+  // Documentation
+  getDocs: () => Promise<DocumentationDocs>;
+  openDocsFolder: () => Promise<void>;
+
   // System
   getAppVersion: () => Promise<string>;
   extractHtml: (raw: string) => Promise<string>;
+}
+
+export interface DocumentationDocs {
+  readme: string;
+  functionalManual: string;
+  technicalManual: string;
+  versionLog: string;
 }
 
 declare global {
