@@ -166,6 +166,7 @@ export class OpenAICompatibleProvider implements LLMProvider {
     const payload: Record<string, unknown> = {
       model: request.modelId,
       messages,
+      stream: false,
     };
 
     if (typeof request.temperature === 'number') payload.temperature = request.temperature;
@@ -208,26 +209,69 @@ export class OpenAICompatibleProvider implements LLMProvider {
       throw new Error(`Provider generation failed: ${lastError || 'Could not reach completion endpoint'}`);
     }
 
-    interface ChatCompletionResponse {
-      id?: string;
-      model?: string;
-      choices?: Array<{ message?: { content?: string } }>;
-      usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+    const responseText = await response.text();
+    let rawOutput = '';
+    let responseId: string | undefined;
+    let resolvedModel = request.modelId;
+    let inputTokens: number | undefined;
+    let outputTokens: number | undefined;
+
+    try {
+      const data = JSON.parse(responseText);
+      rawOutput =
+        data.choices?.[0]?.message?.content ??
+        data.choices?.[0]?.text ??
+        data.response ??
+        data.message?.content ??
+        '';
+      responseId = data.id;
+      if (data.model) resolvedModel = data.model;
+      inputTokens = data.usage?.prompt_tokens ?? data.prompt_eval_count;
+      outputTokens = data.usage?.completion_tokens ?? data.eval_count;
+    } catch {
+      // Fallback: If returned SSE streaming lines "data: {...}" or JSONL
+      const lines = responseText.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data:') && !trimmed.includes('[DONE]')) {
+          try {
+            const chunk = JSON.parse(trimmed.slice(5).trim());
+            const delta = chunk.choices?.[0]?.delta?.content ?? chunk.choices?.[0]?.text ?? '';
+            rawOutput += delta;
+            if (chunk.id) responseId = chunk.id;
+            if (chunk.model) resolvedModel = chunk.model;
+          } catch {
+            // ignore malformed chunk
+          }
+        } else if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+          try {
+            const chunk = JSON.parse(trimmed);
+            const delta = chunk.message?.content ?? chunk.response ?? '';
+            rawOutput += delta;
+            if (chunk.model) resolvedModel = chunk.model;
+          } catch {
+            // ignore
+          }
+        }
+      }
     }
 
-    const data = (await response.json()) as ChatCompletionResponse;
-    const rawOutput = data.choices?.[0]?.message?.content || '';
+    if (!rawOutput && responseText.trim().length > 0) {
+      Logger.warn('PROVIDER', `No JSON content found in response; using raw response text (${responseText.length} chars)`);
+      rawOutput = responseText;
+    }
+
     const extracted = extractHtml(rawOutput);
 
-    const inputTokens = data.usage?.prompt_tokens;
-    const outputTokens = data.usage?.completion_tokens;
     let tokensPerSecond: number | undefined;
-
     if (outputTokens && durationMs > 0) {
       tokensPerSecond = Math.round((outputTokens / (durationMs / 1000)) * 10) / 10;
     }
 
-    Logger.info('PROVIDER', `✓ Completion received from ${successfulUrl} in ${durationMs}ms (${outputTokens || 0} tokens, ${tokensPerSecond || 0} tok/s)`);
+    Logger.info(
+      'PROVIDER',
+      `✓ Completion received from ${successfulUrl} in ${durationMs}ms (${outputTokens || 0} tokens, ${tokensPerSecond || 0} tok/s, HTML extracted: ${extracted.length} chars)`
+    );
 
     return {
       rawOutput,
@@ -237,12 +281,12 @@ export class OpenAICompatibleProvider implements LLMProvider {
       outputTokens,
       tokensPerSecond,
       requestedModelId: request.modelId,
-      resolvedModelId: data.model || request.modelId,
+      resolvedModelId: resolvedModel,
       metadata: {
         providerId: config.id,
         baseUrl: config.baseUrl,
         endpointUrl: successfulUrl,
-        responseId: data.id,
+        responseId,
       },
     };
   }

@@ -176,21 +176,24 @@ export function registerIpcHandlers(services: {
         maxTokens?: number;
       }
     ) => {
-      const promptVersions = promptRepo.getPromptVersions(
-        (
-          runRepo['db'].prepare('SELECT prompt_id FROM prompt_versions WHERE id = ?').get(request.promptVersionId) as {
-            prompt_id: string;
-          }
-        ).prompt_id
+      Logger.info(
+        'IPC',
+        `Executing benchmark run: promptVersion=${request.promptVersionId}, model=${request.modelId}, providerConfig=${request.providerConfigId}`
       );
-      const targetVersion = promptVersions.find((pv) => pv.id === request.promptVersionId);
+
+      const targetVersion = runRepo['db']
+        .prepare('SELECT * FROM prompt_versions WHERE id = ?')
+        .get(request.promptVersionId) as { prompt_id: string; version: number; prompt_text: string } | undefined;
+
       if (!targetVersion) {
-        throw new Error('Prompt version not found');
+        Logger.error('IPC', `Prompt version not found: ${request.promptVersionId}`);
+        throw new Error(`Prompt version not found (${request.promptVersionId})`);
       }
 
       const configs = settingsService.getProviderConfigs();
       const config = configs.find((c) => c.id === request.providerConfigId);
       if (!config) {
+        Logger.error('IPC', `Provider configuration not found: ${request.providerConfigId}`);
         throw new Error('Provider configuration not found');
       }
 
@@ -206,6 +209,7 @@ export function registerIpcHandlers(services: {
       }
       if (!model) {
         // Auto-register model in catalog if it was discovered live
+        Logger.info('IPC', `Auto-registering live model in catalog: ${request.modelId}`);
         model = modelRepo.createModel({
           modelName: request.modelName || request.modelId,
           displayName: request.modelDisplayName || request.modelName || request.modelId,
@@ -215,9 +219,11 @@ export function registerIpcHandlers(services: {
 
       const provider = ProviderRegistry.getProvider(config.type);
       if (!provider) {
+        Logger.error('IPC', `Provider implementation ${config.type} not available`);
         throw new Error(`Provider implementation ${config.type} not available`);
       }
 
+      Logger.info('IPC', `Dispatching generation to provider ${config.name} (${config.baseUrl})...`);
       const result = await provider.generate(
         {
           promptText: targetVersion.prompt_text,
@@ -229,6 +235,7 @@ export function registerIpcHandlers(services: {
         config
       );
 
+      Logger.info('IPC', `Saving generated model run and extracted HTML (${result.extractedHtml.length} chars)...`);
       return runRepo.createModelRun({
         promptVersionId: request.promptVersionId,
         modelId: model.id,

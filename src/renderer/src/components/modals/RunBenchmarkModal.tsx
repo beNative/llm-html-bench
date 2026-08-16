@@ -50,8 +50,25 @@ export const RunBenchmarkModal: React.FC = () => {
   const [maxTokens, setMaxTokens] = useState<string>('4096');
 
   const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPromptCopied, setIsPromptCopied] = useState<boolean>(false);
+
+  useEffect(() => {
+    let interval: any = null;
+    if (isRunning) {
+      setElapsedSeconds(0);
+      const start = Date.now();
+      interval = setInterval(() => {
+        setElapsedSeconds((Date.now() - start) / 1000);
+      }, 100);
+    } else {
+      setElapsedSeconds(0);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRunning]);
 
   const activePv = promptVersions.find((pv) => pv.id === selectedVersionId);
   const activePromptObj = prompts.find((p) => p.id === targetPromptId);
@@ -612,18 +629,46 @@ export const RunBenchmarkModal: React.FC = () => {
           </div>
         </div>
 
+        {/* Live Execution Progress Box */}
+        {isRunning && (
+          <div
+            style={{
+              padding: '12px 14px',
+              backgroundColor: 'rgba(59, 130, 246, 0.08)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: 'var(--accent-primary)', fontSize: '12px' }}>
+                <RotateCw size={14} className="spin-anim" />
+                <span>Generating benchmark application...</span>
+              </div>
+              <span className="font-mono" style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent-primary)' }}>
+                {elapsedSeconds.toFixed(1)}s
+              </span>
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+              Sending prompt to <strong>{activeConfig?.name}</strong> ({activeConfig?.baseUrl}). Generating the complete HTML5 game application. The result will automatically open in the inspection lab and preview once finished.
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
-          <Button type="button" variant="ghost" onClick={() => setIsRunBenchmarkModalOpen(false)}>
+          <Button type="button" variant="ghost" disabled={isRunning} onClick={() => setIsRunBenchmarkModalOpen(false)}>
             Cancel
           </Button>
           <Button
             type="submit"
             variant="primary"
             disabled={isRunning || !selectedConfigId}
-            icon={<Play size={13} />}
+            icon={isRunning ? <RotateCw size={13} className="spin-anim" /> : <Play size={13} />}
           >
-            {isRunning ? 'Executing Live Run...' : 'Start Execution'}
+            {isRunning ? `Generating (${elapsedSeconds.toFixed(0)}s)...` : 'Start Execution'}
           </Button>
         </div>
       </form>

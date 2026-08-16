@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.3.3] - 2026-08-16
+
+### 🎮 Live Benchmark Execution Engine, Progress Timer & Automatic Output Storage
+
+#### 🌟 Features & Refinements
+- **Real-Time Execution Progress & Elapsed Timer (`RunBenchmarkModal.tsx`)**:
+  - Added a live elapsed execution timer with 100ms precision and dynamic progress box showing the target model, endpoint URL, and status.
+  - Action button dynamically shows real-time progress (`Generating (14s)...`).
+- **Resilient Generation & Stream Handling (`openaiProvider.ts`)**:
+  - Explicitly passed `stream: false` preventing servers that default to streaming from failing single-response JSON parsing.
+  - Added fallback parsers for SSE streamed chunks (`data: {...}`), multi-line JSONL, and Ollama-specific response properties (`response`, `eval_count`, `prompt_eval_count`).
+- **Direct Output Storage & Master-Detail Inspection**:
+  - Automatically captures the full generated HTML application, parses code blocks, records token counts and duration, and opens the run in the **Master-Detail Run History** with instant interactive preview.
+
+---
+
 ## [1.3.2] - 2026-08-16
 
 ### 🚀 Complete Auto-Update Packaging & GitHub Releases Metadata Synchronization
