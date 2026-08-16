@@ -143,6 +143,9 @@ jobs:
             dist-package/*.deb
             dist-package/*.tar.gz
             dist-package/*.zip
+            dist-package/*.yml
+            dist-package/*.yaml
+            dist-package/*.blockmap
           if-no-files-found: warn
           retention-days: 2
 
@@ -174,7 +177,7 @@ jobs:
       - name: 📋 Move and organize binaries
         run: |
           mkdir -p release-assets
-          find release-temp -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.tar.gz" -o -name "*.zip" \) ! -name "*blockmap*" ! -name "*builder-debug*" -exec cp {} release-assets/ \;
+          find release-temp -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.tar.gz" -o -name "*.zip" -o -name "*.yml" -o -name "*.yaml" -o -name "*.blockmap" \) ! -name "*builder-debug*" -exec cp {} release-assets/ \;
           echo "::group::Aggregated Release Files"
           ls -lh release-assets/
           echo "::endgroup::"
@@ -182,7 +185,7 @@ jobs:
       - name: 🔒 Compute SHA-256 Checksums
         working-directory: release-assets
         run: |
-          sha256sum * > SHA256SUMS.txt
+          sha256sum $(ls | grep -v 'SHA256SUMS.txt' | grep -v '\.yml$' | grep -v '\.yaml$') > SHA256SUMS.txt || sha256sum * > SHA256SUMS.txt
           echo "::group::SHA256 Checksums"
           cat SHA256SUMS.txt
           echo "::endgroup::"

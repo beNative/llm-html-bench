@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.3.2] - 2026-08-16
+
+### 🚀 Complete Auto-Update Packaging & GitHub Releases Metadata Synchronization
+
+#### 🌟 Bug Fixes & Refinements
+- **Auto-Update Metadata Generation (`latest.yml` / `*.blockmap`)**:
+  - Configured `electron-builder` to always generate differential and channel update files (`latest.yml`, `latest-mac.yml`, `latest-linux.yml`, and `*.blockmap`).
+  - Updated the GitHub Actions Release workflow (`.github/workflows/release.yml`) to package and upload `latest.yml` directly into GitHub Release assets, enabling `electron-updater` to discover updates.
+- **Explicit Feed URL Configuration**:
+  - Added explicit `setFeedURL` configuration in `AutoUpdateService.ts` ensuring clean discovery against GitHub Releases.
+
+---
+
 ## [1.3.1] - 2026-08-16
 
 ### 🛠️ Resilient Multi-Candidate Model Discovery, Auto-Updater Error Fixes & Diagnostics

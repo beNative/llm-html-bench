@@ -25,6 +25,17 @@ export class AutoUpdateService {
     autoUpdater.autoInstallOnAppQuit = true;
     autoUpdater.allowDowngrade = false;
 
+    try {
+      autoUpdater.setFeedURL({
+        provider: 'github',
+        owner: 'beNative',
+        repo: 'llm-html-bench',
+        private: false,
+      });
+    } catch (err: any) {
+      Logger.warn('AUTO_UPDATER', `setFeedURL notice: ${err?.message}`);
+    }
+
     // Route electron-updater internal logs through our unified logger
     autoUpdater.logger = {
       info: (msg: any) => Logger.info('AUTO_UPDATER', typeof msg === 'string' ? msg : JSON.stringify(msg)),

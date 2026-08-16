@@ -54,6 +54,7 @@
     "repo": "llm-html-bench",
     "private": false
   },
+  "generateUpdatesFilesForAllChannels": true,
 
   // macOS Platform Configuration (DMG + Zip for Intel and Apple Silicon)
   "mac": {
