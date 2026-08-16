@@ -20,6 +20,7 @@ import { extractHtml } from '../../shared/utils/htmlExtractor';
 import { APP_VERSION } from '../../shared/constants/defaults';
 import { LogLevel } from '../../shared/types/ipc';
 import { Model } from '../../shared/types/entities';
+import { GenerationResult } from '../../shared/types/providers';
 import {
   CreatePromptInput,
   UpdatePromptInput,
@@ -161,11 +162,28 @@ export function registerIpcHandlers(services: {
     }
     return result;
   });
+  const activeAbortControllers = new Map<string, AbortController>();
+
+  ipcMain.handle(IPC_CHANNELS.PROVIDER_CANCEL_RUN, (_, requestId?: string) => {
+    if (requestId && activeAbortControllers.has(requestId)) {
+      Logger.info('IPC', `Cancelling active benchmark run: ${requestId}`);
+      activeAbortControllers.get(requestId)?.abort();
+      activeAbortControllers.delete(requestId);
+    } else if (!requestId) {
+      Logger.info('IPC', 'Cancelling all active benchmark runs...');
+      for (const [id, ctrl] of activeAbortControllers.entries()) {
+        ctrl.abort();
+        activeAbortControllers.delete(id);
+      }
+    }
+  });
+
   ipcMain.handle(
     IPC_CHANNELS.PROVIDER_EXECUTE_RUN,
     async (
-      _,
+      event,
       request: {
+        requestId?: string;
         promptVersionId: string;
         modelId: string;
         providerConfigId: string;
@@ -176,83 +194,140 @@ export function registerIpcHandlers(services: {
         maxTokens?: number;
       }
     ) => {
+      const runReqId = request.requestId || `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      const abortCtrl = new AbortController();
+      activeAbortControllers.set(runReqId, abortCtrl);
+
       Logger.info(
         'IPC',
-        `Executing benchmark run: promptVersion=${request.promptVersionId}, model=${request.modelId}, providerConfig=${request.providerConfigId}`
+        `Executing benchmark run [${runReqId}]: promptVersion=${request.promptVersionId}, model=${request.modelId}, providerConfig=${request.providerConfigId}`
       );
 
-      const targetVersion = runRepo['db']
-        .prepare('SELECT * FROM prompt_versions WHERE id = ?')
-        .get(request.promptVersionId) as { prompt_id: string; version: number; prompt_text: string } | undefined;
+      try {
+        const targetVersion = runRepo['db']
+          .prepare('SELECT * FROM prompt_versions WHERE id = ?')
+          .get(request.promptVersionId) as { prompt_id: string; version: number; prompt_text: string } | undefined;
 
-      if (!targetVersion) {
-        Logger.error('IPC', `Prompt version not found: ${request.promptVersionId}`);
-        throw new Error(`Prompt version not found (${request.promptVersionId})`);
-      }
+        if (!targetVersion) {
+          Logger.error('IPC', `Prompt version not found: ${request.promptVersionId}`);
+          throw new Error(`Prompt version not found (${request.promptVersionId})`);
+        }
 
-      const configs = settingsService.getProviderConfigs();
-      const config = configs.find((c) => c.id === request.providerConfigId);
-      if (!config) {
-        Logger.error('IPC', `Provider configuration not found: ${request.providerConfigId}`);
-        throw new Error('Provider configuration not found');
-      }
+        const configs = settingsService.getProviderConfigs();
+        const config = configs.find((c) => c.id === request.providerConfigId);
+        if (!config) {
+          Logger.error('IPC', `Provider configuration not found: ${request.providerConfigId}`);
+          throw new Error('Provider configuration not found');
+        }
 
-      let model: Model | null = modelRepo.getModelById(request.modelId);
-      if (!model) {
-        const allModels = modelRepo.getModels();
-        model =
-          allModels.find(
-            (m) =>
-              m.model_name === request.modelId ||
-              m.display_name?.toLowerCase() === request.modelId.toLowerCase()
-          ) || null;
-      }
-      if (!model) {
-        // Auto-register model in catalog if it was discovered live
-        Logger.info('IPC', `Auto-registering live model in catalog: ${request.modelId}`);
-        model = modelRepo.createModel({
-          modelName: request.modelName || request.modelId,
-          displayName: request.modelDisplayName || request.modelName || request.modelId,
-          provider: config.name || 'openai-compatible',
+        let model: Model | null = modelRepo.getModelById(request.modelId);
+        if (!model) {
+          const allModels = modelRepo.getModels();
+          model =
+            allModels.find(
+              (m) =>
+                m.model_name === request.modelId ||
+                m.display_name?.toLowerCase() === request.modelId.toLowerCase()
+            ) || null;
+        }
+        if (!model) {
+          // Auto-register model in catalog if it was discovered live
+          Logger.info('IPC', `Auto-registering live model in catalog: ${request.modelId}`);
+          model = modelRepo.createModel({
+            modelName: request.modelName || request.modelId,
+            displayName: request.modelDisplayName || request.modelName || request.modelId,
+            provider: config.name || 'openai-compatible',
+          });
+        }
+
+        const provider = ProviderRegistry.getProvider(config.type);
+        if (!provider) {
+          Logger.error('IPC', `Provider implementation ${config.type} not available`);
+          throw new Error(`Provider implementation ${config.type} not available`);
+        }
+
+        event.sender.send(IPC_CHANNELS.PROVIDER_STREAM_STATUS, {
+          requestId: runReqId,
+          state: 'started',
         });
-      }
 
-      const provider = ProviderRegistry.getProvider(config.type);
-      if (!provider) {
-        Logger.error('IPC', `Provider implementation ${config.type} not available`);
-        throw new Error(`Provider implementation ${config.type} not available`);
-      }
+        Logger.info('IPC', `Dispatching streaming generation to provider ${config.name} (${config.baseUrl})...`);
 
-      Logger.info('IPC', `Dispatching generation to provider ${config.name} (${config.baseUrl})...`);
-      const result = await provider.generate(
-        {
-          promptText: targetVersion.prompt_text,
-          modelId: model.model_name,
+        let result: GenerationResult;
+        if (typeof provider.generateStream === 'function') {
+          result = await provider.generateStream(
+            {
+              promptText: targetVersion.prompt_text,
+              modelId: model.model_name,
+              temperature: request.temperature,
+              topP: request.topP,
+              maxTokens: request.maxTokens,
+            },
+            config,
+            (delta, accumulated) => {
+              if (!abortCtrl.signal.aborted) {
+                event.sender.send(IPC_CHANNELS.PROVIDER_STREAM_CHUNK, {
+                  requestId: runReqId,
+                  delta,
+                  accumulated,
+                });
+              }
+            },
+            abortCtrl.signal
+          );
+        } else {
+          result = await provider.generate(
+            {
+              promptText: targetVersion.prompt_text,
+              modelId: model.model_name,
+              temperature: request.temperature,
+              topP: request.topP,
+              maxTokens: request.maxTokens,
+            },
+            config
+          );
+        }
+
+        event.sender.send(IPC_CHANNELS.PROVIDER_STREAM_STATUS, {
+          requestId: runReqId,
+          state: 'extracting',
+        });
+
+        Logger.info('IPC', `Saving generated model run and extracted HTML (${result.extractedHtml.length} chars)...`);
+        const savedRun = runRepo.createModelRun({
+          promptVersionId: request.promptVersionId,
+          modelId: model.id,
           temperature: request.temperature,
           topP: request.topP,
           maxTokens: request.maxTokens,
-        },
-        config
-      );
+          generationTimeMs: result.generationTimeMs,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
+          tokensPerSecond: result.tokensPerSecond,
+          rawOutput: result.rawOutput,
+          html: result.extractedHtml,
+          provenance: 'api',
+          requestedModelId: result.requestedModelId,
+          resolvedModelId: result.resolvedModelId,
+          metadataJson: JSON.stringify(result.metadata || {}),
+        });
 
-      Logger.info('IPC', `Saving generated model run and extracted HTML (${result.extractedHtml.length} chars)...`);
-      return runRepo.createModelRun({
-        promptVersionId: request.promptVersionId,
-        modelId: model.id,
-        temperature: request.temperature,
-        topP: request.topP,
-        maxTokens: request.maxTokens,
-        generationTimeMs: result.generationTimeMs,
-        inputTokens: result.inputTokens,
-        outputTokens: result.outputTokens,
-        tokensPerSecond: result.tokensPerSecond,
-        rawOutput: result.rawOutput,
-        html: result.extractedHtml,
-        provenance: 'api',
-        requestedModelId: result.requestedModelId,
-        resolvedModelId: result.resolvedModelId,
-        metadataJson: JSON.stringify(result.metadata || {}),
-      });
+        event.sender.send(IPC_CHANNELS.PROVIDER_STREAM_STATUS, {
+          requestId: runReqId,
+          state: 'completed',
+        });
+
+        return savedRun;
+      } catch (err: unknown) {
+        event.sender.send(IPC_CHANNELS.PROVIDER_STREAM_STATUS, {
+          requestId: runReqId,
+          state: 'error',
+          error: err instanceof Error ? err.message : String(err),
+        });
+        throw err;
+      } finally {
+        activeAbortControllers.delete(runReqId);
+      }
     }
   );
 

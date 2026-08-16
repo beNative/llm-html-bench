@@ -58,6 +58,21 @@ const api: ElectronAPI = {
   testProviderConnection: (config) => ipcRenderer.invoke(IPC_CHANNELS.PROVIDER_TEST, config),
   fetchProviderModels: (config) => ipcRenderer.invoke(IPC_CHANNELS.PROVIDER_FETCH_MODELS, config),
   executeBenchmarkRun: (req) => ipcRenderer.invoke(IPC_CHANNELS.PROVIDER_EXECUTE_RUN, req),
+  cancelBenchmarkRun: (requestId) => ipcRenderer.invoke(IPC_CHANNELS.PROVIDER_CANCEL_RUN, requestId),
+  onStreamChunk: (callback) => {
+    const handler = (_: any, data: any) => callback(data);
+    ipcRenderer.on(IPC_CHANNELS.PROVIDER_STREAM_CHUNK, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.PROVIDER_STREAM_CHUNK, handler);
+    };
+  },
+  onStreamStatus: (callback) => {
+    const handler = (_: any, status: any) => callback(status);
+    ipcRenderer.on(IPC_CHANNELS.PROVIDER_STREAM_STATUS, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.PROVIDER_STREAM_STATUS, handler);
+    };
+  },
 
   // Database Management
   getDatabaseInfo: () => ipcRenderer.invoke(IPC_CHANNELS.DB_GET_INFO),

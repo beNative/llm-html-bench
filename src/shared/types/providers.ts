@@ -42,6 +42,12 @@ export interface LLMProvider {
   id: string;
   name: string;
   generate(request: GenerationRequest, config: ProviderConfig): Promise<GenerationResult>;
+  generateStream?(
+    request: GenerationRequest,
+    config: ProviderConfig,
+    onChunk: (delta: string, accumulated: string) => void,
+    signal?: AbortSignal
+  ): Promise<GenerationResult>;
   testConnection(config: ProviderConfig): Promise<{ success: boolean; error?: string }>;
   fetchModels?(config: ProviderConfig): Promise<{ success: boolean; models: DiscoveredModel[]; error?: string }>;
 }

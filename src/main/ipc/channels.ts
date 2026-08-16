@@ -53,6 +53,9 @@ export const IPC_CHANNELS = {
   PROVIDER_TEST: 'provider:test',
   PROVIDER_FETCH_MODELS: 'provider:fetch-models',
   PROVIDER_EXECUTE_RUN: 'provider:execute-run',
+  PROVIDER_STREAM_CHUNK: 'provider:stream-chunk',
+  PROVIDER_STREAM_STATUS: 'provider:stream-status',
+  PROVIDER_CANCEL_RUN: 'provider:cancel-run',
 
   // Database
   DB_GET_INFO: 'db:get-info',

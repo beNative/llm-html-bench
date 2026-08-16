@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.4.0] - 2026-08-16
+
+### ⚡ Live Token-by-Token Streaming Engine & Real-Time Progressive Preview
+
+#### 🌟 Key Features & Architectural Enhancements
+- **Real-Time Token-by-Token SSE Streaming Engine (`openaiProvider.ts`)**:
+  - Implemented `generateStream(...)` with line-buffered Server-Sent Events (SSE) decoding directly streaming text token chunks from LM Studio, Ollama, OpenRouter, and OpenAI.
+  - Supports standard OpenAI format (`choices[0].delta.content`), OpenRouter format, and Ollama streaming format (`message.content`, `eval_count`).
+  - Seamless fallback to non-streaming execution if an endpoint does not support SSE.
+- **Bi-Directional Streaming IPC & Request Cancellation (`ipcHandlers.ts` / `channels.ts`)**:
+  - Added `PROVIDER_STREAM_CHUNK`, `PROVIDER_STREAM_STATUS`, and `PROVIDER_CANCEL_RUN` channels across Electron main and preload bridge.
+  - Added `AbortController` request management allowing users to cancel in-flight generations mid-stream at any time.
+- **Live Benchmark Execution Terminal (`RunBenchmarkModal.tsx`)**:
+  - **Live Metrics Bar**: Active model badge, endpoint badge, elapsed timer (`0.0s`), token counter (`~1,840 tokens`), streaming velocity (`48.2 tok/s`), and state indicator (`Streaming` / `Extracting HTML`).
+  - **Live Code Stream Viewer**: Syntax-styled dark terminal with auto-scroll to bottom and animated cursor `▋`.
+  - **Progressive Live Preview Tab**: Sandboxed `IsolatedFrame` rendering the live HTML game/app progressively as closing tags complete.
+  - **Cancel Generation Button**: Halts generation cleanly mid-stream with instant user feedback.
+- **Automatic Output Storage & Inspection Transition**:
+  - Automatically extracts the full HTML application upon stream completion, records timing and token counts in SQLite, and seamlessly transitions to the Master-Detail Run History.
+
+---
+
 ## [1.3.4] - 2026-08-16
 
 ### 🎯 LM Studio Endpoint Routing Fix & HTML Landing Page Filter

@@ -296,4 +296,213 @@ export class OpenAICompatibleProvider implements LLMProvider {
       },
     };
   }
+
+  public async generateStream(
+    request: GenerationRequest,
+    config: ProviderConfig,
+    onChunk: (delta: string, accumulated: string) => void,
+    signal?: AbortSignal
+  ): Promise<GenerationResult> {
+    const candidateUrls = getCandidateChatUrls(config.baseUrl);
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+    };
+    if (config.apiKey) {
+      headers['Authorization'] = `Bearer ${config.apiKey}`;
+    }
+
+    const messages: { role: string; content: string }[] = [];
+    if (request.systemPrompt) {
+      messages.push({ role: 'system', content: request.systemPrompt });
+    }
+    messages.push({ role: 'user', content: request.promptText });
+
+    const payload: Record<string, unknown> = {
+      model: request.modelId,
+      messages,
+      stream: true,
+    };
+
+    if (typeof request.temperature === 'number') payload.temperature = request.temperature;
+    if (typeof request.topP === 'number') payload.top_p = request.topP;
+    if (typeof request.maxTokens === 'number') payload.max_tokens = request.maxTokens;
+    if (typeof request.seed === 'number') payload.seed = request.seed;
+
+    const startTime = Date.now();
+    let successfulUrl = '';
+    let lastError = '';
+    let accumulated = '';
+    let responseId: string | undefined;
+    let resolvedModel = request.modelId;
+    let inputTokens: number | undefined;
+    let outputTokens: number | undefined;
+
+    for (const url of candidateUrls) {
+      if (signal?.aborted) throw new Error('Generation cancelled by user');
+
+      try {
+        Logger.info('PROVIDER', `Sending SSE streaming request to: ${url} (Model: ${request.modelId})`);
+        const res = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload),
+          signal,
+        });
+
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          lastError = `HTTP ${res.status} at ${url}: ${errText.slice(0, 500)}`;
+          Logger.warn('PROVIDER', `Streaming request to ${url} returned ${lastError}`);
+          continue;
+        }
+
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('text/html')) {
+          lastError = `Endpoint ${url} returned HTML landing page instead of SSE stream`;
+          Logger.warn('PROVIDER', lastError);
+          continue;
+        }
+
+        if (!res.body) {
+          lastError = `No response body received from ${url}`;
+          continue;
+        }
+
+        successfulUrl = url;
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+
+        while (true) {
+          if (signal?.aborted) {
+            reader.cancel().catch(() => {});
+            throw new Error('Generation cancelled by user');
+          }
+
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line || line.startsWith(':')) continue;
+
+            if (line.startsWith('data:')) {
+              const dataStr = line.slice(5).trim();
+              if (dataStr === '[DONE]') {
+                break;
+              }
+
+              try {
+                const chunk = JSON.parse(dataStr);
+                const delta =
+                  chunk.choices?.[0]?.delta?.content ??
+                  chunk.choices?.[0]?.text ??
+                  chunk.message?.content ??
+                  chunk.response ??
+                  '';
+
+                if (chunk.id) responseId = chunk.id;
+                if (chunk.model) resolvedModel = chunk.model;
+                if (chunk.usage?.prompt_tokens) inputTokens = chunk.usage.prompt_tokens;
+                if (chunk.usage?.completion_tokens) outputTokens = chunk.usage.completion_tokens;
+
+                if (delta) {
+                  accumulated += delta;
+                  onChunk(delta, accumulated);
+                }
+              } catch {
+                // Ignore malformed JSON chunks
+              }
+            } else if (line.startsWith('{') && line.endsWith('}')) {
+              try {
+                const chunk = JSON.parse(line);
+                const delta = chunk.message?.content ?? chunk.response ?? '';
+                if (chunk.model) resolvedModel = chunk.model;
+                if (chunk.eval_count) outputTokens = chunk.eval_count;
+                if (chunk.prompt_eval_count) inputTokens = chunk.prompt_eval_count;
+
+                if (delta) {
+                  accumulated += delta;
+                  onChunk(delta, accumulated);
+                }
+              } catch {
+                // Ignore
+              }
+            }
+          }
+        }
+
+        if (buffer.trim()) {
+          const line = buffer.trim();
+          if (line.startsWith('data:') && !line.includes('[DONE]')) {
+            try {
+              const chunk = JSON.parse(line.slice(5).trim());
+              const delta = chunk.choices?.[0]?.delta?.content ?? '';
+              if (delta) {
+                accumulated += delta;
+                onChunk(delta, accumulated);
+              }
+            } catch {}
+          }
+        }
+
+        break;
+      } catch (err: unknown) {
+        if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) {
+          throw new Error('Generation cancelled by user');
+        }
+        lastError = err instanceof Error ? err.message : String(err);
+        Logger.warn('PROVIDER', `Streaming attempt failed at ${url}: ${lastError}`);
+      }
+    }
+
+    const durationMs = Date.now() - startTime;
+
+    if (!successfulUrl || !accumulated) {
+      Logger.warn('PROVIDER', `Streaming returned no output (${lastError}). Falling back to non-streaming generate...`);
+      return this.generate(request, config);
+    }
+
+    const extracted = extractHtml(accumulated);
+
+    if (!outputTokens) {
+      outputTokens = Math.max(1, Math.round(accumulated.length / 3.8));
+    }
+    if (!inputTokens) {
+      inputTokens = Math.max(1, Math.round(request.promptText.length / 3.8));
+    }
+
+    let tokensPerSecond: number | undefined;
+    if (outputTokens && durationMs > 0) {
+      tokensPerSecond = Math.round((outputTokens / (durationMs / 1000)) * 10) / 10;
+    }
+
+    Logger.info(
+      'PROVIDER',
+      `✓ Stream completed from ${successfulUrl} in ${durationMs}ms (${outputTokens} tokens, ${tokensPerSecond || 0} tok/s, HTML extracted: ${extracted.length} chars)`
+    );
+
+    return {
+      rawOutput: accumulated,
+      extractedHtml: extracted,
+      generationTimeMs: durationMs,
+      inputTokens,
+      outputTokens,
+      tokensPerSecond,
+      requestedModelId: request.modelId,
+      resolvedModelId: resolvedModel,
+      metadata: {
+        providerId: config.id,
+        baseUrl: config.baseUrl,
+        endpointUrl: successfulUrl,
+        responseId,
+        streaming: true,
+      },
+    };
+  }
 }

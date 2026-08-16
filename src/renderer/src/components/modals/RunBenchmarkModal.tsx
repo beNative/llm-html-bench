@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Model, Prompt, PromptVersion } from '@shared/types/entities';
 import { ProviderConfig, DiscoveredModel } from '@shared/types/providers';
+import { extractHtml } from '@shared/utils/htmlExtractor';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Tooltip } from '../common/Tooltip';
+import { IsolatedFrame } from '../preview/IsolatedFrame';
 import {
   Play,
   AlertCircle,
@@ -14,6 +16,9 @@ import {
   Globe,
   Settings,
   Cpu,
+  Code,
+  Eye,
+  XCircle,
 } from 'lucide-react';
 
 export const RunBenchmarkModal: React.FC = () => {
@@ -54,6 +59,42 @@ export const RunBenchmarkModal: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPromptCopied, setIsPromptCopied] = useState<boolean>(false);
 
+  // Live SSE Streaming state
+  const [streamedText, setStreamedText] = useState<string>('');
+  const [streamStatus, setStreamStatus] = useState<string>('idle');
+  const [activeStreamTab, setActiveStreamTab] = useState<'code' | 'preview'>('code');
+  const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
+  const [autoScrollCode, setAutoScrollCode] = useState<boolean>(true);
+  const codeEndRef = useRef<HTMLDivElement>(null);
+
+  // Subscribe to live IPC stream events
+  useEffect(() => {
+    if (!window.electronAPI) return;
+
+    const unsubChunk = window.electronAPI.onStreamChunk((data) => {
+      setStreamedText(data.accumulated);
+    });
+
+    const unsubStatus = window.electronAPI.onStreamStatus((status) => {
+      setStreamStatus(status.state);
+      if (status.state === 'error' && status.error) {
+        setErrorMsg(status.error);
+      }
+    });
+
+    return () => {
+      unsubChunk();
+      unsubStatus();
+    };
+  }, []);
+
+  // Auto-scroll streamed code terminal
+  useEffect(() => {
+    if (isRunning && autoScrollCode && codeEndRef.current) {
+      codeEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [streamedText, isRunning, autoScrollCode]);
+
   useEffect(() => {
     let interval: any = null;
     if (isRunning) {
@@ -73,6 +114,22 @@ export const RunBenchmarkModal: React.FC = () => {
   const activePv = promptVersions.find((pv) => pv.id === selectedVersionId);
   const activePromptObj = prompts.find((p) => p.id === targetPromptId);
   const activeConfig = providerConfigs.find((c) => c.id === selectedConfigId);
+
+  // Progressive live HTML extraction
+  const liveExtractedHtml = useMemo(() => {
+    if (!streamedText) return '';
+    return extractHtml(streamedText);
+  }, [streamedText]);
+
+  // Derived streaming metrics
+  const approxTokens = useMemo(() => {
+    return Math.round(streamedText.length / 3.8);
+  }, [streamedText]);
+
+  const tokensPerSec = useMemo(() => {
+    if (elapsedSeconds < 0.3) return '0.0';
+    return (approxTokens / elapsedSeconds).toFixed(1);
+  }, [approxTokens, elapsedSeconds]);
 
   const handleCopyPrompt = async () => {
     const text = activePv?.prompt_text;
@@ -139,6 +196,8 @@ export const RunBenchmarkModal: React.FC = () => {
   useEffect(() => {
     if (isRunBenchmarkModalOpen) {
       setErrorMsg(null);
+      setStreamedText('');
+      setStreamStatus('idle');
       loadData();
     }
   }, [isRunBenchmarkModalOpen, selectedPromptId]);
@@ -159,6 +218,22 @@ export const RunBenchmarkModal: React.FC = () => {
     const cfg = providerConfigs.find((c) => c.id === newConfigId);
     if (cfg) {
       discoverModelsForConfig(cfg);
+    }
+  };
+
+  const handleCancelRun = async () => {
+    if (window.electronAPI && currentRequestId) {
+      try {
+        await window.electronAPI.cancelBenchmarkRun(currentRequestId);
+        showToast('Generation cancelled by user', 'info');
+      } catch (err) {
+        console.warn('Cancellation notice:', err);
+      } finally {
+        setIsRunning(false);
+        setCurrentRequestId(null);
+      }
+    } else {
+      setIsRunning(false);
     }
   };
 
@@ -197,12 +272,17 @@ export const RunBenchmarkModal: React.FC = () => {
       targetModelDisplayName = cat ? cat.display_name : selectedCatalogModelId;
     }
 
+    const reqId = `run-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    setCurrentRequestId(reqId);
+    setStreamedText('');
+    setStreamStatus('started');
     setIsRunning(true);
     setErrorMsg(null);
 
     try {
       if (window.electronAPI) {
         const run = await window.electronAPI.executeBenchmarkRun({
+          requestId: reqId,
           promptVersionId: selectedVersionId,
           modelId: targetModelId,
           providerConfigId: selectedConfigId,
@@ -214,46 +294,298 @@ export const RunBenchmarkModal: React.FC = () => {
         });
 
         const timeStr = run.generation_time_ms ? `${(run.generation_time_ms / 1000).toFixed(2)}s` : 'completed';
-        showToast(`Benchmark run completed (${timeStr})!`, 'success');
+        showToast(`Benchmark run completed in ${timeStr}!`, 'success');
         refreshModels();
         setIsRunBenchmarkModalOpen(false);
         openCompareWithRuns([run.id]);
-        setCurrentTab('compare');
+        setCurrentTab('runs');
       }
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : String(err));
     } finally {
       setIsRunning(false);
+      setCurrentRequestId(null);
     }
   };
 
   return (
     <Modal
       isOpen={isRunBenchmarkModalOpen}
-      onClose={() => setIsRunBenchmarkModalOpen(false)}
-      title="Execute Live Benchmark Run"
-      subtitle="Send the benchmark challenge to any local or cloud LLM endpoint and capture tokens, duration, and output"
-      maxWidth="720px"
+      onClose={() => {
+        if (!isRunning) setIsRunBenchmarkModalOpen(false);
+      }}
+      title={isRunning ? 'Live Benchmark Streaming & Execution' : 'Execute Live Benchmark Run'}
+      subtitle={
+        isRunning
+          ? `Streaming response from ${activeConfig?.name || 'provider'} (${activeConfig?.baseUrl})...`
+          : 'Send the benchmark challenge to any local or cloud LLM endpoint and capture tokens, duration, and output'
+      }
+      maxWidth={isRunning ? '960px' : '720px'}
     >
-      <form onSubmit={handleRun} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        {errorMsg && (
+      {isRunning ? (
+        /* ================= LIVE STREAMING VIEW ================= */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Stream Header Metrics Bar */}
           <div
             style={{
-              padding: '10px 12px',
-              borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'var(--accent-danger-light)',
-              color: 'var(--accent-danger)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              fontSize: '12px',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              justifyContent: 'space-between',
+              padding: '10px 14px',
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-color)',
+              flexWrap: 'wrap',
+              gap: '10px',
             }}
           >
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
-            <span>{errorMsg}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span className="live-pulse-dot" />
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {modelSource === 'discovered' ? selectedDiscoveredId : selectedCatalogModelId}
+                </span>
+              </div>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>via</span>
+              <span style={{ fontSize: '11px', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                {activeConfig?.name}
+              </span>
+            </div>
+
+            {/* Live Metrics Pills */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div
+                style={{
+                  padding: '3px 8px',
+                  backgroundColor:
+                    streamStatus === 'extracting'
+                      ? 'rgba(16, 185, 129, 0.15)'
+                      : 'rgba(59, 130, 246, 0.12)',
+                  border: `1px solid ${
+                    streamStatus === 'extracting'
+                      ? 'rgba(16, 185, 129, 0.4)'
+                      : 'rgba(59, 130, 246, 0.3)'
+                  }`,
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '11px',
+                  fontFamily: 'var(--font-mono)',
+                  color:
+                    streamStatus === 'extracting'
+                      ? 'var(--accent-success)'
+                      : 'var(--accent-primary)',
+                  fontWeight: 600,
+                  textTransform: 'capitalize',
+                }}
+              >
+                {streamStatus === 'extracting' ? 'Extracting HTML' : 'Streaming'}
+              </div>
+              <div
+                style={{
+                  padding: '3px 8px',
+                  backgroundColor: 'var(--bg-card)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '11px',
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                ⏱️ {elapsedSeconds.toFixed(1)}s
+              </div>
+              <div
+                style={{
+                  padding: '3px 8px',
+                  backgroundColor: 'var(--bg-card)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '11px',
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                📊 ~{approxTokens} tokens
+              </div>
+              <div
+                style={{
+                  padding: '3px 8px',
+                  backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '11px',
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--accent-primary)',
+                  fontWeight: 600,
+                }}
+              >
+                ⚡ {tokensPerSec} tok/s
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* View Tab Switcher during generation */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button
+                type="button"
+                onClick={() => setActiveStreamTab('code')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '5px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  backgroundColor: activeStreamTab === 'code' ? 'var(--accent-primary)' : 'transparent',
+                  color: activeStreamTab === 'code' ? '#ffffff' : 'var(--text-secondary)',
+                }}
+              >
+                <Code size={13} />
+                Live Code Stream ({streamedText.length} chars)
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveStreamTab('preview')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '5px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  backgroundColor: activeStreamTab === 'preview' ? 'var(--accent-primary)' : 'transparent',
+                  color: activeStreamTab === 'preview' ? '#ffffff' : 'var(--text-secondary)',
+                }}
+              >
+                <Eye size={13} />
+                Progressive Live Preview {liveExtractedHtml ? '✓' : ''}
+              </button>
+            </div>
+
+            {activeStreamTab === 'code' && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={autoScrollCode}
+                  onChange={(e) => setAutoScrollCode(e.target.checked)}
+                />
+                Auto-scroll
+              </label>
+            )}
+          </div>
+
+          {/* Active Tab Content */}
+          {activeStreamTab === 'code' ? (
+            <div
+              style={{
+                height: '380px',
+                backgroundColor: '#0d1117',
+                color: '#e6edf3',
+                borderRadius: 'var(--radius-md)',
+                padding: '12px 14px',
+                overflowY: 'auto',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '12px',
+                lineHeight: '1.5',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+                border: '1px solid var(--border-color)',
+              }}
+            >
+              {streamedText || (
+                <div style={{ color: '#8b949e', display: 'flex', alignItems: 'center', gap: '8px', padding: '20px 0' }}>
+                  <RotateCw size={14} className="spin-anim" />
+                  <span>Waiting for model output stream to begin...</span>
+                </div>
+              )}
+              <span className="cursor-blink" style={{ color: 'var(--accent-primary)', fontWeight: 900 }}>
+                ▋
+              </span>
+              <div ref={codeEndRef} />
+            </div>
+          ) : (
+            <div
+              style={{
+                height: '380px',
+                backgroundColor: 'var(--bg-primary)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-color)',
+                overflow: 'hidden',
+                position: 'relative',
+              }}
+            >
+              {liveExtractedHtml ? (
+                <IsolatedFrame html={liveExtractedHtml} height="100%" />
+              ) : (
+                <div
+                  style={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px',
+                    color: 'var(--text-muted)',
+                    fontSize: '12px',
+                  }}
+                >
+                  <RotateCw size={18} className="spin-anim" />
+                  <span>Extracting HTML tags as stream progresses...</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Stream Footer & Cancel Button */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingTop: '10px',
+              borderTop: '1px solid var(--border-color)',
+            }}
+          >
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              Once generation completes, this run will automatically open in the Master-Detail Run History.
+            </span>
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              icon={<XCircle size={13} />}
+              onClick={handleCancelRun}
+            >
+              Cancel Generation
+            </Button>
+          </div>
+        </div>
+      ) : (
+        /* ================= SETUP / CONFIGURATION FORM ================= */
+        <form onSubmit={handleRun} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {errorMsg && (
+            <div
+              style={{
+                padding: '10px 12px',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--accent-danger-light)',
+                color: 'var(--accent-danger)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                fontSize: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
 
         {/* Provider Endpoint Selector with Auto-Discovery Action */}
         <div
@@ -629,34 +961,6 @@ export const RunBenchmarkModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Live Execution Progress Box */}
-        {isRunning && (
-          <div
-            style={{
-              padding: '12px 14px',
-              backgroundColor: 'rgba(59, 130, 246, 0.08)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid rgba(59, 130, 246, 0.3)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: 'var(--accent-primary)', fontSize: '12px' }}>
-                <RotateCw size={14} className="spin-anim" />
-                <span>Generating benchmark application...</span>
-              </div>
-              <span className="font-mono" style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent-primary)' }}>
-                {elapsedSeconds.toFixed(1)}s
-              </span>
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-              Sending prompt to <strong>{activeConfig?.name}</strong> ({activeConfig?.baseUrl}). Generating the complete HTML5 game application. The result will automatically open in the inspection lab and preview once finished.
-            </div>
-          </div>
-        )}
-
         {/* Action Buttons */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
           <Button type="button" variant="ghost" disabled={isRunning} onClick={() => setIsRunBenchmarkModalOpen(false)}>
@@ -668,10 +972,11 @@ export const RunBenchmarkModal: React.FC = () => {
             disabled={isRunning || !selectedConfigId}
             icon={isRunning ? <RotateCw size={13} className="spin-anim" /> : <Play size={13} />}
           >
-            {isRunning ? `Generating (${elapsedSeconds.toFixed(0)}s)...` : 'Start Execution'}
+            Start Execution
           </Button>
         </div>
       </form>
+      )}
     </Modal>
   );
 };

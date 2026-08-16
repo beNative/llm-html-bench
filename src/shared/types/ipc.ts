@@ -213,6 +213,7 @@ export interface ElectronAPI {
   testProviderConnection: (config: ProviderConfig) => Promise<{ success: boolean; error?: string }>;
   fetchProviderModels: (config: ProviderConfig) => Promise<{ success: boolean; models: Array<{ id: string; name: string; ownedBy?: string }>; error?: string }>;
   executeBenchmarkRun: (request: {
+    requestId?: string;
     promptVersionId: string;
     modelId: string;
     providerConfigId: string;
@@ -222,6 +223,9 @@ export interface ElectronAPI {
     topP?: number;
     maxTokens?: number;
   }) => Promise<ModelRun>;
+  cancelBenchmarkRun: (requestId?: string) => Promise<void>;
+  onStreamChunk: (callback: (data: { requestId: string; delta: string; accumulated: string }) => void) => () => void;
+  onStreamStatus: (callback: (status: { requestId: string; state: 'started' | 'streaming' | 'extracting' | 'completed' | 'error'; error?: string }) => void) => () => void;
 
   // Database Management & Backup
   getDatabaseInfo: () => Promise<DatabaseInfo>;

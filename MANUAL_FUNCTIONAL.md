@@ -108,7 +108,7 @@ The **Benchmark Run History** tab provides an integrated master-detail inspectio
 
 ---
 
-## 6. Live Multi-Provider Execution & Auto-Discovery
+## 6. Live Multi-Provider Execution, Streaming & Auto-Discovery
 
 For automated, reproducible benchmarking directly against local or cloud engines:
 1. **Manage Provider Endpoints** in **Settings & DB** (supports **LM Studio**, **Ollama**, **OpenRouter**, **OpenAI**, **vLLM**, and custom OpenAI-compatible endpoints).
@@ -121,7 +121,12 @@ For automated, reproducible benchmarking directly against local or cloud engines
    - You can choose from **Auto-Discovered Models** or **Catalog Models**.
    - Zero manual entry: executing against any discovered model automatically registers it in the database catalog on the fly.
 4. Select target prompt, version, and parameters (*Temperature*, *Top P*, *Max Tokens*).
-5. Click **Start Execution**. LLM HTML Bench executes the test, logs metrics, parses HTML, and immediately navigates to comparison and scoring.
+5. Click **Start Execution**:
+   - **⚡ Live Token-by-Token Streaming**: Watch the model output stream in real time into an integrated, syntax-highlighted code terminal with live cursor `▋` and auto-scroll.
+   - **👁️ Progressive Live Preview**: Toggle to the live preview tab to observe the HTML5 game or interface render dynamically as closing tags complete.
+   - **📊 Real-Time Metrics Header**: Track active model, endpoint, elapsed duration (`0.0s`), tokens received (`~1,840 tokens`), streaming velocity (`48.2 tok/s`), and live extraction states.
+   - **🛑 Instant Cancellation**: Click **Cancel Generation** at any time to halt an in-flight generation stream cleanly.
+   - **Automatic Output Storage**: Upon stream completion, LLM HTML Bench automatically extracts HTML, persists the run in SQLite, and immediately opens the Master-Detail Run History.
 
 ---
 
