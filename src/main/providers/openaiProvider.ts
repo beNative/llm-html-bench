@@ -32,8 +32,9 @@ function getCandidateChatUrls(baseUrl: string): string[] {
     candidates.push(`${clean}/chat/completions`);
     candidates.push(`${clean.replace(/\/v1$/, '')}/chat/completions`);
   } else {
-    candidates.push(`${clean}/chat/completions`);
     candidates.push(`${clean}/v1/chat/completions`);
+    candidates.push(`${clean}/chat/completions`);
+    candidates.push(`${clean}/api/v1/chat/completions`);
   }
 
   return Array.from(new Set(candidates));
@@ -175,28 +176,85 @@ export class OpenAICompatibleProvider implements LLMProvider {
     if (typeof request.seed === 'number') payload.seed = request.seed;
 
     const startTime = Date.now();
-    let response: Response | null = null;
     let successfulUrl = '';
     let lastError = '';
+    let rawOutput = '';
+    let responseId: string | undefined;
+    let resolvedModel = request.modelId;
+    let inputTokens: number | undefined;
+    let outputTokens: number | undefined;
 
     for (const url of candidateUrls) {
       try {
-        Logger.info('PROVIDER', `Sending completion request to: ${url} (Model: ${request.modelId})`);
+        Logger.info('PROVIDER', `Sending completion request to: ${url} (Model: ${request.modelId}, stream: false)`);
         const res = await fetch(url, {
           method: 'POST',
           headers,
           body: JSON.stringify(payload),
         });
 
-        if (res.ok) {
-          response = res;
-          successfulUrl = url;
-          break;
-        } else {
+        if (!res.ok) {
           const errText = await res.text().catch(() => '');
           lastError = `HTTP ${res.status} at ${url}: ${errText.slice(0, 500)}`;
           Logger.warn('PROVIDER', `Request to ${url} returned ${lastError}`);
+          continue;
         }
+
+        const contentType = res.headers.get('content-type') || '';
+        const responseText = await res.text();
+
+        // Reject if HTML landing page was returned with HTTP 200 (like LM Studio root or web UI)
+        if (contentType.includes('text/html') || responseText.trim().startsWith('<!DOCTYPE html>') || responseText.trim().startsWith('<html')) {
+          lastError = `Endpoint ${url} returned HTML landing page instead of OpenAI API JSON`;
+          Logger.warn('PROVIDER', lastError);
+          continue;
+        }
+
+        let parsedJson: any = null;
+        try {
+          parsedJson = JSON.parse(responseText);
+        } catch {
+          // Might be SSE stream
+        }
+
+        let parsedOutput = '';
+        if (parsedJson) {
+          parsedOutput =
+            parsedJson.choices?.[0]?.message?.content ??
+            parsedJson.choices?.[0]?.text ??
+            parsedJson.response ??
+            parsedJson.message?.content ??
+            '';
+          responseId = parsedJson.id;
+          if (parsedJson.model) resolvedModel = parsedJson.model;
+          inputTokens = parsedJson.usage?.prompt_tokens ?? parsedJson.prompt_eval_count;
+          outputTokens = parsedJson.usage?.completion_tokens ?? parsedJson.eval_count;
+        } else {
+          // Fallback: Parse SSE streamed chunks
+          const lines = responseText.split('\n');
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('data:') && !trimmed.includes('[DONE]')) {
+              try {
+                const chunk = JSON.parse(trimmed.slice(5).trim());
+                const delta = chunk.choices?.[0]?.delta?.content ?? chunk.choices?.[0]?.text ?? '';
+                parsedOutput += delta;
+                if (chunk.id) responseId = chunk.id;
+                if (chunk.model) resolvedModel = chunk.model;
+              } catch {}
+            }
+          }
+        }
+
+        if (!parsedOutput && !responseText.includes('choices') && !responseText.includes('message')) {
+          lastError = `No completion choices returned from ${url}`;
+          Logger.warn('PROVIDER', lastError);
+          continue;
+        }
+
+        rawOutput = parsedOutput || responseText;
+        successfulUrl = url;
+        break;
       } catch (err: unknown) {
         lastError = err instanceof Error ? err.message : String(err);
         Logger.warn('PROVIDER', `Request to ${url} failed with: ${lastError}`);
@@ -205,60 +263,8 @@ export class OpenAICompatibleProvider implements LLMProvider {
 
     const durationMs = Date.now() - startTime;
 
-    if (!response || !response.ok) {
+    if (!successfulUrl || !rawOutput) {
       throw new Error(`Provider generation failed: ${lastError || 'Could not reach completion endpoint'}`);
-    }
-
-    const responseText = await response.text();
-    let rawOutput = '';
-    let responseId: string | undefined;
-    let resolvedModel = request.modelId;
-    let inputTokens: number | undefined;
-    let outputTokens: number | undefined;
-
-    try {
-      const data = JSON.parse(responseText);
-      rawOutput =
-        data.choices?.[0]?.message?.content ??
-        data.choices?.[0]?.text ??
-        data.response ??
-        data.message?.content ??
-        '';
-      responseId = data.id;
-      if (data.model) resolvedModel = data.model;
-      inputTokens = data.usage?.prompt_tokens ?? data.prompt_eval_count;
-      outputTokens = data.usage?.completion_tokens ?? data.eval_count;
-    } catch {
-      // Fallback: If returned SSE streaming lines "data: {...}" or JSONL
-      const lines = responseText.split('\n');
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith('data:') && !trimmed.includes('[DONE]')) {
-          try {
-            const chunk = JSON.parse(trimmed.slice(5).trim());
-            const delta = chunk.choices?.[0]?.delta?.content ?? chunk.choices?.[0]?.text ?? '';
-            rawOutput += delta;
-            if (chunk.id) responseId = chunk.id;
-            if (chunk.model) resolvedModel = chunk.model;
-          } catch {
-            // ignore malformed chunk
-          }
-        } else if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-          try {
-            const chunk = JSON.parse(trimmed);
-            const delta = chunk.message?.content ?? chunk.response ?? '';
-            rawOutput += delta;
-            if (chunk.model) resolvedModel = chunk.model;
-          } catch {
-            // ignore
-          }
-        }
-      }
-    }
-
-    if (!rawOutput && responseText.trim().length > 0) {
-      Logger.warn('PROVIDER', `No JSON content found in response; using raw response text (${responseText.length} chars)`);
-      rawOutput = responseText;
     }
 
     const extracted = extractHtml(rawOutput);

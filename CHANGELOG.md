@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.3.4] - 2026-08-16
+
+### 🎯 LM Studio Endpoint Routing Fix & HTML Landing Page Filter
+
+#### 🌟 Bug Fixes & Refinements
+- **Fixed LM Studio Chat Completion Endpoint Routing**:
+  - Corrected candidate URL prioritization so `/v1/chat/completions` is always queried before `/chat/completions`, preventing LM Studio's HTTP root web server from intercepting API calls.
+- **HTML Landing Page Detection & Rejection**:
+  - Added response content-type and payload validation to reject HTML landing pages returned with HTTP 200, ensuring the client properly connects to the OpenAI API handler.
+- **Unified Log Directory**:
+  - Standardized logger path to `%APPDATA%\llm-html-bench\logs\` across all platforms.
+
+---
+
 ## [1.3.3] - 2026-08-16
 
 ### 🎮 Live Benchmark Execution Engine, Progress Timer & Automatic Output Storage

@@ -24,9 +24,8 @@ export class Logger {
    */
   public static initialize(): string {
     try {
-      // Determine executable directory when packaged as an Electron app
-      if (app && app.isPackaged) {
-        this.logDirectory = path.dirname(process.execPath);
+      if (app && typeof app.getPath === 'function') {
+        this.logDirectory = path.join(app.getPath('userData'), 'logs');
       } else {
         this.logDirectory = path.join(process.cwd(), 'logs');
       }
