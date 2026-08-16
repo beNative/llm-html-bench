@@ -102,18 +102,27 @@ export class AutoUpdateService {
       this.isManualCheck = false;
     });
 
-    // 6. Error handling - Silent on background check, sanitized on manual check
+    // 6. Error handling - Silent on background check, friendly on manual check
     autoUpdater.on('error', (err) => {
-      const sanitized = this.sanitizeErrorMessage(err);
-      Logger.warn('AUTO_UPDATER', `Update check notice: ${sanitized} (Raw: ${err?.message || err})`);
+      const msg = typeof err === 'string' ? err : err?.message || String(err || '');
+      Logger.warn('AUTO_UPDATER', `Update check notification: ${msg.split('\n')[0]}`);
 
       if (this.isManualCheck) {
-        this.broadcastState({
-          status: 'error',
-          error: sanitized,
-        });
+        if (msg.includes('404') || msg.includes('releases.atom') || msg.includes('Cannot find')) {
+          // 404 means no newer published release packages found on GitHub - treat as up-to-date
+          this.broadcastState({
+            status: 'not-available',
+            info: { version: app.getVersion() },
+          });
+        } else {
+          const sanitized = this.sanitizeErrorMessage(err);
+          this.broadcastState({
+            status: 'error',
+            error: sanitized,
+          });
+        }
       } else {
-        // Keep background check completely silent to never disrupt the user on startup
+        // Keep background check completely silent to never disrupt the user
         this.currentState = { status: 'idle' };
       }
       this.isManualCheck = false;
@@ -123,8 +132,8 @@ export class AutoUpdateService {
     if (app.isPackaged) {
       setTimeout(() => {
         this.isManualCheck = false;
-        this.checkForUpdates(false).catch((err) => {
-          Logger.info('AUTO_UPDATER', `Silent startup update check completed: ${err?.message || 'No updates'}`);
+        this.checkForUpdates(false).catch(() => {
+          // Intentionally silent
         });
       }, 5000);
     } else {
@@ -134,7 +143,7 @@ export class AutoUpdateService {
 
   /**
    * Triggers an update check.
-   * @param manual If true, indicates explicit user request from menu/UI (will surface not-found / clean error notices)
+   * @param manual If true, indicates explicit user request from menu/UI
    */
   public static async checkForUpdates(manual = true): Promise<{ success: boolean; message?: string }> {
     this.isManualCheck = manual;
@@ -165,12 +174,22 @@ export class AutoUpdateService {
       Logger.info('AUTO_UPDATER', `Update check query finished: ${result ? result.updateInfo.version : 'Done'}`);
       return { success: true };
     } catch (err: any) {
-      const sanitized = this.sanitizeErrorMessage(err);
-      Logger.warn('AUTO_UPDATER', `Check for updates notice: ${sanitized}`);
+      const msg = typeof err === 'string' ? err : err?.message || String(err || '');
+      Logger.warn('AUTO_UPDATER', `Check for updates notice: ${msg.split('\n')[0]}`);
       if (manual) {
-        this.broadcastState({ status: 'error', error: sanitized });
+        if (msg.includes('404') || msg.includes('releases.atom') || msg.includes('Cannot find')) {
+          this.broadcastState({
+            status: 'not-available',
+            info: { version: app.getVersion() },
+          });
+          return { success: true, message: 'You are on the latest version.' };
+        } else {
+          const sanitized = this.sanitizeErrorMessage(err);
+          this.broadcastState({ status: 'error', error: sanitized });
+          return { success: false, message: sanitized };
+        }
       }
-      return { success: false, message: sanitized };
+      return { success: false, message: 'Check finished.' };
     }
   }
 

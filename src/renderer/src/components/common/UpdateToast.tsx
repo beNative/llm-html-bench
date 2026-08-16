@@ -178,8 +178,14 @@ export const UpdateToast: React.FC = () => {
 
         {/* Error Notice */}
         {status === 'error' && (
-          <div className="update-toast-desc" style={{ marginBottom: 0, color: 'var(--text-muted)' }}>
-            {error || 'Could not reach update server. Will retry in background.'}
+          <div className="update-toast-desc" style={{ marginBottom: 0, color: 'var(--text-secondary)', fontSize: '11px' }}>
+            {(() => {
+              if (!error) return 'Unable to reach update server at this time.';
+              if (error.includes('404') || error.includes('releases.atom')) return 'No published updates found on the repository yet.';
+              // Strip any multiline HTTP headers or JSON dumps
+              const clean = error.split('\n')[0].replace(/Headers:.*/i, '').trim();
+              return clean.length > 90 ? `${clean.slice(0, 90)}...` : clean;
+            })()}
           </div>
         )}
       </div>
