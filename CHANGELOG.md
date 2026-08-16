@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.3.1] - 2026-08-16
+
+### 🛠️ Resilient Multi-Candidate Model Discovery, Auto-Updater Error Fixes & Diagnostics
+
+#### 🌟 Bug Fixes & Refinements
+- **Smart Multi-Candidate Endpoint Discovery**:
+  - Implemented automatic resolution across candidate model URLs (`/models`, `/v1/models`, `/api/tags`, `/api/v1/models`) ensuring seamless discovery with Ollama, LM Studio, vLLM, OpenRouter, and LocalAI.
+  - Added multi-format payload parser for OpenAI data format (`{ data: [...] }`), Ollama tags format (`{ models: [...] }`), and raw arrays.
+- **Request Timeout & Abort Control**:
+  - Added 8-second timeout protection with `AbortController` preventing stalled network queries if a server is offline or unreachable.
+- **Comprehensive Diagnostic Provider Logging**:
+  - Added granular logging (`Logger.info`, `Logger.debug`, `Logger.warn`, `Logger.error`) across provider queries, connection tests, and model discovery.
+- **Interactive Discovery Troubleshooting**:
+  - Replaced silent fallback in `RunBenchmarkModal.tsx` with a descriptive troubleshooting banner showing the exact connection status and an instant **"Retry"** button.
+- **Auto-Updater 404 & Notice Protection**:
+  - Suppressed raw 404 HTTP errors during background startup checks when the GitHub repository is private or has no published releases yet.
+  - Gracefully handles manual update checks and strips HTTP headers/cookies.
+
+---
+
 ## [1.3.0] - 2026-08-16
 
 ### 🚀 Master-Detail Run History, Multi-Provider Endpoints & Model Auto-Discovery
