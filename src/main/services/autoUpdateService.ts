@@ -223,22 +223,41 @@ export class AutoUpdateService {
     if (!rawError) return 'Unable to check for updates at this time.';
     const msg = typeof rawError === 'string' ? rawError : rawError.message || String(rawError);
 
-    if (msg.includes('404') || msg.includes('releases.atom')) {
-      return 'No published updates found on the repository yet.';
-    }
-    if (msg.includes('ENOTFOUND') || msg.includes('ETIMEDOUT') || msg.includes('net::ERR') || msg.includes('ECONNREFUSED')) {
-      return 'Could not connect to update server. Please check your internet connection.';
-    }
-    if (msg.includes('401') || msg.includes('403') || msg.includes('authentication')) {
-      return 'Authentication required to access update repository.';
+    // Detect GitHub 50x / Unicorn / Cloudflare HTML error pages
+    if (
+      msg.includes('<!DOCTYPE html') ||
+      msg.includes('<html') ||
+      msg.includes('Unicorn!') ||
+      msg.includes('500 Internal Server Error') ||
+      msg.includes('502 Bad Gateway') ||
+      msg.includes('503 Service Unavailable') ||
+      msg.includes('504 Gateway Timeout')
+    ) {
+      return 'GitHub Releases service is temporarily unavailable (HTTP 50x). Please try again shortly.';
     }
 
-    // Strip multiline headers, cookies, or JSON dumps
-    const firstLine = msg.split('\n')[0].replace(/Headers:.*/i, '').trim();
-    if (!firstLine || firstLine.length > 100) {
+    if (msg.includes('404') || msg.includes('releases.atom') || msg.includes('Cannot find')) {
+      return 'No newer updates found on the repository yet.';
+    }
+    if (
+      msg.includes('ENOTFOUND') ||
+      msg.includes('ETIMEDOUT') ||
+      msg.includes('net::ERR') ||
+      msg.includes('ECONNREFUSED') ||
+      msg.includes('fetch failed')
+    ) {
+      return 'Could not connect to update server. Please check your internet connection.';
+    }
+    if (msg.includes('401') || msg.includes('403') || msg.includes('authentication') || msg.includes('rate limit')) {
+      return 'GitHub API rate limit or authentication constraint reached. Please try again later.';
+    }
+
+    // Strip multiline headers, cookies, HTML tags, or JSON dumps
+    const cleaned = msg.replace(/<[^>]*>?/gm, '').split('\n')[0].replace(/Headers:.*/i, '').trim();
+    if (!cleaned || cleaned.length > 80 || cleaned.startsWith('<!DOCTYPE') || cleaned.startsWith('{')) {
       return 'No newer updates found at this time.';
     }
-    return firstLine;
+    return cleaned;
   }
 
   /**
