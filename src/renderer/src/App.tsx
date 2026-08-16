@@ -17,6 +17,7 @@ import { NewPromptModal } from './components/modals/NewPromptModal';
 import { AddOutputModal } from './components/modals/AddOutputModal';
 import { NewModelModal } from './components/modals/NewModelModal';
 import { RunBenchmarkModal } from './components/modals/RunBenchmarkModal';
+import { AboutModal } from './components/modals/AboutModal';
 import { CommandPalette } from './components/common/CommandPalette';
 import { UpdateToast } from './components/common/UpdateToast';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
@@ -78,6 +79,7 @@ export const MainApp: React.FC = () => {
       <AddOutputModal />
       <NewModelModal />
       <RunBenchmarkModal />
+      <AboutModal />
       <UpdateToast />
 
       {/* Toast Notifications */}

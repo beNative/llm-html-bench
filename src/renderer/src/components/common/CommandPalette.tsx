@@ -25,6 +25,9 @@ import {
   Code2,
   Copy,
   Check,
+  Download,
+  Upload,
+  Info,
 } from 'lucide-react';
 import { Tooltip } from './Tooltip';
 
@@ -48,6 +51,10 @@ export const CommandPalette: React.FC = () => {
     setIsNewModelModalOpen,
     setIsRunBenchmarkModalOpen,
     openAddOutputModal,
+    openAboutModal,
+    backupDatabase,
+    restoreDatabase,
+    openDatabaseFolder,
     setSelectedPromptId,
     setSelectedModelId,
     openCompareWithRuns,
@@ -131,6 +138,54 @@ export const CommandPalette: React.FC = () => {
       onSelect: () => {
         setIsCommandPaletteOpen(false);
         openAddOutputModal('');
+      },
+    });
+
+    list.push({
+      id: 'action-backup-db',
+      title: 'Database: Backup SQLite Database',
+      category: 'Actions',
+      subtitle: 'Create a standalone snapshot backup file of benchmark.sqlite',
+      icon: <Download size={14} color="var(--accent-primary)" />,
+      onSelect: () => {
+        setIsCommandPaletteOpen(false);
+        backupDatabase();
+      },
+    });
+
+    list.push({
+      id: 'action-restore-db',
+      title: 'Database: Restore SQLite Database',
+      category: 'Actions',
+      subtitle: 'Restore database from an existing SQLite backup file',
+      icon: <Upload size={14} color="var(--accent-warning)" />,
+      onSelect: () => {
+        setIsCommandPaletteOpen(false);
+        restoreDatabase();
+      },
+    });
+
+    list.push({
+      id: 'action-open-db-folder',
+      title: 'Database: Open Database File Location in Explorer',
+      category: 'Actions',
+      subtitle: 'Reveal benchmark.sqlite on the filesystem',
+      icon: <FolderOpen size={14} color="var(--accent-primary)" />,
+      onSelect: () => {
+        setIsCommandPaletteOpen(false);
+        openDatabaseFolder();
+      },
+    });
+
+    list.push({
+      id: 'action-about-app',
+      title: 'App: About LLM HTML Bench & GitHub Repo',
+      category: 'Actions',
+      subtitle: 'Version details, author credits, and repository links',
+      icon: <Info size={14} color="var(--accent-primary)" />,
+      onSelect: () => {
+        setIsCommandPaletteOpen(false);
+        openAboutModal();
       },
     });
 

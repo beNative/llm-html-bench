@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import fs from 'fs';
 import { DatabaseInfo } from '../../shared/types/ipc';
 import { ProviderConfig } from '../../shared/types/providers';
-import { getDatabasePath } from '../database/connection';
+import { getDatabasePath, initializeDatabase, closeDatabase } from '../database/connection';
 import { encryptString, decryptString } from '../security/safeStorage';
 
 export class SettingsService {
@@ -60,9 +60,11 @@ export class SettingsService {
     }
 
     const dbPath = getDatabasePath();
-    this.db.close();
+    closeDatabase();
 
     fs.copyFileSync(sourcePath, dbPath);
+
+    this.db = initializeDatabase();
 
     return { success: true };
   }
@@ -103,6 +105,19 @@ export class SettingsService {
       existing.push(encryptedConfig);
     }
 
+    this.db
+      .prepare(
+        `
+      INSERT INTO app_settings (key, value_json, updated_at)
+      VALUES ('provider_configs', ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = CURRENT_TIMESTAMP
+    `
+      )
+      .run(JSON.stringify(existing));
+  }
+
+  public deleteProviderConfig(configId: string): void {
+    const existing = this.getProviderConfigs().filter((c) => c.id !== configId);
     this.db
       .prepare(
         `

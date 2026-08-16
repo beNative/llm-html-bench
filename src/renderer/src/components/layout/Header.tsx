@@ -19,6 +19,9 @@ import {
   Database,
   BookOpen,
   RotateCw,
+  Download,
+  Upload,
+  Info,
 } from 'lucide-react';
 import { Button } from '../common/Button';
 import { Tooltip } from '../common/Tooltip';
@@ -32,6 +35,10 @@ export const Header: React.FC = () => {
     setIsNewModelModalOpen,
     setIsRunBenchmarkModalOpen,
     openAddOutputModal,
+    openAboutModal,
+    backupDatabase,
+    restoreDatabase,
+    openDatabaseFolder,
     openCommandPalette,
     showToast,
     toggleLogPanel,
@@ -182,6 +189,27 @@ export const Header: React.FC = () => {
                 >
                   <FileCode2 size={13} />
                   <span>Add Model Output...</span>
+                </div>
+                <div className="titlebar-dropdown-divider" />
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={() => {
+                    setActiveMenu(null);
+                    backupDatabase();
+                  }}
+                >
+                  <Download size={13} color="var(--accent-primary)" />
+                  <span>Backup SQLite Database...</span>
+                </div>
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={() => {
+                    setActiveMenu(null);
+                    restoreDatabase();
+                  }}
+                >
+                  <Upload size={13} color="var(--accent-warning)" />
+                  <span>Restore SQLite Database...</span>
                 </div>
                 <div className="titlebar-dropdown-divider" />
                 <div
@@ -373,7 +401,7 @@ export const Header: React.FC = () => {
                   className="titlebar-dropdown-item"
                   onClick={() => {
                     setActiveMenu(null);
-                    if (window.electronAPI) window.electronAPI.openDatabaseFolder();
+                    openDatabaseFolder();
                   }}
                 >
                   <Database size={13} />
@@ -395,6 +423,17 @@ export const Header: React.FC = () => {
                 >
                   <RotateCw size={13} color="var(--accent-primary)" />
                   <span>Check for Updates...</span>
+                </div>
+                <div className="titlebar-dropdown-divider" />
+                <div
+                  className="titlebar-dropdown-item"
+                  onClick={() => {
+                    setActiveMenu(null);
+                    openAboutModal();
+                  }}
+                >
+                  <Info size={13} color="var(--accent-primary)" />
+                  <span>About LLM HTML Bench...</span>
                 </div>
               </div>
             )}

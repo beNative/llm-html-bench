@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.3.0] - 2026-08-16
+
+### 🚀 Master-Detail Run History, Multi-Provider Endpoints & Model Auto-Discovery
+
+#### 🌟 Features & Architecture Improvements
+- **Integrated Master-Detail Benchmark Run History (`RunsPage.tsx`)**:
+  - Replaced the modal inspection dialog with a split-pane layout.
+  - Left master pane features real-time search, provenance filtering, dynamic sorting, and detailed metric cards.
+  - Right detail pane embeds Live HTML Preview (`IsolatedFrame`), Monaco Extracted HTML Editor, Raw Model Response, Metadata & Parameter metrics, and the Evaluation Panel with instant action buttons.
+- **Multi-Provider LLM Endpoint Management (`SettingsPage.tsx`)**:
+  - Full support for configuring, testing, editing, and deleting multiple provider endpoints simultaneously.
+  - 1-click quick presets for **Local LM Studio**, **Local Ollama**, **OpenRouter Cloud**, **OpenAI Cloud**, and **Local vLLM**.
+- **Automated Model Discovery (`/v1/models`)**:
+  - Live query of available models loaded on local engines or available through cloud API keys.
+  - Zero-manual-entry execution in **Execute Live Benchmark Run**: discovered models can be run directly and are automatically registered in the SQLite catalog on the fly.
+  - 1-click **"Register to Catalog"** directly from endpoint cards in Settings.
+- **About Dialog & GitHub Repository Integration (`AboutModal.tsx`)**:
+  - Dedicated About dialog accessible from **Help Menu**, **Command Palette**, and **Status Bar**.
+  - Direct link button to the official GitHub repository (`https://github.com/beNative/llm-html-bench`).
+  - System diagnostics, database storage statistics, and quick system actions.
+- **Enhanced Database Tools & Explorer Integration**:
+  - Added **Backup Database**, **Restore Database**, and **Open Database Location in Explorer** across the top File menu, Help menu, Settings, and Command Palette.
+  - Fixed database connection re-initialization on restore to seamlessly re-bind without requiring an application restart.
+- **Dynamic Application Versioning**:
+  - Replaced hardcoded version strings with dynamic resolution via Electron runtime `app.getVersion()`.
+
+---
+
 ## [1.2.0] - 2026-08-15
 
 ### 🚀 Automated Background Auto-Update System with Real-Time Progress Toast

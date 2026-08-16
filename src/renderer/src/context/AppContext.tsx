@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { Collection, Tag, Model } from '@shared/types/entities';
 import { LogEntry, LogLevel, LogConfig } from '@shared/types/ipc';
+import { APP_VERSION } from '@shared/constants/defaults';
 
 export type NavTab = 'dashboard' | 'prompts' | 'compare' | 'models' | 'collections' | 'runs' | 'settings' | 'info';
 
@@ -34,11 +35,18 @@ interface AppContextType {
   setIsNewModelModalOpen: (open: boolean) => void;
   isRunBenchmarkModalOpen: boolean;
   setIsRunBenchmarkModalOpen: (open: boolean) => void;
+  isAboutModalOpen: boolean;
+  setIsAboutModalOpen: (open: boolean) => void;
+  openAboutModal: () => void;
   isCommandPaletteOpen: boolean;
   setIsCommandPaletteOpen: (open: boolean) => void;
   openCommandPalette: () => void;
   activePromptForOutput: { promptId: string; versionId?: string } | null;
   openAddOutputModal: (promptId: string, versionId?: string) => void;
+  appVersion: string;
+  backupDatabase: () => Promise<void>;
+  restoreDatabase: () => Promise<void>;
+  openDatabaseFolder: () => Promise<void>;
 
   // Cached collections & tags & models
   collections: Collection[];
@@ -78,8 +86,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAddOutputModalOpen, setIsAddOutputModalOpen] = useState(false);
   const [isNewModelModalOpen, setIsNewModelModalOpen] = useState(false);
   const [isRunBenchmarkModalOpen, setIsRunBenchmarkModalOpen] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+  const [appVersion, setAppVersion] = useState<string>(APP_VERSION);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [activePromptForOutput, setActivePromptForOutput] = useState<{ promptId: string; versionId?: string } | null>(null);
+
+  const openAboutModal = () => {
+    setIsAboutModalOpen(true);
+  };
+
+  useEffect(() => {
+    if (window.electronAPI?.getAppVersion) {
+      window.electronAPI.getAppVersion().then((v) => {
+        if (v) setAppVersion(v);
+      }).catch(() => {});
+    }
+  }, []);
 
   const openCommandPalette = () => {
     setIsCommandPaletteOpen(true);
@@ -89,6 +111,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tags, setTags] = useState<Tag[]>([]);
   const [models, setModels] = useState<Model[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const backupDatabase = async () => {
+    try {
+      if (window.electronAPI) {
+        const res = await window.electronAPI.backupDatabase();
+        if (res.success) {
+          showToast(`Database backed up to ${res.filePath}`, 'success');
+        }
+      }
+    } catch (err: unknown) {
+      showToast(`Backup failed: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    }
+  };
+
+  const restoreDatabase = async () => {
+    try {
+      if (window.electronAPI) {
+        const res = await window.electronAPI.restoreDatabase('');
+        if (res.success) {
+          showToast('Database restored successfully! Refreshing data...', 'success');
+          refreshModels();
+          refreshCollectionsAndTags();
+        }
+      }
+    } catch (err: unknown) {
+      showToast(`Restore failed: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    }
+  };
+
+  const openDatabaseFolder = async () => {
+    if (window.electronAPI) {
+      await window.electronAPI.openDatabaseFolder();
+    }
+  };
 
   // Logging Panel State
   const [isLogPanelOpen, setIsLogPanelOpen] = useState<boolean>(false);
@@ -253,11 +309,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsNewModelModalOpen,
         isRunBenchmarkModalOpen,
         setIsRunBenchmarkModalOpen,
+        isAboutModalOpen,
+        setIsAboutModalOpen,
+        openAboutModal,
         isCommandPaletteOpen,
         setIsCommandPaletteOpen,
         openCommandPalette,
         activePromptForOutput,
         openAddOutputModal,
+        appVersion,
+        backupDatabase,
+        restoreDatabase,
+        openDatabaseFolder,
         collections,
         tags,
         models,

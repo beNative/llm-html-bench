@@ -7,7 +7,8 @@ export class OpenAICompatibleProvider implements LLMProvider {
 
   public async testConnection(config: ProviderConfig): Promise<{ success: boolean; error?: string }> {
     try {
-      const url = `${config.baseUrl.replace(/\/+$/, '')}/models`;
+      const cleanUrl = config.baseUrl.replace(/\/+$/, '');
+      const url = cleanUrl.endsWith('/models') ? cleanUrl : `${cleanUrl}/models`;
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -23,6 +24,54 @@ export class OpenAICompatibleProvider implements LLMProvider {
       return { success: true };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  }
+
+  public async fetchModels(config: ProviderConfig): Promise<{ success: boolean; models: Array<{ id: string; name: string; ownedBy?: string }>; error?: string }> {
+    try {
+      const cleanUrl = config.baseUrl.replace(/\/+$/, '');
+      const url = cleanUrl.endsWith('/models') ? cleanUrl : `${cleanUrl}/models`;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (config.apiKey) {
+        headers['Authorization'] = `Bearer ${config.apiKey}`;
+      }
+
+      const res = await fetch(url, { method: 'GET', headers });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        return { success: false, models: [], error: `HTTP ${res.status}: ${text.slice(0, 200)}` };
+      }
+
+      const json = (await res.json()) as any;
+      let rawList: any[] = [];
+      if (Array.isArray(json)) {
+        rawList = json;
+      } else if (Array.isArray(json?.data)) {
+        rawList = json.data;
+      } else if (Array.isArray(json?.models)) {
+        rawList = json.models;
+      }
+
+      const models = rawList
+        .map((item: any) => {
+          if (typeof item === 'string') return { id: item, name: item };
+          const id = item?.id || item?.name || item?.model;
+          if (!id) return null;
+          return {
+            id: String(id),
+            name: item?.name || item?.id || String(id),
+            ownedBy: item?.owned_by || item?.owner,
+          };
+        })
+        .filter((m): m is { id: string; name: string; ownedBy?: string } => !!m);
+
+      models.sort((a, b) => a.id.localeCompare(b.id));
+
+      return { success: true, models };
+    } catch (err: unknown) {
+      return { success: false, models: [], error: err instanceof Error ? err.message : String(err) };
     }
   }
 

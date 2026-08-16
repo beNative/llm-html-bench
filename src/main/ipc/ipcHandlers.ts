@@ -19,6 +19,7 @@ import { Logger } from '../utils/logger';
 import { extractHtml } from '../../shared/utils/htmlExtractor';
 import { APP_VERSION } from '../../shared/constants/defaults';
 import { LogLevel } from '../../shared/types/ipc';
+import { Model } from '../../shared/types/entities';
 import {
   CreatePromptInput,
   UpdatePromptInput,
@@ -130,10 +131,20 @@ export function registerIpcHandlers(services: {
   ipcMain.handle(IPC_CHANNELS.PROVIDER_SAVE_CONFIG, (_, config: ProviderConfig) =>
     settingsService.saveProviderConfig(config)
   );
+  ipcMain.handle(IPC_CHANNELS.PROVIDER_DELETE_CONFIG, (_, configId: string) =>
+    settingsService.deleteProviderConfig(configId)
+  );
   ipcMain.handle(IPC_CHANNELS.PROVIDER_TEST, async (_, config: ProviderConfig) => {
     const provider = ProviderRegistry.getProvider(config.type);
     if (!provider) return { success: false, error: `No provider found for type: ${config.type}` };
     return provider.testConnection(config);
+  });
+  ipcMain.handle(IPC_CHANNELS.PROVIDER_FETCH_MODELS, async (_, config: ProviderConfig) => {
+    const provider = ProviderRegistry.getProvider(config.type);
+    if (!provider || !provider.fetchModels) {
+      return { success: false, models: [], error: `Provider ${config.type} does not support model discovery` };
+    }
+    return provider.fetchModels(config);
   });
   ipcMain.handle(
     IPC_CHANNELS.PROVIDER_EXECUTE_RUN,
@@ -143,6 +154,8 @@ export function registerIpcHandlers(services: {
         promptVersionId: string;
         modelId: string;
         providerConfigId: string;
+        modelName?: string;
+        modelDisplayName?: string;
         temperature?: number;
         topP?: number;
         maxTokens?: number;
@@ -160,15 +173,29 @@ export function registerIpcHandlers(services: {
         throw new Error('Prompt version not found');
       }
 
-      const model = modelRepo.getModelById(request.modelId);
-      if (!model) {
-        throw new Error('Model not found');
-      }
-
       const configs = settingsService.getProviderConfigs();
       const config = configs.find((c) => c.id === request.providerConfigId);
       if (!config) {
         throw new Error('Provider configuration not found');
+      }
+
+      let model: Model | null = modelRepo.getModelById(request.modelId);
+      if (!model) {
+        const allModels = modelRepo.getModels();
+        model =
+          allModels.find(
+            (m) =>
+              m.model_name === request.modelId ||
+              m.display_name?.toLowerCase() === request.modelId.toLowerCase()
+          ) || null;
+      }
+      if (!model) {
+        // Auto-register model in catalog if it was discovered live
+        model = modelRepo.createModel({
+          modelName: request.modelName || request.modelId,
+          displayName: request.modelDisplayName || request.modelName || request.modelId,
+          provider: config.name || 'openai-compatible',
+        });
       }
 
       const provider = ProviderRegistry.getProvider(config.type);
@@ -189,7 +216,7 @@ export function registerIpcHandlers(services: {
 
       return runRepo.createModelRun({
         promptVersionId: request.promptVersionId,
-        modelId: request.modelId,
+        modelId: model.id,
         temperature: request.temperature,
         topP: request.topP,
         maxTokens: request.maxTokens,
@@ -343,6 +370,17 @@ export function registerIpcHandlers(services: {
   ipcMain.handle(IPC_CHANNELS.UPDATER_QUIT_AND_INSTALL, () => AutoUpdateService.quitAndInstall());
 
   // System
-  ipcMain.handle(IPC_CHANNELS.APP_GET_VERSION, () => APP_VERSION);
+  ipcMain.handle(IPC_CHANNELS.APP_GET_VERSION, () => {
+    try {
+      return app.getVersion() || APP_VERSION;
+    } catch {
+      return APP_VERSION;
+    }
+  });
   ipcMain.handle(IPC_CHANNELS.EXTRACT_HTML, (_, raw: string) => extractHtml(raw));
+  ipcMain.handle(IPC_CHANNELS.SYSTEM_OPEN_EXTERNAL, async (_, url: string) => {
+    if (url && (url.startsWith('https://') || url.startsWith('http://') || url.startsWith('mailto:'))) {
+      await shell.openExternal(url);
+    }
+  });
 }

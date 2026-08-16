@@ -209,11 +209,15 @@ export interface ElectronAPI {
   // Provider / Execution
   getProviderConfigs: () => Promise<ProviderConfig[]>;
   saveProviderConfig: (config: ProviderConfig) => Promise<void>;
+  deleteProviderConfig: (configId: string) => Promise<void>;
   testProviderConnection: (config: ProviderConfig) => Promise<{ success: boolean; error?: string }>;
+  fetchProviderModels: (config: ProviderConfig) => Promise<{ success: boolean; models: Array<{ id: string; name: string; ownedBy?: string }>; error?: string }>;
   executeBenchmarkRun: (request: {
     promptVersionId: string;
     modelId: string;
     providerConfigId: string;
+    modelName?: string;
+    modelDisplayName?: string;
     temperature?: number;
     topP?: number;
     maxTokens?: number;
@@ -263,6 +267,7 @@ export interface ElectronAPI {
   // System
   getAppVersion: () => Promise<string>;
   extractHtml: (raw: string) => Promise<string>;
+  openExternalUrl: (url: string) => Promise<void>;
 }
 
 export type UpdateStatus =

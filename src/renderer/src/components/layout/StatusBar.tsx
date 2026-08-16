@@ -13,6 +13,8 @@ export const StatusBar: React.FC = () => {
     isLogPanelOpen,
     toggleLogPanel,
     logCounts,
+    appVersion,
+    openAboutModal,
   } = useApp();
   const { theme, toggleTheme } = useTheme();
   const [dbInfo, setDbInfo] = useState<DatabaseInfo | null>(null);
@@ -138,7 +140,29 @@ export const StatusBar: React.FC = () => {
           </button>
         </Tooltip>
 
-        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>LLM HTML Bench v1.0.0</span>
+        <Tooltip content="About LLM HTML Bench & GitHub Repository" position="top">
+          <span
+            onClick={openAboutModal}
+            style={{
+              fontSize: '10px',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              padding: '2px 4px',
+              borderRadius: 'var(--radius-sm)',
+              transition: 'all 0.1s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--accent-primary)';
+              e.currentTarget.style.backgroundColor = 'var(--accent-primary-light)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--text-muted)';
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            LLM HTML Bench v{appVersion}
+          </span>
+        </Tooltip>
       </div>
     </footer>
   );

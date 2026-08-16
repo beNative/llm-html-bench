@@ -160,10 +160,13 @@ This isolates and mirrors console messages in the application's **Console Drawer
 
 ---
 
-## 6. LLM Provider Execution Engine
+## 6. LLM Provider Execution & Model Discovery Engine
 
 - **Provider Registry**: `src/main/providers/providerRegistry.ts`
-- **OpenAI Compatible Client**: `src/main/providers/openaiProvider.ts` communicates with OpenAI, OpenRouter, LM Studio, Ollama, and vLLM endpoints.
+- **Multi-Endpoint Management**: `src/main/services/settingsService.ts` persists multiple local and cloud provider configurations with secure `safeStorage` encryption for API keys.
+- **OpenAI Compatible Client**: `src/main/providers/openaiProvider.ts` communicates with OpenAI, OpenRouter, LM Studio, Ollama, vLLM, and SGLang endpoints.
+- **Dynamic Model Auto-Discovery (`/v1/models`)**: Queries endpoint models and normalizes IDs, display names, and owner metadata.
+- **Automatic Catalog Registration**: The IPC handler automatically registers discovered models into SQLite on the fly during benchmark execution if not already present.
 - **Streaming & Token Telemetry**: Automatically records total duration in milliseconds, completion tokens, and tokens per second throughput.
 - **SafeStorage Encryption**: API keys are securely encrypted using Windows DPAPI / macOS Keychain / Linux Secret Service before disk storage.
 

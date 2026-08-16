@@ -31,9 +31,17 @@ export interface ProviderConfig {
   enabled: boolean;
 }
 
+export interface DiscoveredModel {
+  id: string;
+  name: string;
+  ownedBy?: string;
+  contextWindow?: number;
+}
+
 export interface LLMProvider {
   id: string;
   name: string;
   generate(request: GenerationRequest, config: ProviderConfig): Promise<GenerationResult>;
   testConnection(config: ProviderConfig): Promise<{ success: boolean; error?: string }>;
+  fetchModels?(config: ProviderConfig): Promise<{ success: boolean; models: DiscoveredModel[]; error?: string }>;
 }

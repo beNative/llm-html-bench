@@ -90,37 +90,38 @@ Track generations across specific provider architectures, parameter sizes, and q
 
 ---
 
-## 5. Recording & Editing Benchmark Runs
+## 5. Benchmark Run History (Master-Detail Inspector)
 
-You can record benchmark outputs via **Manual Paste** (for web chats, command-line local models, or proprietary UI runs):
-1. Click **Add Output** in the toolbar or inside a prompt view.
-2. Select the **Target Prompt**, **Prompt Version**, and **Generating Model**.
-3. (Optional) Record generation parameters: *Temperature*, *Top P*, *Generation Time (ms)*, *Output Tokens*, and *Tokens/Second*.
-4. Paste the raw LLM response. The built-in parser automatically extracts clean HTML from markdown code fences (` ```html ... ``` `) while permanently preserving the original raw output.
-5. (Optional) Provide initial ratings or save to score later in the Comparison view.
-6. Click **Save Benchmark Output**.
-
-### Editing Generated Outputs & Run Notes
-- In the **Runs History** tab, the **Prompts** runs table, or the **Compare** laboratory view, click the **Edit** icon on any run card/row.
-- The **Edit Output Modal** allows you to:
-  - Modify the HTML source code directly in Monaco editor with live iframe preview.
-  - Tweak raw model responses or add run observations/notes.
-  - Choose between in-place updating or saving as a modified output iteration (`is_modified = 1`).
-
-### Deleting Benchmark Runs
-- Click the **Delete** button (trash icon) on any run row or inside the Output Inspection modal.
-- Confirming permanently removes the run, its extracted HTML, screenshots, and associated score evaluations.
+The **Benchmark Run History** tab provides an integrated master-detail inspection workspace:
+- **Left Master Pane**:
+  - Real-time search across prompt names, models, and notes.
+  - Provenance filter (*All Sources*, *API Execution*, *Manual Paste*, *Imported Dataset*).
+  - Multi-metric sorting (*Newest First*, *Oldest First*, *Highest Score*, *Fastest Speed*, *Shortest Duration*).
+  - Visual run cards displaying model name, favorite star, score badge, prompt version, date, latency, and speed (tok/s).
+- **Right Detail Inspector**:
+  - **Quick Action Bar**: Compare, Edit Output, Copy HTML, Copy Raw, Delete Run.
+  - **Live Preview**: Sandboxed real-time interactive iframe rendering.
+  - **Extracted HTML**: Read-only Monaco code editor with syntax highlighting and character metrics.
+  - **Raw Model Response**: Markdown code editor showing raw LLM generation.
+  - **Metadata & Parameters**: Latency, tokens/sec, token counts, temperature, top-p, seed, and notes.
+  - **Evaluation & Scoring**: Interactive grading panel for ratings and favoriting.
 
 ---
 
-## 6. Live API Execution
+## 6. Live Multi-Provider Execution & Auto-Discovery
 
-For automated, reproducible benchmarking directly from LLM endpoints:
-1. Configure your endpoint in **Settings & DB** &rarr; **API Provider Configurations** (supports OpenAI, OpenRouter, LM Studio, Ollama, vLLM, and any OpenAI-compatible server). API keys are encrypted at rest using system-level `safeStorage`.
-2. Click **Run Benchmark** in the header.
-3. Select your provider, target prompt, prompt version, and target model.
-4. Set sampling parameters (*Temperature*, *Top P*, *Max Tokens*).
-5. Click **Start Execution**. LLM HTML Bench streams the request, captures timing and token telemetry, parses the generated HTML, and immediately opens the inspection view.
+For automated, reproducible benchmarking directly against local or cloud engines:
+1. **Manage Provider Endpoints** in **Settings & DB** (supports **LM Studio**, **Ollama**, **OpenRouter**, **OpenAI**, **vLLM**, and custom OpenAI-compatible endpoints).
+   - Use **1-click Presets** to quickly configure popular local and cloud providers.
+   - API keys are encrypted at rest using OS-level `safeStorage`.
+   - Click **Auto-Discover Models** on any endpoint to instantly query `/v1/models` and view available models, with a 1-click **Register to Catalog** option.
+2. Click **Run Benchmark** (`Ctrl+R` or top toolbar).
+3. Select your provider endpoint:
+   - Models are **automatically discovered live** from the endpoint.
+   - You can choose from **Auto-Discovered Models** or **Catalog Models**.
+   - Zero manual entry: executing against any discovered model automatically registers it in the database catalog on the fly.
+4. Select target prompt, version, and parameters (*Temperature*, *Top P*, *Max Tokens*).
+5. Click **Start Execution**. LLM HTML Bench executes the test, logs metrics, parses HTML, and immediately navigates to comparison and scoring.
 
 ---
 

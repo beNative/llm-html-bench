@@ -49,7 +49,9 @@ export const IPC_CHANNELS = {
   // Provider
   PROVIDER_GET_CONFIGS: 'provider:get-configs',
   PROVIDER_SAVE_CONFIG: 'provider:save-config',
+  PROVIDER_DELETE_CONFIG: 'provider:delete-config',
   PROVIDER_TEST: 'provider:test',
+  PROVIDER_FETCH_MODELS: 'provider:fetch-models',
   PROVIDER_EXECUTE_RUN: 'provider:execute-run',
 
   // Database
@@ -96,4 +98,5 @@ export const IPC_CHANNELS = {
   // System
   APP_GET_VERSION: 'app:get-version',
   EXTRACT_HTML: 'app:extract-html',
+  SYSTEM_OPEN_EXTERNAL: 'system:open-external',
 } as const;

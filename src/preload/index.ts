@@ -54,7 +54,9 @@ const api: ElectronAPI = {
   // Provider / Execution
   getProviderConfigs: () => ipcRenderer.invoke(IPC_CHANNELS.PROVIDER_GET_CONFIGS),
   saveProviderConfig: (config) => ipcRenderer.invoke(IPC_CHANNELS.PROVIDER_SAVE_CONFIG, config),
+  deleteProviderConfig: (configId) => ipcRenderer.invoke(IPC_CHANNELS.PROVIDER_DELETE_CONFIG, configId),
   testProviderConnection: (config) => ipcRenderer.invoke(IPC_CHANNELS.PROVIDER_TEST, config),
+  fetchProviderModels: (config) => ipcRenderer.invoke(IPC_CHANNELS.PROVIDER_FETCH_MODELS, config),
   executeBenchmarkRun: (req) => ipcRenderer.invoke(IPC_CHANNELS.PROVIDER_EXECUTE_RUN, req),
 
   // Database Management
@@ -119,6 +121,7 @@ const api: ElectronAPI = {
   // System
   getAppVersion: () => ipcRenderer.invoke(IPC_CHANNELS.APP_GET_VERSION),
   extractHtml: (raw) => ipcRenderer.invoke(IPC_CHANNELS.EXTRACT_HTML, raw),
+  openExternalUrl: (url) => ipcRenderer.invoke(IPC_CHANNELS.SYSTEM_OPEN_EXTERNAL, url),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', api);
