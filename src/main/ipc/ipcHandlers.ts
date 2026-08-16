@@ -127,24 +127,39 @@ export function registerIpcHandlers(services: {
   ipcMain.handle(IPC_CHANNELS.STATS_GET, () => statsRepo.getBenchmarkStats());
 
   // Provider
-  ipcMain.handle(IPC_CHANNELS.PROVIDER_GET_CONFIGS, () => settingsService.getProviderConfigs());
-  ipcMain.handle(IPC_CHANNELS.PROVIDER_SAVE_CONFIG, (_, config: ProviderConfig) =>
-    settingsService.saveProviderConfig(config)
-  );
-  ipcMain.handle(IPC_CHANNELS.PROVIDER_DELETE_CONFIG, (_, configId: string) =>
-    settingsService.deleteProviderConfig(configId)
-  );
+  ipcMain.handle(IPC_CHANNELS.PROVIDER_GET_CONFIGS, () => {
+    const configs = settingsService.getProviderConfigs();
+    Logger.debug('IPC', `Retrieved ${configs.length} provider configuration(s)`);
+    return configs;
+  });
+  ipcMain.handle(IPC_CHANNELS.PROVIDER_SAVE_CONFIG, (_, config: ProviderConfig) => {
+    Logger.info('IPC', `Saving provider configuration: "${config.name}" (${config.baseUrl})`);
+    return settingsService.saveProviderConfig(config);
+  });
+  ipcMain.handle(IPC_CHANNELS.PROVIDER_DELETE_CONFIG, (_, configId: string) => {
+    Logger.info('IPC', `Deleting provider configuration: ${configId}`);
+    return settingsService.deleteProviderConfig(configId);
+  });
   ipcMain.handle(IPC_CHANNELS.PROVIDER_TEST, async (_, config: ProviderConfig) => {
+    Logger.info('IPC', `Testing provider connection for: "${config.name}" (${config.baseUrl})`);
     const provider = ProviderRegistry.getProvider(config.type);
     if (!provider) return { success: false, error: `No provider found for type: ${config.type}` };
     return provider.testConnection(config);
   });
   ipcMain.handle(IPC_CHANNELS.PROVIDER_FETCH_MODELS, async (_, config: ProviderConfig) => {
+    Logger.info('IPC', `Fetching available models for provider: "${config.name}" (${config.baseUrl})`);
     const provider = ProviderRegistry.getProvider(config.type);
     if (!provider || !provider.fetchModels) {
+      Logger.warn('IPC', `Provider ${config.type} does not support model discovery`);
       return { success: false, models: [], error: `Provider ${config.type} does not support model discovery` };
     }
-    return provider.fetchModels(config);
+    const result = await provider.fetchModels(config);
+    if (result.success) {
+      Logger.info('IPC', `Successfully discovered ${result.models.length} model(s) for "${config.name}"`);
+    } else {
+      Logger.warn('IPC', `Model discovery failed for "${config.name}": ${result.error}`);
+    }
+    return result;
   });
   ipcMain.handle(
     IPC_CHANNELS.PROVIDER_EXECUTE_RUN,

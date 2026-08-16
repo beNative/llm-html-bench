@@ -40,6 +40,7 @@ export const RunBenchmarkModal: React.FC = () => {
   const [modelSource, setModelSource] = useState<'discovered' | 'catalog'>('discovered');
   const [discoveredModels, setDiscoveredModels] = useState<DiscoveredModel[]>([]);
   const [isDiscovering, setIsDiscovering] = useState<boolean>(false);
+  const [discoveryNotice, setDiscoveryNotice] = useState<string | null>(null);
   const [selectedDiscoveredId, setSelectedDiscoveredId] = useState<string>('');
   const [selectedCatalogModelId, setSelectedCatalogModelId] = useState<string>('');
 
@@ -98,23 +99,21 @@ export const RunBenchmarkModal: React.FC = () => {
   const discoverModelsForConfig = async (config: ProviderConfig) => {
     if (!window.electronAPI) return;
     setIsDiscovering(true);
-    setErrorMsg(null);
+    setDiscoveryNotice(null);
     try {
       const res = await window.electronAPI.fetchProviderModels(config);
       if (res.success && res.models.length > 0) {
         setDiscoveredModels(res.models);
         setSelectedDiscoveredId(res.models[0].id);
         setModelSource('discovered');
+        setDiscoveryNotice(null);
       } else {
         setDiscoveredModels([]);
-        setModelSource('catalog');
-        if (res.error) {
-          console.warn('Discovery notice:', res.error);
-        }
+        setDiscoveryNotice(res.error || `No models returned from ${config.baseUrl}`);
       }
     } catch (err: unknown) {
       setDiscoveredModels([]);
-      setModelSource('catalog');
+      setDiscoveryNotice(err instanceof Error ? err.message : String(err));
     } finally {
       setIsDiscovering(false);
     }
@@ -379,14 +378,46 @@ export const RunBenchmarkModal: React.FC = () => {
           {modelSource === 'discovered' ? (
             <div>
               {discoveredModels.length === 0 ? (
-                <div style={{ padding: '12px', textAlign: 'center', backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', fontSize: '11px' }}>
+                <div style={{ padding: '12px 14px', textAlign: 'left', backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {isDiscovering ? (
-                    'Querying endpoint for available models...'
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
-                      <span>No models discovered from {activeConfig?.baseUrl || 'endpoint'}.</span>
-                      <span style={{ fontSize: '10px' }}>Make sure your local engine (LM Studio, Ollama, vLLM) or API server is running, or switch to Catalog Models.</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+                      <RotateCw size={13} className="spin-anim" />
+                      <span>Querying candidate endpoints for available models on {activeConfig?.baseUrl}...</span>
                     </div>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-warning)', fontWeight: 600 }}>
+                        <AlertCircle size={14} />
+                        <span>Could not discover models from {activeConfig?.name || 'endpoint'}:</span>
+                      </div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--accent-danger)', backgroundColor: 'var(--bg-card)', padding: '6px 8px', borderRadius: 'var(--radius-xs)', wordBreak: 'break-all' }}>
+                        {discoveryNotice || `No models responded at ${activeConfig?.baseUrl}`}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                          Check if your local server (LM Studio, Ollama, vLLM) is running with CORS enabled, or switch to Catalog Models.
+                        </span>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            icon={<RotateCw size={11} />}
+                            onClick={() => activeConfig && discoverModelsForConfig(activeConfig)}
+                          >
+                            Retry
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setModelSource('catalog')}
+                          >
+                            Use Catalog
+                          </Button>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               ) : (
