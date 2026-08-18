@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.5.0] - 2026-08-18
+
+### 🔬 Compare Lab Master-Detail Redesign & Multi-Model Comparative Suite
+
+#### 🌟 Key Features & Architectural Enhancements
+- **Master-Detail 2-Pane Architecture (`ComparePage.tsx`)**:
+  - Completely redesigned Compare Lab into a unified master-detail workspace matching the organization and aesthetic of Run History.
+  - **Left Master Catalog (380px)**: Real-time search across model names, prompts, notes, and providers; filtering by prompt to isolate runs generated for the same challenge; multi-metric sorting (Newest, Oldest, Highest Score, Fastest Speed, Shortest Latency); provenance filtering (All Sources, API Benchmark, Manual Paste, Imported).
+  - **Active Slot Chips**: Visual slot chips with color accents (`[A]`, `[B]`, `[C]`, `[D]`) with 1-click slot removal.
+  - **Rich Interactive Selection Cards**: Cards with slot selection indicators (`[A]`, `[B]`, `[C]`, `[D]`), model name, star, score badge, prompt version, execution latency, tok/s, and source tags.
+  - **1-Click Quick Compare**: Added "Compare Top 2" button to instantly load the two most recent runs into side-by-side comparison slots.
+- **6 Specialized Comparison Workspace Tabs**:
+  - 👁️ **Live Preview**: Sandboxed real-time interactive previews with responsive viewport presets (*Desktop 1920×1080*, *Tablet*, *Mobile*, *Custom*), zoom controls, and synchronized scrolling.
+  - 💻 **Extracted HTML**: Side-by-side Monaco code editors with full HTML/CSS syntax highlighting.
+  - ⚡ **Split View**: Synchronized live preview on top and source code below for each compared model.
+  - 🔀 **Monaco Diff Viewer**: Visual side-by-side Monaco Diff viewer highlighting line and character differences (with dynamic model selectors for >2 runs).
+  - 📊 **Metrics Matrix**: Side-by-side comparative table analyzing Overall Score, all 5 evaluation dimensions (Visual Quality, Prompt Adherence, Functionality, Code Quality, Creativity), Generation Speed (tok/s), Latency, Token metrics (In/Out), HTML size, Sampling Parameters, and timestamps.
+  - 🏆 **Head-to-Head Arena & Scoring**: Head-to-head winner declaration selector (`HeadToHeadSelector`) + simultaneous side-by-side evaluation rating panels (`EvaluationPanel`) to grade models concurrently.
+- **Synchronized Viewport & Console Integration**:
+  - Integrated `ViewportControls` with responsive sizing, synchronized zoom, synchronized scrolling across iframes, reload all sandboxes, and per-slot collapsible JavaScript console drawer with real-time error badge counters.
+
+---
+
 ## [1.4.0] - 2026-08-16
 
 ### ⚡ Live Token-by-Token Streaming Engine & Real-Time Progressive Preview

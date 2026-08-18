@@ -130,16 +130,23 @@ For automated, reproducible benchmarking directly against local or cloud engines
 
 ---
 
-## 7. Side-by-Side Comparison & Inspector
+## 7. Side-by-Side Comparison & Compare Lab (Master-Detail Workspace)
 
-The **Compare Mode** is the heart of the inspection laboratory:
-- **Select up to 4 runs** simultaneously to compare side-by-side.
-- **Synchronized Viewport Modes**: Toggle between *Responsive Canvas*, *Desktop (1920×1080)*, *Tablet (768×1024)*, and *Mobile (375×667)*.
-- **Isolated Sandboxed Execution**: Each run executes in an independent, security-isolated iframe with strict script sandboxing.
-- **Console & Error Drawer**: Real-time monitoring captures runtime JavaScript errors, warnings, and `console.log` statements for each model without polluting the main application.
-- **Source Code Inspection & Monaco Diff Viewer**: Compare raw code or extracted HTML side-by-side with visual line and word diff highlighting.
+The **Compare Lab** provides a systematic Master-Detail comparative inspection workspace:
+- **Left Master Catalog (380px Sidebar)**:
+  - **Live Search & Filters**: Search across models, prompts, notes, and providers; filter by prompt to isolate runs generated for the same benchmark challenge; sort by newest, score, speed, or latency.
+  - **Active Slot Chips**: Visual slot chips with color accents (`[A]`, `[B]`, `[C]`, `[D]`) with 1-click slot removal.
+  - **Interactive Selection Cards**: Click any card or slot checkbox (`[A]`, `[B]`, etc.) to toggle comparison slots (up to 4 models simultaneously).
+  - **1-Click Quick Compare**: Instantly load the 2 most recent runs with "Compare Top 2".
+- **Right Comparison Workspace & Dedicated Tabs**:
+  - 👁️ **Live Preview**: Sandboxed real-time interactive previews with responsive presets (*Desktop 1920×1080*, *Tablet*, *Mobile*, *Custom*), zoom controls, and synchronized scrolling.
+  - 💻 **Extracted HTML**: Side-by-side Monaco code editors with full syntax highlighting.
+  - ⚡ **Split View**: Synchronized live preview on top and source code below for each model.
+  - 🔀 **Monaco Diff Viewer**: Visual side-by-side line and character diff highlighting between model outputs.
+  - 📊 **Metrics Matrix**: Side-by-side comparative table analyzing Overall Score, all 5 evaluation dimensions, generation speed (tok/s), latency, token counts, and sampling parameters.
+  - 🏆 **Head-to-Head Arena & Scoring**: Pairwise winner declaration (`HeadToHeadSelector`) + simultaneous side-by-side 5-dimension evaluation cards (`EvaluationPanel`).
+- **Console & Error Drawers**: Per-slot collapsible JavaScript console drawer capturing runtime errors and logs with live error badge counters.
 - **In-Situ Output Editing**: Tweak HTML code and re-test directly inside comparison cards without navigating away.
-- **Head-to-Head Matchup Arena**: Declare winners between model pairs (Left Wins, Right Wins, or Tie) to drive Elo-style win-rate rankings.
 
 ---
 
