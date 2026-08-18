@@ -473,6 +473,18 @@ export const CommandPalette: React.FC = () => {
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIndex((prev) => (prev - 1 >= 0 ? prev - 1 : filteredCommands.length - 1));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setSelectedIndex(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setSelectedIndex(Math.max(0, filteredCommands.length - 1));
+    } else if (e.key === 'PageDown') {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.min(filteredCommands.length - 1, prev + 5));
+    } else if (e.key === 'PageUp') {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.max(0, prev - 5));
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (filteredCommands[selectedIndex]) {

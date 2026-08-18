@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.6.0] - 2026-08-18
+
+### ⌨️ Windows-Native Keyboard Navigation Suite & Desktop Accessibility
+
+#### 🌟 Key Features & Architectural Enhancements
+- **Windows-Native Keyboard Navigation Suite (`useListKeyboardNav.ts`)**:
+  - Implemented desktop-grade keyboard navigation across all master lists, catalogs, and sidebars (`RunsPage`, `PromptsPage`, `ComparePage`, `ModelsPage`, `CollectionsPage`, `InfoPage`, `CommandPalette`).
+  - **Standard Desktop Keys**:
+    - `↓ ArrowDown` / `↑ ArrowUp`: Step through items with smooth auto-scrolling into view.
+    - `Home` / `End`: Jump immediately to first or last list item.
+    - `PageDown` / `PageUp`: Fast pagination by 6 items per step.
+    - `Space` / `↵ Enter`: Activate item or toggle slot in Compare Lab catalog.
+    - `Delete`: Prompt deletion for selected run, prompt, model, or benchmark suite.
+    - `E`: Open Edit metadata or output modal for active item.
+    - `C` / `R`: Quick-copy primary artifacts (HTML, Prompt text, Raw LLM response).
+  - **Global Workspace Shortcuts**:
+    - `Ctrl + 1` .. `Ctrl + 8` / `Alt + 1..8`: Instant main tab navigation across all 8 app pages.
+    - `1` .. `6` / `←` / `→`: Cycle detail inspection and comparison tabs.
+    - `Ctrl + R`: Open Run Benchmark Modal.
+    - `Ctrl + N`: Create New Prompt.
+    - `Ctrl + M`: Register New Model.
+    - `Ctrl + B`: Quick SQLite database backup.
+    - `Ctrl + L` / `F12`: Toggle Logging & Diagnostics drawer.
+    - `F1`: Open About & System Guide.
+    - `Escape`: Close modals and blur inputs to resume keyboard navigation.
+  - **Input Guarding & Focus Styles**: Single-key shortcuts automatically pause while typing inside form inputs, textareas, and Monaco editors; distinct `:focus-visible` outline rings throughout UI.
+- **Unit Test Suite Expansion (`tests/keyboardNav.test.ts`)**: Added automated tests verifying list index math, bounds clamping, pagination steps, and detail tab cycling.
+
+---
+
 ## [1.5.0] - 2026-08-18
 
 ### 🔬 Compare Lab Master-Detail Redesign & Multi-Model Comparative Suite

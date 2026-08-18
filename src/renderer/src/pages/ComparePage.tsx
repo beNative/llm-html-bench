@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../context/AppContext';
+import { useListKeyboardNav } from '../hooks/useListKeyboardNav';
 import { ModelRun, Prompt } from '@shared/types/entities';
 import { IsolatedFrame, ConsoleEntry } from '../components/preview/IsolatedFrame';
 import { ViewportControls } from '../components/preview/ViewportControls';
@@ -81,6 +82,10 @@ export const ComparePage: React.FC = () => {
   const [editingRun, setEditingRun] = useState<ModelRun | null>(null);
   const [deletingRun, setDeletingRun] = useState<ModelRun | null>(null);
 
+  // Keyboard navigation & list ref
+  const catalogContainerRef = useRef<HTMLDivElement>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number>(0);
+
   // Diff Custom Selection (for >2 runs)
   const [diffLeftId, setDiffLeftId] = useState<string>('');
   const [diffRightId, setDiffRightId] = useState<string>('');
@@ -157,6 +162,42 @@ export const ComparePage: React.FC = () => {
       .map((id) => allRuns.find((r) => r.id === id))
       .filter((r): r is ModelRun => r !== undefined);
   }, [allRuns, compareRunIds]);
+
+  useListKeyboardNav({
+    itemCount: sortedRuns.length,
+    selectedIndex: focusedIndex,
+    onSelectIndex: (idx) => setFocusedIndex(idx),
+    onActivate: (idx) => {
+      if (sortedRuns[idx]) {
+        toggleCompareRunId(sortedRuns[idx].id);
+      }
+    },
+    containerRef: catalogContainerRef,
+    pageSize: 6,
+    onExtraKey: (e) => {
+      // 1-6 keys: switch tab
+      if (['1', '2', '3', '4', '5', '6'].includes(e.key) && !e.ctrlKey && !e.altKey) {
+        const tabs: CompareTab[] = ['preview', 'html', 'split', 'diff', 'matrix', 'eval'];
+        const target = tabs[parseInt(e.key, 10) - 1];
+        if (target === 'diff' && compareRuns.length < 2) {
+          showToast('Monaco Diff requires at least 2 runs selected', 'info');
+          return true;
+        }
+        setActiveTab(target);
+        return true;
+      }
+      // R: reload all
+      if (e.key.toLowerCase() === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        handleReloadAll();
+        return true;
+      }
+      // C: copy prompt
+      if (e.key.toLowerCase() === 'c' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        handleCopyPrompt();
+        return true;
+      }
+    },
+  });
 
   // Sync diff selection defaults when compareRuns change
   useEffect(() => {
@@ -493,26 +534,35 @@ export const ComparePage: React.FC = () => {
         </div>
 
         {/* Master Runs List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
+        <div ref={catalogContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
           {sortedRuns.length === 0 ? (
             <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px' }}>
               No model runs recorded matching filters.
             </div>
           ) : (
-            sortedRuns.map((r) => {
+            sortedRuns.map((r, idx) => {
               const selectedIndex = compareRunIds.indexOf(r.id);
               const isSelected = selectedIndex !== -1;
+              const isFocused = idx === focusedIndex;
               const slotMeta = isSelected ? SLOT_COLORS[selectedIndex % SLOT_COLORS.length] : null;
 
               return (
                 <div
                   key={r.id}
-                  onClick={() => toggleCompareRunId(r.id)}
+                  data-list-item="true"
+                  tabIndex={0}
+                  onClick={() => {
+                    setFocusedIndex(idx);
+                    toggleCompareRunId(r.id);
+                  }}
+                  onFocus={() => setFocusedIndex(idx)}
                   style={{
                     padding: '9px 11px',
                     borderRadius: 'var(--radius-md)',
-                    backgroundColor: isSelected ? slotMeta?.bg || 'var(--accent-primary-light)' : 'var(--bg-card)',
-                    border: `1px solid ${isSelected ? slotMeta?.border || 'rgba(59, 130, 246, 0.4)' : 'var(--border-subtle)'}`,
+                    backgroundColor: isSelected ? slotMeta?.bg || 'var(--accent-primary-light)' : isFocused ? 'var(--bg-tertiary)' : 'var(--bg-card)',
+                    border: `1px solid ${isSelected ? slotMeta?.border || 'rgba(59, 130, 246, 0.4)' : isFocused ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                    outline: isFocused ? '2px solid var(--accent-primary)' : 'none',
+                    outlineOffset: '-1px',
                     marginBottom: '6px',
                     cursor: 'pointer',
                     transition: 'all 0.12s ease',

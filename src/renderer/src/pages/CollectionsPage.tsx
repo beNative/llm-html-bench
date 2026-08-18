@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
+import { useListKeyboardNav } from '../hooks/useListKeyboardNav';
 import { Collection, Prompt } from '@shared/types/entities';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
@@ -118,6 +119,35 @@ export const CollectionsPage: React.FC = () => {
     }
   };
 
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const selectedIndex = useMemo(() => {
+    return collections.findIndex((c) => c.id === selectedCol?.id);
+  }, [collections, selectedCol?.id]);
+
+  useListKeyboardNav({
+    itemCount: collections.length,
+    selectedIndex,
+    onSelectIndex: (idx) => {
+      if (collections[idx]) {
+        setSelectedCol(collections[idx]);
+      }
+    },
+    containerRef: listContainerRef,
+    pageSize: 6,
+    onExtraKey: (e) => {
+      // Delete: delete suite
+      if (e.key === 'Delete') {
+        if (selectedCol) setIsDeleteModalOpen(true);
+        return true;
+      }
+      // E: edit suite
+      if (e.key.toLowerCase() === 'e' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (selectedCol) setIsEditModalOpen(true);
+        return true;
+      }
+    },
+  });
+
   return (
     <div style={{ flex: 1, display: 'flex', height: '100%', overflow: 'hidden' }}>
       {/* Sidebar: Collections List */}
@@ -148,18 +178,23 @@ export const CollectionsPage: React.FC = () => {
           </Button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '6px' }}>
+        <div ref={listContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '6px' }}>
           {collections.map((col) => {
             const isSelected = selectedCol?.id === col.id;
             return (
               <div
                 key={col.id}
+                data-list-item="true"
+                tabIndex={0}
                 onClick={() => setSelectedCol(col)}
+                onFocus={() => setSelectedCol(col)}
                 style={{
                   padding: '8px 10px',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: isSelected ? 'var(--accent-primary-light)' : 'transparent',
                   border: `1px solid ${isSelected ? 'rgba(59, 130, 246, 0.3)' : 'transparent'}`,
+                  outline: isSelected ? '2px solid var(--accent-primary)' : 'none',
+                  outlineOffset: '-1px',
                   marginBottom: '4px',
                   cursor: 'pointer',
                 }}

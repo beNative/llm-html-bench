@@ -213,14 +213,48 @@ Access the **Command Palette & Global Search** anytime by clicking the center co
 
 ---
 
-## 13. Keyboard Shortcuts
+## 13. Keyboard Shortcuts & Native Windows Navigation
+
+LLM HTML Bench features comprehensive keyboard accessibility modeled after native Windows desktop software.
+
+### Master Lists & Catalog Navigation
+
+All master-detail sidebars (Run History, Prompt Library, Compare Lab Catalog, Models, Benchmark Suites, Documentation) support standard keyboard list controls:
+
+| Key | Action |
+| :--- | :--- |
+| `↓ ArrowDown` | Move selection / focus to the next item |
+| `↑ ArrowUp` | Move selection / focus to the previous item |
+| `Home` | Jump selection immediately to the top (first item) |
+| `End` | Jump selection immediately to the bottom (last item) |
+| `PageDown` | Advance selection down by one page (6 items) |
+| `PageUp` | Move selection up by one page (6 items) |
+| `Space` / `↵ Enter` | Activate item or toggle slot in Compare Lab |
+| `Delete` | Prompt to delete selected run, prompt, model, or suite |
+| `E` | Open Edit metadata or output modal for active item |
+| `C` | Quick-copy primary artifact (HTML / Prompt text) |
+| `R` | Quick-copy raw LLM response (in Run History) |
+
+### Global Workspace Shortcuts
 
 | Shortcut | Action |
 | :--- | :--- |
 | `Ctrl + K` / `Ctrl + P` / `/` | Open Spotlight Command Palette & Global Search |
+| `Ctrl + 1` .. `Ctrl + 8` / `Alt + 1..8` | Switch Main Navigation Tabs (Dashboard, Prompts, Compare, Models, Suites, Runs, Settings, Info) |
+| `Ctrl + R` | Launch Run Benchmark Modal |
 | `Ctrl + N` | Create New Benchmark Prompt |
+| `Ctrl + M` | Register New Model |
+| `Ctrl + B` | Perform Quick SQLite Database Backup |
 | `Ctrl + Shift + C` | Open Comparison View with Selected Runs |
-| `F12` | Toggle Developer Tools & Diagnostics |
-| `Escape` | Close active dialog, menu, or modal window |
+| `Ctrl + L` / `F12` | Toggle Real-Time Logging & Diagnostics Drawer |
+| `F1` | Open About & System Guide Dialog |
+| `Escape` | Dismiss active dialog / blur search inputs to return to list navigation |
 
-*(Note: Global shortcuts are automatically guarded when typing inside form inputs and text areas).*
+### Detail Pane Tab Switching
+
+When viewing Run History or Compare Lab workspaces, press number keys `1` through `6` (or `←` / `→` arrows) to instantly cycle detail tabs without reaching for the mouse:
+- In **Run History**: `1` (Live Preview), `2` (Extracted HTML), `3` (Raw Response), `4` (Metadata), `5` (Evaluation Metrics)
+- In **Compare Lab**: `1` (Live Preview), `2` (Extracted HTML), `3` (Split View), `4` (Monaco Diff), `5` (Metrics Matrix), `6` (Head-to-Head & Scoring)
+
+*(Note: Single-key shortcuts and list arrows are automatically suspended while typing inside form inputs, textareas, and code editors. Press `Escape` at any time to unfocus inputs).*
+

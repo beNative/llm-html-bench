@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
+import { useListKeyboardNav } from '../hooks/useListKeyboardNav';
 import { Prompt, PromptVersion, ModelRun, HeadToHeadComparison, Tag, Collection } from '@shared/types/entities';
 import { DEFAULT_CATEGORIES } from '@shared/constants/defaults';
 import { Button } from '../components/common/Button';
@@ -238,6 +239,41 @@ export const PromptsPage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentVersionObj, editedPromptText, activePrompt]);
 
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const selectedIndex = useMemo(() => {
+    return prompts.findIndex((p) => p.id === selectedPromptId);
+  }, [prompts, selectedPromptId]);
+
+  useListKeyboardNav({
+    itemCount: prompts.length,
+    selectedIndex,
+    onSelectIndex: (idx) => {
+      if (prompts[idx]) {
+        setSelectedPromptId(prompts[idx].id);
+      }
+    },
+    containerRef: listContainerRef,
+    pageSize: 6,
+    onExtraKey: (e) => {
+      // Delete: delete prompt
+      if (e.key === 'Delete') {
+        if (activePrompt) setIsDeletePromptModalOpen(true);
+        return true;
+      }
+      // E: edit prompt metadata
+      if (e.key.toLowerCase() === 'e' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (activePrompt) setIsEditPromptModalOpen(true);
+        return true;
+      }
+      // 1-3: switch prompt tabs
+      if (['1', '2', '3'].includes(e.key) && !e.ctrlKey && !e.altKey) {
+        const tabs: ('runs' | 'editor' | 'h2h')[] = ['runs', 'editor', 'h2h'];
+        setActiveTab(tabs[parseInt(e.key, 10) - 1]);
+        return true;
+      }
+    },
+  });
+
   return (
     <div style={{ flex: 1, display: 'flex', height: '100%', overflow: 'hidden' }}>
       {/* Left Sidebar: Prompt Library Browser */}
@@ -322,7 +358,7 @@ export const PromptsPage: React.FC = () => {
         </div>
 
         {/* Prompt List Items */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '6px' }}>
+        <div ref={listContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '6px' }}>
           {prompts.length === 0 ? (
             <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px' }}>
               No prompts match filter.
@@ -333,12 +369,17 @@ export const PromptsPage: React.FC = () => {
               return (
                 <div
                   key={p.id}
+                  data-list-item="true"
+                  tabIndex={0}
                   onClick={() => setSelectedPromptId(p.id)}
+                  onFocus={() => setSelectedPromptId(p.id)}
                   style={{
                     padding: '8px 10px',
                     borderRadius: 'var(--radius-md)',
                     backgroundColor: isSelected ? 'var(--accent-primary-light)' : 'transparent',
                     border: `1px solid ${isSelected ? 'rgba(59, 130, 246, 0.3)' : 'transparent'}`,
+                    outline: isSelected ? '2px solid var(--accent-primary)' : 'none',
+                    outlineOffset: '-1px',
                     marginBottom: '4px',
                     cursor: 'pointer',
                     transition: 'all 0.1s ease',

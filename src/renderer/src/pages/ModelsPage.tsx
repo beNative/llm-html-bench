@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
+import { useListKeyboardNav } from '../hooks/useListKeyboardNav';
 import { ModelRun } from '@shared/types/entities';
 import { Button } from '../components/common/Button';
 import { ScoreBadge } from '../components/common/ScoreBadge';
@@ -82,6 +83,35 @@ export const ModelsPage: React.FC = () => {
     }
   }, [selectedModel?.id]);
 
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const selectedIndex = useMemo(() => {
+    return models.findIndex((m) => m.id === selectedModelId);
+  }, [models, selectedModelId]);
+
+  useListKeyboardNav({
+    itemCount: models.length,
+    selectedIndex,
+    onSelectIndex: (idx) => {
+      if (models[idx]) {
+        setSelectedModelId(models[idx].id);
+      }
+    },
+    containerRef: listContainerRef,
+    pageSize: 6,
+    onExtraKey: (e) => {
+      // Delete: delete model
+      if (e.key === 'Delete') {
+        if (selectedModel) setIsDeleteModelModalOpen(true);
+        return true;
+      }
+      // E: edit model
+      if (e.key.toLowerCase() === 'e' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (selectedModel) setIsEditModelModalOpen(true);
+        return true;
+      }
+    },
+  });
+
   return (
     <div style={{ flex: 1, display: 'flex', height: '100%', overflow: 'hidden' }}>
       {/* Left Sidebar: Models List */}
@@ -112,18 +142,23 @@ export const ModelsPage: React.FC = () => {
           </Button>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '6px' }}>
+        <div ref={listContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '6px' }}>
           {models.map((m) => {
             const isSelected = selectedModel?.id === m.id;
             return (
               <div
                 key={m.id}
+                data-list-item="true"
+                tabIndex={0}
                 onClick={() => setSelectedModelId(m.id)}
+                onFocus={() => setSelectedModelId(m.id)}
                 style={{
                   padding: '8px 10px',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: isSelected ? 'var(--accent-primary-light)' : 'transparent',
                   border: `1px solid ${isSelected ? 'rgba(59, 130, 246, 0.3)' : 'transparent'}`,
+                  outline: isSelected ? '2px solid var(--accent-primary)' : 'none',
+                  outlineOffset: '-1px',
                   marginBottom: '4px',
                   cursor: 'pointer',
                 }}

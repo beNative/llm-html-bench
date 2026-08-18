@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DocumentationDocs } from '@shared/types/ipc';
+import { useListKeyboardNav } from '../hooks/useListKeyboardNav';
 import { Button } from '../components/common/Button';
 import { Tooltip } from '../components/common/Tooltip';
 import { MarkdownViewer } from '../components/common/MarkdownViewer';
@@ -126,6 +127,24 @@ export const InfoPage: React.FC = () => {
     );
   }
 
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const selectedIndex = useMemo(() => {
+    return DOCS_LIST.findIndex((d) => d.key === activeDocKey);
+  }, [activeDocKey]);
+
+  useListKeyboardNav({
+    itemCount: DOCS_LIST.length,
+    selectedIndex,
+    onSelectIndex: (idx) => {
+      if (DOCS_LIST[idx]) {
+        setActiveDocKey(DOCS_LIST[idx].key);
+        setSearchQuery('');
+      }
+    },
+    containerRef: listContainerRef,
+    pageSize: 4,
+  });
+
   return (
     <div style={{ flex: 1, display: 'flex', height: '100%', overflow: 'hidden' }}>
       {/* Left Sub-Navigation */}
@@ -152,13 +171,19 @@ export const InfoPage: React.FC = () => {
         </div>
 
         {/* Document Switcher List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
+        <div ref={listContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
           {DOCS_LIST.map((doc) => {
             const isSelected = activeDocKey === doc.key;
             return (
               <div
                 key={doc.key}
+                data-list-item="true"
+                tabIndex={0}
                 onClick={() => {
+                  setActiveDocKey(doc.key);
+                  setSearchQuery('');
+                }}
+                onFocus={() => {
                   setActiveDocKey(doc.key);
                   setSearchQuery('');
                 }}
@@ -167,6 +192,8 @@ export const InfoPage: React.FC = () => {
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: isSelected ? 'var(--accent-primary-light)' : 'transparent',
                   border: `1px solid ${isSelected ? 'rgba(59, 130, 246, 0.3)' : 'transparent'}`,
+                  outline: isSelected ? '2px solid var(--accent-primary)' : 'none',
+                  outlineOffset: '-1px',
                   marginBottom: '6px',
                   cursor: 'pointer',
                   transition: 'all 0.1s ease',

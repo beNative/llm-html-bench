@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../context/AppContext';
+import { useListKeyboardNav } from '../hooks/useListKeyboardNav';
 import { ModelRun } from '@shared/types/entities';
 import { Button } from '../components/common/Button';
 import { ScoreBadge } from '../components/common/ScoreBadge';
@@ -26,6 +27,7 @@ export const RunsPage: React.FC = () => {
     showToast,
   } = useApp();
 
+  const listContainerRef = useRef<HTMLDivElement>(null);
   const [runs, setRuns] = useState<ModelRun[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterProvenance, setFilterProvenance] = useState<string>('all');
@@ -134,6 +136,67 @@ export const RunsPage: React.FC = () => {
     setTimeout(() => setCopiedType(null), 2000);
   };
 
+  const selectedIndex = useMemo(() => {
+    return sortedRuns.findIndex((r) => r.id === selectedRun?.id);
+  }, [sortedRuns, selectedRun?.id]);
+
+  useListKeyboardNav({
+    itemCount: sortedRuns.length,
+    selectedIndex,
+    onSelectIndex: (idx) => {
+      if (sortedRuns[idx]) {
+        setSelectedRunId(sortedRuns[idx].id);
+      }
+    },
+    containerRef: listContainerRef,
+    pageSize: 6,
+    onExtraKey: (e) => {
+      // Delete key: prompt to delete selected run
+      if (e.key === 'Delete') {
+        if (selectedRun) setDeletingRun(selectedRun);
+        return true;
+      }
+      // E: edit output
+      if (e.key.toLowerCase() === 'e' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (selectedRun) setEditingRun(selectedRun);
+        return true;
+      }
+      // C: copy HTML
+      if (e.key.toLowerCase() === 'c' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (selectedRun?.output?.html) {
+          handleCopy(selectedRun.output.html, 'html');
+          return true;
+        }
+      }
+      // R: copy raw
+      if (e.key.toLowerCase() === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (selectedRun?.output?.raw_output) {
+          handleCopy(selectedRun.output.raw_output, 'raw');
+          return true;
+        }
+      }
+      // Numbers 1-5: switch inspect tabs
+      if (['1', '2', '3', '4', '5'].includes(e.key) && !e.ctrlKey && !e.altKey) {
+        const tabs: ('preview' | 'html' | 'raw' | 'metadata' | 'eval')[] = ['preview', 'html', 'raw', 'metadata', 'eval'];
+        setInspectTab(tabs[parseInt(e.key, 10) - 1]);
+        return true;
+      }
+      // Left / Right arrow: cycle inspect tabs
+      if (e.key === 'ArrowLeft' && !e.ctrlKey && !e.altKey) {
+        const tabs: ('preview' | 'html' | 'raw' | 'metadata' | 'eval')[] = ['preview', 'html', 'raw', 'metadata', 'eval'];
+        const cur = tabs.indexOf(inspectTab);
+        setInspectTab(cur > 0 ? tabs[cur - 1] : tabs[tabs.length - 1]);
+        return true;
+      }
+      if (e.key === 'ArrowRight' && !e.ctrlKey && !e.altKey) {
+        const tabs: ('preview' | 'html' | 'raw' | 'metadata' | 'eval')[] = ['preview', 'html', 'raw', 'metadata', 'eval'];
+        const cur = tabs.indexOf(inspectTab);
+        setInspectTab(cur < tabs.length - 1 ? tabs[cur + 1] : tabs[0]);
+        return true;
+      }
+    },
+  });
+
   return (
     <div style={{ flex: 1, display: 'flex', height: '100%', overflow: 'hidden' }}>
       {/* Master Pane: Run History Catalog */}
@@ -233,7 +296,7 @@ export const RunsPage: React.FC = () => {
         </div>
 
         {/* Master Runs List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
+        <div ref={listContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
           {sortedRuns.length === 0 ? (
             <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px' }}>
               No model runs recorded matching filters.
@@ -244,12 +307,17 @@ export const RunsPage: React.FC = () => {
               return (
                 <div
                   key={r.id}
+                  data-list-item="true"
+                  tabIndex={0}
                   onClick={() => setSelectedRunId(r.id)}
+                  onFocus={() => setSelectedRunId(r.id)}
                   style={{
                     padding: '10px 12px',
                     borderRadius: 'var(--radius-md)',
                     backgroundColor: isSelected ? 'var(--accent-primary-light)' : 'var(--bg-card)',
                     border: `1px solid ${isSelected ? 'rgba(59, 130, 246, 0.4)' : 'var(--border-subtle)'}`,
+                    outline: isSelected ? '2px solid var(--accent-primary)' : 'none',
+                    outlineOffset: '-1px',
                     marginBottom: '6px',
                     cursor: 'pointer',
                     transition: 'all 0.12s ease',
