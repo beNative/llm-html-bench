@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.8.2] - 2026-08-19
+
+### ⚡ 2026 Next-Gen Frontier Model Lineup (Claude 5, GPT-5.6, DeepSeek V4, Gemini 3.7, Grok 4.6, Qwen 3.8)
+
+#### 🌟 Key Features & Architectural Enhancements
+- **Next-Gen 2026 Model Catalog (41 Models Across 9 Categories)**:
+  - Updated all provider presets to the active mid-2026 generational models:
+    - **Anthropic Claude 5 (Active 2026 Lineup)**: *Claude Opus 5 (July 2026 Reasoning & Agentic Flagship)*, *Claude Sonnet 5 (June 2026 Daily Driver)*, *Claude Fable 5 (Creative & Synthesis)*, *Claude Haiku 4.5*.
+    - **OpenAI GPT-5.6 / GPT-5 (Mid-2026)**: *GPT-5.6 Sol (Top-tier Frontier Reasoning Flagship)*, *GPT-5.6 Terra (Balanced Workhorse)*, *GPT-5.6 Luna (Fast & Cost-Efficient)*, *GPT-5.5 (Thinking Mode)*.
+    - **DeepSeek V4 (August 2026 GA)**: *DeepSeek-V4-Pro (August 13, 2026 1.6T MoE GA)*, *DeepSeek-V4-Flash (July 31, 2026 480B MoE)*, *DeepSeek-V4-Coder (680B Frontend & WebGL Specialist)*, *DeepSeek-V4-Lite 32B (Local)*.
+    - **Google Gemini 3.7 & 3.x (August 2026)**: *Gemini 3.7 Flash (August 13, 2026 Algorithmic Coding Leader)*, *Gemini 3.6 Pro (2M Context Multimodal Flagship)*, *Gemini 3.5 Flash Thinking*.
+    - **Alibaba Qwen 3.8 (August 2026)**: *Qwen 3.8-Max (2.4T MoE Flagship)*, *Qwen 3.8-27B Instruct (August 14, 2026 Open Weights)*, *Qwen 3.8-Coder 32B*, *QwQ 2.0 Thinking (64B)*.
+    - **xAI Grok 4 (August 2026)**: *xAI Grok 4.6 (August 12, 2026 SOTA Flagship with 500k Context)*, *xAI Grok 4.5 Flash*.
+    - **Meta Llama 4 & Muse**: *Llama 4 Scout (400B MoE)*, *Llama 4 Maverick (Dense 70B)*, *Meta Muse Spark (April 2026 Reasoning)*.
+    - **Mistral AI (2026)**: *Mistral Large 3 (675B MoE Apache 2.0)*, *Mistral Small 4 (March 2026 Reasoning)*, *Codestral 2601 (256k Context)*.
+    - **Microsoft, Amazon & Enterprise**: *Phi-4-Reasoning-Vision (15B)*, *Phi-4.5 Mini (4B)*, *Amazon Nova Pro 2 (500k Context)*, *Cohere Command R++ (2026)*.
+    - **Classic & Milestone Baselines**: Retains landmark baseline models (*Claude 3.7 Sonnet, Claude 3.5 Sonnet v2, GPT-4o, GPT-4o mini, DeepSeek R1, DeepSeek V3, Gemini 2.0 Flash, Llama 3.3 70B, Qwen 2.5 Coder 32B, SmolLM2 1.7B*) for longitudinal comparison.
+  - **Full Artificial Analysis Benchmark Correlation**: All 41 models mapped with verified intelligence indices, measured token throughput speeds, and token pricing.
+
+---
+
 ## [1.8.1] - 2026-08-19
 
 ### 🚀 Cutting-Edge 2025/2026 Model Catalog & CI/CD Pipeline Hardening
