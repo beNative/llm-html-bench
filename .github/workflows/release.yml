@@ -34,8 +34,18 @@ jobs:
           node-version: 22.x
           cache: 'npm'
 
-      - name: 📦 Install dependencies
-        run: npm ci
+      - name: 📦 Install dependencies with retry
+        shell: bash
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "Attempt $i: Installing npm dependencies..."
+            npm ci --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && exit 0 || {
+              echo "Attempt $i failed. Retrying in 15 seconds..."
+              sleep 15
+            }
+          done
+          echo "Failed to install dependencies after 5 attempts."
+          exit 1
 
       - name: 🔍 Validate Version Tag
         shell: bash
@@ -114,8 +124,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb libgbm1 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 || true
 
-      - name: 📦 Install npm dependencies
-        run: npm ci
+      - name: 📦 Install npm dependencies with retry
+        shell: bash
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "Attempt $i: Installing npm dependencies on ${{ matrix.platform-name }}..."
+            npm ci --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && exit 0 || {
+              echo "Attempt $i failed. Retrying in 15 seconds..."
+              sleep 15
+            }
+          done
+          echo "Failed to install dependencies on ${{ matrix.platform-name }} after 5 attempts."
+          exit 1
 
       - name: 🎨 Pre-generate Vector Icons
         run: |
