@@ -119,14 +119,6 @@ export const InfoPage: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-        Loading documentation suite...
-      </div>
-    );
-  }
-
   const listContainerRef = useRef<HTMLDivElement>(null);
   const selectedIndex = useMemo(() => {
     return DOCS_LIST.findIndex((d) => d.key === activeDocKey);
@@ -144,6 +136,14 @@ export const InfoPage: React.FC = () => {
     containerRef: listContainerRef,
     pageSize: 4,
   });
+
+  if (loading) {
+    return (
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+        Loading documentation suite...
+      </div>
+    );
+  }
 
   return (
     <div style={{ flex: 1, display: 'flex', height: '100%', overflow: 'hidden' }}>
