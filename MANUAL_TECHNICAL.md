@@ -156,6 +156,8 @@ This isolates and mirrors console messages in the application's **Console Drawer
 - **React 18 & Vite**: Built for instant sub-second hot reloading in dev and optimized tree-shaken chunks in production.
 - **Theme System**: Full Dark and Light theme token support via CSS variables (`variables.css`, `reset.css`, `typography.css`).
 - **State Management**: Centralized reactive state in `AppContext.tsx` managing active tabs, selected prompts, models, compare selections, and toast notifications.
+- **Adaptive Comparison Grid (`ComparePage.tsx`)**: Reactive multi-mode viewport architecture rendering full-width single-model previews or 2-4 slot comparative side-by-side matrices dynamically.
+- **Desktop Keyboard Navigation Suite (`useListKeyboardNav.ts`)**: Windows-native accessibility supporting arrow navigation, Home/End, PageUp/PageDown, global workspace shortcuts (`Ctrl+1..8`, `Ctrl+R`, `Ctrl+N`, `Ctrl+M`), and smart input-guarded shortcuts.
 - **Monaco Editor Integration**: Embedded VS Code editor engine for syntax-highlighted prompt authoring and side-by-side HTML diffing.
 
 ---

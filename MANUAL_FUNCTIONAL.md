@@ -130,9 +130,12 @@ For automated, reproducible benchmarking directly against local or cloud engines
 
 ---
 
-## 7. Side-by-Side Comparison & Compare Lab (Master-Detail Workspace)
+## 7. Model Inspection, Single Preview & Compare Lab
 
-The **Compare Lab** provides a systematic Master-Detail comparative inspection workspace:
+The **Compare Lab** provides an adaptive Master-Detail workspace supporting both dedicated single-model inspection and multi-model comparative analysis:
+- **Adaptive Single vs. Multi-Model Modes**:
+  - **Single-Model Inspection**: Selecting or opening a single run displays the model result across 100% full width and height with zero empty slots or split-screen clutter. The Detail Header highlights individual model specifications, prompt version, generation latency, and streaming speed.
+  - **On-Demand "Compare Side-by-Side" / "Add Model" Action**: Click the header action button to open a smart candidate menu listing other models tested on the same benchmark prompt. Selecting any candidate instantly transitions into side-by-side comparison mode (supporting 2, 3, or 4 simultaneous slots).
 - **Left Master Catalog (380px Sidebar)**:
   - **Live Search & Filters**: Search across models, prompts, notes, and providers; filter by prompt to isolate runs generated for the same benchmark challenge; sort by newest, score, speed, or latency.
   - **Active Slot Chips**: Visual slot chips with color accents (`[A]`, `[B]`, `[C]`, `[D]`) with 1-click slot removal.
@@ -140,9 +143,9 @@ The **Compare Lab** provides a systematic Master-Detail comparative inspection w
   - **1-Click Quick Compare**: Instantly load the 2 most recent runs with "Compare Top 2".
 - **Right Comparison Workspace & Dedicated Tabs**:
   - 👁️ **Live Preview**: Sandboxed real-time interactive previews with responsive presets (*Desktop 1920×1080*, *Tablet*, *Mobile*, *Custom*), zoom controls, and synchronized scrolling.
-  - 💻 **Extracted HTML**: Side-by-side Monaco code editors with full syntax highlighting.
+  - 💻 **Extracted HTML**: Full Monaco code editor view (or side-by-side multi-model views) with syntax highlighting.
   - ⚡ **Split View**: Synchronized live preview on top and source code below for each model.
-  - 🔀 **Monaco Diff Viewer**: Visual side-by-side line and character diff highlighting between model outputs.
+  - 🔀 **Monaco Diff Viewer**: Visual side-by-side line and character diff highlighting between model outputs (active when $\ge 2$ models selected).
   - 📊 **Metrics Matrix**: Side-by-side comparative table analyzing Overall Score, all 5 evaluation dimensions, generation speed (tok/s), latency, token counts, and sampling parameters.
   - 🏆 **Head-to-Head Arena & Scoring**: Pairwise winner declaration (`HeadToHeadSelector`) + simultaneous side-by-side 5-dimension evaluation cards (`EvaluationPanel`).
 - **Console & Error Drawers**: Per-slot collapsible JavaScript console drawer capturing runtime errors and logs with live error badge counters.

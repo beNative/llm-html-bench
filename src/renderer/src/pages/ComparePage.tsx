@@ -32,6 +32,7 @@ import {
   X,
   Sparkles,
   Terminal,
+  ChevronDown,
 } from 'lucide-react';
 
 type CompareTab = 'preview' | 'html' | 'split' | 'diff' | 'matrix' | 'eval';
@@ -61,6 +62,8 @@ export const ComparePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<CompareTab>('preview');
   const [isPromptCopied, setIsPromptCopied] = useState<boolean>(false);
   const [copiedSlotId, setCopiedSlotId] = useState<string | null>(null);
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState<boolean>(false);
+  const addMenuRef = useRef<HTMLDivElement>(null);
 
   // Viewport Settings
   const [selectedPreset, setSelectedPreset] = useState<string>('Responsive (Fit)');
@@ -108,6 +111,19 @@ export const ComparePage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Close add menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) {
+        setIsAddMenuOpen(false);
+      }
+    };
+    if (isAddMenuOpen) {
+      window.addEventListener('mousedown', handleClickOutside);
+      return () => window.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isAddMenuOpen]);
 
   // Filtered master catalog list
   const filteredRuns = useMemo(() => {
@@ -162,6 +178,19 @@ export const ComparePage: React.FC = () => {
       .map((id) => allRuns.find((r) => r.id === id))
       .filter((r): r is ModelRun => r !== undefined);
   }, [allRuns, compareRunIds]);
+
+  // Candidate runs to add for comparison (prioritize same prompt, then others not already selected)
+  const candidateRunsToAdd = useMemo(() => {
+    if (compareRuns.length === 0) return { samePromptRuns: [], otherRuns: [] };
+    const currentPromptId = compareRuns[0].prompt_id;
+    const samePromptRuns = allRuns.filter(
+      (r) => !compareRunIds.includes(r.id) && r.prompt_id === currentPromptId
+    );
+    const otherRuns = allRuns.filter(
+      (r) => !compareRunIds.includes(r.id) && r.prompt_id !== currentPromptId
+    );
+    return { samePromptRuns, otherRuns };
+  }, [allRuns, compareRuns, compareRunIds]);
 
   useListKeyboardNav({
     itemCount: sortedRuns.length,
@@ -356,7 +385,7 @@ export const ComparePage: React.FC = () => {
                   fontWeight: 600,
                 }}
               >
-                {compareRuns.length} of 4 selected
+                {compareRuns.length === 1 ? '1 model active' : `${compareRuns.length} of 4 selected`}
               </span>
               {compareRuns.length > 0 && (
                 <button
@@ -676,43 +705,196 @@ export const ComparePage: React.FC = () => {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <h2 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                    {isSamePrompt
-                      ? compareRuns[0].prompt_name
-                      : `Comparing ${compareRuns.length} Model Generations`}
+                    {compareRuns.length === 1
+                      ? (compareRuns[0].model_display_name || compareRuns[0].model_name)
+                      : isSamePrompt
+                        ? compareRuns[0].prompt_name
+                        : `Comparing ${compareRuns.length} Model Generations`}
                   </h2>
-                  {isSamePrompt && (
+                  {compareRuns.length === 1 ? (
+                    <>
+                      <ScoreBadge score={compareRuns[0].evaluation?.overall_score} size="sm" />
+                      {compareRuns[0].evaluation?.favorite === 1 && (
+                        <Star size={13} fill="var(--accent-warning)" color="var(--accent-warning)" />
+                      )}
+                      <span className="badge" style={{ fontSize: '10px' }}>
+                        Prompt v{compareRuns[0].prompt_version}
+                      </span>
+                    </>
+                  ) : isSamePrompt ? (
                     <span className="badge" style={{ fontSize: '10px' }}>
                       Prompt v{compareRuns[0].prompt_version}
                     </span>
-                  )}
+                  ) : null}
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
-                  {compareRuns.map((r, idx) => {
-                    const slotMeta = SLOT_COLORS[idx % SLOT_COLORS.length];
-                    return (
-                      <span
-                        key={r.id}
-                        style={{
-                          fontSize: '11px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          color: 'var(--text-secondary)',
-                        }}
-                      >
-                        <strong style={{ color: slotMeta.text }}>[{slotMeta.label}]</strong>{' '}
-                        {r.model_display_name || r.model_name}
-                        <ScoreBadge score={r.evaluation?.overall_score} size="sm" />
-                        {idx < compareRuns.length - 1 && <span style={{ color: 'var(--text-muted)', marginLeft: '4px' }}>vs</span>}
-                      </span>
-                    );
-                  })}
+                  {compareRuns.length === 1 ? (
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                      <strong>Prompt:</strong> {compareRuns[0].prompt_name} •{' '}
+                      <strong>Date:</strong> {new Date(compareRuns[0].started_at).toLocaleString()} •{' '}
+                      <span className="badge" style={{ fontSize: '9px' }}>{compareRuns[0].provenance}</span>
+                      {compareRuns[0].tokens_per_second ? (
+                        <span className="font-mono" style={{ marginLeft: '6px', color: 'var(--accent-success)', fontSize: '10px' }}>
+                          {Math.round(compareRuns[0].tokens_per_second)} t/s
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    compareRuns.map((r, idx) => {
+                      const slotMeta = SLOT_COLORS[idx % SLOT_COLORS.length];
+                      return (
+                        <span
+                          key={r.id}
+                          style={{
+                            fontSize: '11px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            color: 'var(--text-secondary)',
+                          }}
+                        >
+                          <strong style={{ color: slotMeta.text }}>[{slotMeta.label}]</strong>{' '}
+                          {r.model_display_name || r.model_name}
+                          <ScoreBadge score={r.evaluation?.overall_score} size="sm" />
+                          {idx < compareRuns.length - 1 && <span style={{ color: 'var(--text-muted)', marginLeft: '4px' }}>vs</span>}
+                        </span>
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                {/* Optional + Add Model / Compare Side-by-Side Button & Dropdown */}
+                {compareRuns.length < 4 && (
+                  <div style={{ position: 'relative' }} ref={addMenuRef}>
+                    <Button
+                      size="sm"
+                      variant={compareRuns.length === 1 ? 'primary' : 'secondary'}
+                      icon={<Plus size={12} />}
+                      onClick={() => setIsAddMenuOpen((prev) => !prev)}
+                    >
+                      {compareRuns.length === 1 ? 'Compare Side-by-Side' : 'Add Model'}
+                      <ChevronDown size={11} style={{ marginLeft: '2px', opacity: 0.8 }} />
+                    </Button>
+
+                    {isAddMenuOpen && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          right: 0,
+                          top: '100%',
+                          marginTop: '4px',
+                          width: '300px',
+                          maxHeight: '360px',
+                          overflowY: 'auto',
+                          backgroundColor: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: 'var(--radius-md)',
+                          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)',
+                          zIndex: 200,
+                          padding: '6px',
+                        }}
+                      >
+                        <div style={{ padding: '4px 8px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                          {candidateRunsToAdd.samePromptRuns.length > 0
+                            ? `Other models for this prompt (${candidateRunsToAdd.samePromptRuns.length})`
+                            : 'Select a model run to compare'}
+                        </div>
+
+                        {candidateRunsToAdd.samePromptRuns.map((r) => (
+                          <div
+                            key={r.id}
+                            onClick={() => {
+                              toggleCompareRunId(r.id);
+                              setIsAddMenuOpen(false);
+                              showToast(`Added ${r.model_display_name || r.model_name} for comparison`, 'info');
+                            }}
+                            style={{
+                              padding: '6px 8px',
+                              borderRadius: 'var(--radius-sm)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '6px',
+                              fontSize: '11px',
+                              transition: 'background 0.1s ease',
+                              backgroundColor: 'transparent',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                          >
+                            <div style={{ overflow: 'hidden' }}>
+                              <div style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {r.model_display_name || r.model_name}
+                              </div>
+                              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                                v{r.prompt_version} • {new Date(r.started_at).toLocaleDateString()}
+                              </div>
+                            </div>
+                            <ScoreBadge score={r.evaluation?.overall_score} size="sm" />
+                          </div>
+                        ))}
+
+                        {candidateRunsToAdd.samePromptRuns.length > 0 && candidateRunsToAdd.otherRuns.length > 0 && (
+                          <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: '4px 0' }} />
+                        )}
+
+                        {candidateRunsToAdd.otherRuns.length > 0 && (
+                          <>
+                            <div style={{ padding: '4px 8px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                              Other benchmark runs ({candidateRunsToAdd.otherRuns.slice(0, 10).length})
+                            </div>
+                            {candidateRunsToAdd.otherRuns.slice(0, 10).map((r) => (
+                              <div
+                                key={r.id}
+                                onClick={() => {
+                                  toggleCompareRunId(r.id);
+                                  setIsAddMenuOpen(false);
+                                  showToast(`Added ${r.model_display_name || r.model_name} for comparison`, 'info');
+                                }}
+                                style={{
+                                  padding: '6px 8px',
+                                  borderRadius: 'var(--radius-sm)',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: '6px',
+                                  fontSize: '11px',
+                                  transition: 'background 0.1s ease',
+                                  backgroundColor: 'transparent',
+                                }}
+                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)')}
+                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                              >
+                                <div style={{ overflow: 'hidden' }}>
+                                  <div style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {r.model_display_name || r.model_name}
+                                  </div>
+                                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {r.prompt_name}
+                                  </div>
+                                </div>
+                                <ScoreBadge score={r.evaluation?.overall_score} size="sm" />
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {candidateRunsToAdd.samePromptRuns.length === 0 && candidateRunsToAdd.otherRuns.length === 0 && (
+                          <div style={{ padding: '12px 8px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px' }}>
+                            No other model runs recorded yet.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <Tooltip content="Copy Benchmark Prompt" description="Copy full prompt text tested across these models" position="bottom">
                   <Button
                     size="sm"
@@ -903,217 +1085,39 @@ export const ComparePage: React.FC = () => {
             {/* TAB BODY: Live Preview / Extracted HTML / Split View */}
             {(activeTab === 'preview' || activeTab === 'html' || activeTab === 'split') && (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                {compareRuns.length === 1 ? (
-                  /* 1 Run Selected View with Invitation to Pick 2nd Run */
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', flex: 1, height: '100%', overflow: 'hidden', gap: '1px', backgroundColor: 'var(--border-color)' }}>
-                    {/* Slot A */}
-                    {(() => {
-                      const run = compareRuns[0];
-                      const slotMeta = SLOT_COLORS[0];
-                      const isConsoleOpen = !!consoleOpenSlots[run.id];
-                      const entries = consoleEntries[run.id] || [];
-                      const html = run.output?.html || '';
+                <div style={getGridStyle(compareRuns.length)}>
+                  {compareRuns.map((run, index) => {
+                    const slotMeta = SLOT_COLORS[index % SLOT_COLORS.length];
+                    const isConsoleOpen = !!consoleOpenSlots[run.id];
+                    const entries = consoleEntries[run.id] || [];
+                    const html = run.output?.html || '';
+                    const errorCount = entries.filter((e) => e.type === 'error').length;
 
-                      return (
-                        <div style={{ backgroundColor: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-                          {/* Slot Header */}
-                          <div
-                            style={{
-                              padding: '6px 12px',
-                              backgroundColor: 'var(--bg-secondary)',
-                              borderBottom: '1px solid var(--border-color)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: '8px',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span
-                                style={{
-                                  backgroundColor: slotMeta.bg,
-                                  color: slotMeta.text,
-                                  border: `1px solid ${slotMeta.border}`,
-                                  borderRadius: 'var(--radius-sm)',
-                                  padding: '1px 5px',
-                                  fontSize: '11px',
-                                  fontWeight: 800,
-                                }}
-                              >
-                                {slotMeta.label}
-                              </span>
-                              <span style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-primary)' }}>
-                                {run.model_display_name || run.model_name}
-                              </span>
-                              <ScoreBadge score={run.evaluation?.overall_score} size="sm" />
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                icon={copiedSlotId === run.id ? <Check size={11} color="var(--accent-success)" /> : <Copy size={11} />}
-                                onClick={() => handleCopyHtml(html, run.id)}
-                              >
-                                {copiedSlotId === run.id ? 'Copied' : 'Copy HTML'}
-                              </Button>
-
-                              <Tooltip content="Edit HTML / Notes">
-                                <button
-                                  onClick={() => setEditingRun(run)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    padding: '3px 6px',
-                                    borderRadius: 'var(--radius-sm)',
-                                    backgroundColor: 'var(--bg-tertiary)',
-                                    color: 'var(--text-secondary)',
-                                    border: '1px solid var(--border-subtle)',
-                                    cursor: 'pointer',
-                                    fontSize: '10px',
-                                  }}
-                                >
-                                  <Edit2 size={11} />
-                                </button>
-                              </Tooltip>
-
-                              <Tooltip content="Remove Slot">
-                                <button
-                                  onClick={() => handleRemoveSlot(run.id)}
-                                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '3px' }}
-                                >
-                                  <X size={12} />
-                                </button>
-                              </Tooltip>
-                            </div>
-                          </div>
-
-                          {/* Content */}
-                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                            {activeTab === 'preview' && (
-                              <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-                                <IsolatedFrame
-                                  id={`frame-${run.id}`}
-                                  html={html}
-                                  width={customWidth}
-                                  height={customHeight}
-                                  zoom={zoom}
-                                  reloadKey={reloadTriggers[run.id] || 0}
-                                  onConsoleMessage={(entry) => handleConsoleMessage(run.id, entry)}
-                                  onScroll={handleScroll}
-                                  syncScrollTop={syncScrollTop}
-                                />
-                              </div>
-                            )}
-
-                            {activeTab === 'html' && (
-                              <div style={{ flex: 1, overflow: 'hidden' }}>
-                                <MonacoCodeEditor value={html} readOnly language="html" />
-                              </div>
-                            )}
-
-                            {activeTab === 'split' && (
-                              <>
-                                <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-                                  <IsolatedFrame
-                                    id={`frame-${run.id}`}
-                                    html={html}
-                                    width={customWidth}
-                                    height={customHeight}
-                                    zoom={zoom}
-                                    reloadKey={reloadTriggers[run.id] || 0}
-                                    onConsoleMessage={(entry) => handleConsoleMessage(run.id, entry)}
-                                    onScroll={handleScroll}
-                                    syncScrollTop={syncScrollTop}
-                                  />
-                                </div>
-                                <div style={{ flex: 1, borderTop: '1px solid var(--border-color)', overflow: 'hidden' }}>
-                                  <MonacoCodeEditor value={html} readOnly language="html" />
-                                </div>
-                              </>
-                            )}
-                          </div>
-
-                          <ConsoleDrawer
-                            isOpen={isConsoleOpen}
-                            onClose={() => setConsoleOpenSlots((prev) => ({ ...prev, [run.id]: false }))}
-                            entries={entries}
-                            onClear={() => setConsoleEntries((prev) => ({ ...prev, [run.id]: [] }))}
-                          />
-                        </div>
-                      );
-                    })()}
-
-                    {/* Placeholder for Slot B */}
-                    <div
-                      style={{
-                        backgroundColor: 'var(--bg-card)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '32px',
-                        textAlign: 'center',
-                        color: 'var(--text-muted)',
-                        gap: '12px',
-                      }}
-                    >
+                    return (
                       <div
+                        key={run.id}
                         style={{
-                          width: '48px',
-                          height: '48px',
-                          borderRadius: '50%',
-                          backgroundColor: 'var(--bg-tertiary)',
+                          backgroundColor: 'var(--bg-primary)',
                           display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'var(--accent-primary)',
+                          flexDirection: 'column',
+                          height: '100%',
+                          overflow: 'hidden',
                         }}
                       >
-                        <Plus size={24} />
-                      </div>
-                      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        Select a 2nd Run to Compare
-                      </div>
-                      <p style={{ fontSize: '11px', maxWidth: '280px', margin: 0, lineHeight: 1.4 }}>
-                        Click any model run from the catalog on the left to place it in Slot [B] and compare side-by-side.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  /* 2 to 4 Runs Multi-Grid */
-                  <div style={getGridStyle(compareRuns.length)}>
-                    {compareRuns.map((run, index) => {
-                      const slotMeta = SLOT_COLORS[index % SLOT_COLORS.length];
-                      const isConsoleOpen = !!consoleOpenSlots[run.id];
-                      const entries = consoleEntries[run.id] || [];
-                      const html = run.output?.html || '';
-                      const errorCount = entries.filter((e) => e.type === 'error').length;
-
-                      return (
+                        {/* Slot Header Toolbar */}
                         <div
-                          key={run.id}
                           style={{
-                            backgroundColor: 'var(--bg-primary)',
+                            padding: '6px 10px',
+                            backgroundColor: 'var(--bg-secondary)',
+                            borderBottom: '1px solid var(--border-color)',
                             display: 'flex',
-                            flexDirection: 'column',
-                            height: '100%',
-                            overflow: 'hidden',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '6px',
                           }}
                         >
-                          {/* Slot Header Toolbar */}
-                          <div
-                            style={{
-                              padding: '6px 10px',
-                              backgroundColor: 'var(--bg-secondary)',
-                              borderBottom: '1px solid var(--border-color)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: '6px',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+                            {compareRuns.length > 1 && (
                               <span
                                 style={{
                                   backgroundColor: slotMeta.bg,
@@ -1128,109 +1132,133 @@ export const ComparePage: React.FC = () => {
                               >
                                 {slotMeta.label}
                               </span>
-                              <span
-                                style={{
-                                  fontWeight: 600,
-                                  fontSize: '12px',
-                                  color: 'var(--text-primary)',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {run.model_display_name || run.model_name}
-                              </span>
-                              <ScoreBadge score={run.evaluation?.overall_score} size="sm" />
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                              {run.tokens_per_second ? (
-                                <span className="badge" style={{ fontSize: '9px', color: 'var(--accent-success)' }}>
-                                  {Math.round(run.tokens_per_second)} t/s
-                                </span>
-                              ) : null}
-
-                              <Tooltip content="Copy HTML">
-                                <button
-                                  onClick={() => handleCopyHtml(html, run.id)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    padding: '3px 6px',
-                                    borderRadius: 'var(--radius-sm)',
-                                    backgroundColor: 'var(--bg-tertiary)',
-                                    color: copiedSlotId === run.id ? 'var(--accent-success)' : 'var(--text-secondary)',
-                                    border: '1px solid var(--border-subtle)',
-                                    cursor: 'pointer',
-                                    fontSize: '10px',
-                                  }}
-                                >
-                                  {copiedSlotId === run.id ? <Check size={11} /> : <Copy size={11} />}
-                                </button>
-                              </Tooltip>
-
-                              <Tooltip content="Edit HTML or Notes">
-                                <button
-                                  onClick={() => setEditingRun(run)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    padding: '3px 6px',
-                                    borderRadius: 'var(--radius-sm)',
-                                    backgroundColor: 'var(--bg-tertiary)',
-                                    color: 'var(--text-secondary)',
-                                    border: '1px solid var(--border-subtle)',
-                                    cursor: 'pointer',
-                                    fontSize: '10px',
-                                  }}
-                                >
-                                  <Edit2 size={11} />
-                                </button>
-                              </Tooltip>
-
-                              <Tooltip content="Toggle JavaScript Console">
-                                <button
-                                  onClick={() =>
-                                    setConsoleOpenSlots((prev) => ({ ...prev, [run.id]: !prev[run.id] }))
-                                  }
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '2px',
-                                    padding: '3px 6px',
-                                    borderRadius: 'var(--radius-sm)',
-                                    backgroundColor: isConsoleOpen ? 'var(--bg-active)' : 'var(--bg-tertiary)',
-                                    color: errorCount > 0 ? 'var(--accent-danger)' : 'var(--text-secondary)',
-                                    border: `1px solid ${errorCount > 0 ? 'var(--accent-danger)' : 'var(--border-subtle)'}`,
-                                    cursor: 'pointer',
-                                    fontSize: '10px',
-                                  }}
-                                >
-                                  <Terminal size={11} />
-                                  {errorCount > 0 && <span>{errorCount}</span>}
-                                </button>
-                              </Tooltip>
-
-                              <Tooltip content="Remove Slot from Comparison">
-                                <button
-                                  onClick={() => handleRemoveSlot(run.id)}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--text-muted)',
-                                    cursor: 'pointer',
-                                    padding: '3px',
-                                  }}
-                                >
-                                  <X size={12} />
-                                </button>
-                              </Tooltip>
-                            </div>
+                            )}
+                            <span
+                              style={{
+                                fontWeight: 600,
+                                fontSize: '12px',
+                                color: 'var(--text-primary)',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {run.model_display_name || run.model_name}
+                            </span>
+                            <ScoreBadge score={run.evaluation?.overall_score} size="sm" />
                           </div>
 
-                          {/* Content Area */}
-                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                            {activeTab === 'preview' && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                            {run.tokens_per_second ? (
+                              <span className="badge" style={{ fontSize: '9px', color: 'var(--accent-success)' }}>
+                                {Math.round(run.tokens_per_second)} t/s
+                              </span>
+                            ) : null}
+
+                            <Tooltip content="Copy HTML">
+                              <button
+                                onClick={() => handleCopyHtml(html, run.id)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  padding: '3px 6px',
+                                  borderRadius: 'var(--radius-sm)',
+                                  backgroundColor: 'var(--bg-tertiary)',
+                                  color: copiedSlotId === run.id ? 'var(--accent-success)' : 'var(--text-secondary)',
+                                  border: '1px solid var(--border-subtle)',
+                                  cursor: 'pointer',
+                                  fontSize: '10px',
+                                }}
+                              >
+                                {copiedSlotId === run.id ? <Check size={11} /> : <Copy size={11} />}
+                              </button>
+                            </Tooltip>
+
+                            <Tooltip content="Edit HTML or Notes">
+                              <button
+                                onClick={() => setEditingRun(run)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  padding: '3px 6px',
+                                  borderRadius: 'var(--radius-sm)',
+                                  backgroundColor: 'var(--bg-tertiary)',
+                                  color: 'var(--text-secondary)',
+                                  border: '1px solid var(--border-subtle)',
+                                  cursor: 'pointer',
+                                  fontSize: '10px',
+                                }}
+                              >
+                                <Edit2 size={11} />
+                              </button>
+                            </Tooltip>
+
+                            <Tooltip content="Toggle JavaScript Console">
+                              <button
+                                onClick={() =>
+                                  setConsoleOpenSlots((prev) => ({ ...prev, [run.id]: !prev[run.id] }))
+                                }
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '2px',
+                                  padding: '3px 6px',
+                                  borderRadius: 'var(--radius-sm)',
+                                  backgroundColor: isConsoleOpen ? 'var(--bg-active)' : 'var(--bg-tertiary)',
+                                  color: errorCount > 0 ? 'var(--accent-danger)' : 'var(--text-secondary)',
+                                  border: `1px solid ${errorCount > 0 ? 'var(--accent-danger)' : 'var(--border-subtle)'}`,
+                                  cursor: 'pointer',
+                                  fontSize: '10px',
+                                }}
+                              >
+                                <Terminal size={11} />
+                                {errorCount > 0 && <span>{errorCount}</span>}
+                              </button>
+                            </Tooltip>
+
+                            <Tooltip content="Remove Slot from Comparison">
+                              <button
+                                onClick={() => handleRemoveSlot(run.id)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: 'var(--text-muted)',
+                                  cursor: 'pointer',
+                                  padding: '3px',
+                                }}
+                              >
+                                <X size={12} />
+                              </button>
+                            </Tooltip>
+                          </div>
+                        </div>
+
+                        {/* Content Area */}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                          {activeTab === 'preview' && (
+                            <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+                              <IsolatedFrame
+                                id={`frame-${run.id}`}
+                                html={html}
+                                width={customWidth}
+                                height={customHeight}
+                                zoom={zoom}
+                                reloadKey={reloadTriggers[run.id] || 0}
+                                onConsoleMessage={(entry) => handleConsoleMessage(run.id, entry)}
+                                onScroll={handleScroll}
+                                syncScrollTop={syncScrollTop}
+                              />
+                            </div>
+                          )}
+
+                          {activeTab === 'html' && (
+                            <div style={{ flex: 1, overflow: 'hidden' }}>
+                              <MonacoCodeEditor value={html} readOnly language="html" />
+                            </div>
+                          )}
+
+                          {activeTab === 'split' && (
+                            <>
                               <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
                                 <IsolatedFrame
                                   id={`frame-${run.id}`}
@@ -1244,52 +1272,28 @@ export const ComparePage: React.FC = () => {
                                   syncScrollTop={syncScrollTop}
                                 />
                               </div>
-                            )}
-
-                            {activeTab === 'html' && (
-                              <div style={{ flex: 1, overflow: 'hidden' }}>
+                              <div style={{ flex: 1, borderTop: '1px solid var(--border-color)', overflow: 'hidden' }}>
                                 <MonacoCodeEditor value={html} readOnly language="html" />
                               </div>
-                            )}
-
-                            {activeTab === 'split' && (
-                              <>
-                                <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-                                  <IsolatedFrame
-                                    id={`frame-${run.id}`}
-                                    html={html}
-                                    width={customWidth}
-                                    height={customHeight}
-                                    zoom={zoom}
-                                    reloadKey={reloadTriggers[run.id] || 0}
-                                    onConsoleMessage={(entry) => handleConsoleMessage(run.id, entry)}
-                                    onScroll={handleScroll}
-                                    syncScrollTop={syncScrollTop}
-                                  />
-                                </div>
-                                <div style={{ flex: 1, borderTop: '1px solid var(--border-color)', overflow: 'hidden' }}>
-                                  <MonacoCodeEditor value={html} readOnly language="html" />
-                                </div>
-                              </>
-                            )}
-                          </div>
-
-                          {/* Console Drawer */}
-                          <ConsoleDrawer
-                            isOpen={isConsoleOpen}
-                            onClose={() =>
-                              setConsoleOpenSlots((prev) => ({ ...prev, [run.id]: false }))
-                            }
-                            entries={entries}
-                            onClear={() =>
-                              setConsoleEntries((prev) => ({ ...prev, [run.id]: [] }))
-                            }
-                          />
+                            </>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+
+                        {/* Console Drawer */}
+                        <ConsoleDrawer
+                          isOpen={isConsoleOpen}
+                          onClose={() =>
+                            setConsoleOpenSlots((prev) => ({ ...prev, [run.id]: false }))
+                          }
+                          entries={entries}
+                          onClear={() =>
+                            setConsoleEntries((prev) => ({ ...prev, [run.id]: [] }))
+                          }
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

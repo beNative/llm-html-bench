@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.7.0] - 2026-08-19
+
+### 🎛️ Unified Model Preview & Adaptive Side-by-Side Comparison Workspace
+
+#### 🌟 Key Features & Architectural Enhancements
+- **Single-Model Full-Width Inspection (`ComparePage.tsx`)**:
+  - Replaced the forced 50/50 split screen and empty Slot [B] placeholder with an adaptive full-width viewport when previewing a single model result.
+  - Interactive sandboxed live previews, HTML source views, and metrics now occupy 100% width and height without visual clutter or forced empty slots.
+- **Dedicated Single-Model Metadata Header**:
+  - Dynamically updates the Detail Header when 1 model is active to display model title, score badge, star, prompt version, execution latency, generation speed (tok/s), and provenance source tags.
+- **On-Demand "Compare Side-by-Side" / "Add Model" Action Menu**:
+  - Added an intuitive toolbar action button with a smart candidate dropdown menu.
+  - Automatically prioritizes and surfaces other model runs tested against the same benchmark prompt.
+  - Instantly loads candidate models into comparison slots (supporting 1, 2, 3, or 4 simultaneous slots) on demand.
+  - Seamlessly scales back down to single-model full view when slots are removed.
+- **Unified Responsive Grid Engine**:
+  - Consolidated multi-slot and single-slot rendering under a single reactive grid architecture with dynamic slot headers and toolbars.
+
+---
+
 ## [1.6.0] - 2026-08-18
 
 ### ⌨️ Windows-Native Keyboard Navigation Suite & Desktop Accessibility
