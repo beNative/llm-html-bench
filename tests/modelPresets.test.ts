@@ -8,7 +8,7 @@ import {
 
 describe('Model Presets & Templates', () => {
   it('contains valid curated model templates with essential attributes', () => {
-    expect(MODEL_TEMPLATES.length).toBeGreaterThan(10);
+    expect(MODEL_TEMPLATES.length).toBeGreaterThanOrEqual(35);
 
     for (const t of MODEL_TEMPLATES) {
       expect(t.id).toBeDefined();
@@ -22,16 +22,24 @@ describe('Model Presets & Templates', () => {
     }
   });
 
-  it('includes DeepSeek R1 and Claude 3.7 Sonnet with reasoning flags', () => {
+  it('includes DeepSeek R1, Claude 3.7 Sonnet, OpenAI o3-mini, and Grok 3 with reasoning flags', () => {
     const r1 = MODEL_TEMPLATES.find((t) => t.id === 'deepseek-r1');
     expect(r1).toBeDefined();
     expect(r1?.isReasoningModel).toBe(true);
     expect(r1?.aaIntelligenceIndex).toBeGreaterThan(80);
 
-    const c37 = MODEL_TEMPLATES.find((t) => t.id === 'claude-3-7-sonnet');
+    const c37 = MODEL_TEMPLATES.find((t) => t.id === 'claude-3-7-sonnet-thinking');
     expect(c37).toBeDefined();
     expect(c37?.isReasoningModel).toBe(true);
     expect(c37?.aaIntelligenceIndex).toBeGreaterThan(85);
+
+    const o3 = MODEL_TEMPLATES.find((t) => t.id === 'openai-o3-mini');
+    expect(o3).toBeDefined();
+    expect(o3?.isReasoningModel).toBe(true);
+
+    const grok3 = MODEL_TEMPLATES.find((t) => t.id === 'grok-3');
+    expect(grok3).toBeDefined();
+    expect(grok3?.isReasoningModel).toBe(true);
   });
 
   it('has comprehensive provider and architecture categories', () => {

@@ -276,8 +276,8 @@ export const ModelForm: React.FC<ModelFormProps> = ({
           defaultValue=""
           style={{
             flex: 1,
-            minWidth: '220px',
-            maxWidth: '360px',
+            minWidth: '240px',
+            maxWidth: '420px',
             padding: '5px 8px',
             fontSize: '11px',
             backgroundColor: 'var(--bg-primary)',
@@ -288,12 +288,16 @@ export const ModelForm: React.FC<ModelFormProps> = ({
           }}
         >
           <option value="" disabled>
-            ⚡ Select a popular model to autofill specs...
+            ⚡ Select a recent 2025/2026 model to autofill specs...
           </option>
-          {MODEL_TEMPLATES.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name} [{t.parameterCount}]
-            </option>
+          {Array.from(new Set(MODEL_TEMPLATES.map((t) => t.categoryTag || 'Other'))).map((cat) => (
+            <optgroup key={cat} label={`── ${cat} ──`}>
+              {MODEL_TEMPLATES.filter((t) => (t.categoryTag || 'Other') === cat).map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} [{t.parameterCount}]
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </div>
