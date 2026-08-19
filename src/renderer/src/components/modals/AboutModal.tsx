@@ -279,7 +279,7 @@ export const AboutModal: React.FC = () => {
             color: 'var(--text-muted)',
           }}
         >
-          <span>Created by beNative (dev@benative.org)</span>
+          <span>Created by Tim Sinaeve (tim.sinaeve@gmail.com)</span>
           <span>MIT License</span>
         </div>
       </div>

@@ -3,8 +3,8 @@
   "version": "1.7.0",
   "description": "Desktop benchmark database and inspection laboratory for LLM-generated HTML applications",
   "author": {
-    "name": "beNative",
-    "email": "dev@benative.org"
+    "name": "Tim Sinaeve",
+    "email": "tim.sinaeve@gmail.com"
   },
   "license": "MIT",
   "main": "dist-electron/main/index.js",
