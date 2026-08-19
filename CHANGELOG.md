@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.8.1] - 2026-08-19
+
+### 🚀 Cutting-Edge 2025/2026 Model Catalog & CI/CD Pipeline Hardening
+
+#### 🌟 Key Features & Architectural Enhancements
+- **Expanded Cutting-Edge 2025/2026 Model Catalog (38 Models Across 10 Categories)**:
+  - Completely updated model templates with the latest frontier reasoning and generative architectures:
+    - **Reasoning Leaders**: *Claude 3.7 Sonnet (Hybrid Thinking)*, *DeepSeek R1 (671B MoE)*, *OpenAI o3-mini*, *OpenAI o1*, *OpenAI o1-mini*, *Gemini 2.0 Flash Thinking Exp*, *QwQ 32B Preview*, *DeepSeek R1 Distill Qwen 32B*, *DeepSeek R1 Distill Llama 70B*.
+    - **Frontier Flagships**: *Claude 3.7 Sonnet (Standard)*, *Claude 3.5 Sonnet v2*, *Claude 3.5 Haiku*, *GPT-4.5 Preview*, *GPT-4o (2024-11-20)*, *GPT-4o mini*, *DeepSeek V3 (671B MoE MLA)*, *Gemini 2.0 Flash*, *Gemini 2.0 Pro Exp*, *xAI Grok 3*, *xAI Grok 2*, *Mistral Large 2 (2411)*.
+    - **Open-Weights & Code Synthesis**: *Qwen 2.5 Coder 32B/14B/7B*, *Codestral 2501*, *Llama 3.3 70B*, *Llama 3.1 405B/70B/8B*, *Phi-4 (14B)*, *Phi-4 Mini (3.8B)*, *Gemma 2 27B*, *Cohere Command R+*, *Amazon Nova Pro*, *SmolLM2 1.7B*.
+  - **Categorized UI `<optgroup>` Pickers**: Grouped into clean subheadings within the model preset dropdown for effortless navigation.
+  - **Comprehensive Artificial Analysis Correlation**: All 38 models are mapped with pre-populated Artificial Analysis intelligence indices, measured token speeds, and API pricing.
+- **CI/CD Build Pipeline Hardening**:
+  - Added a 5-attempt retry loop with exponential backoff for `npm ci` and Electron binary downloads in `.github/workflows/release.yml`, resolving transient CDN socket resets (`ECONNRESET`) during multi-platform builds.
+
+---
+
 ## [1.8.0] - 2026-08-19
 
 ### 🏢 Model Entry & Editor Overhaul + Artificial Analysis Benchmark Intelligence
