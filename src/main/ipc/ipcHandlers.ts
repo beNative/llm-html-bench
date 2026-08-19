@@ -14,6 +14,7 @@ import { ExportImportService } from '../services/exportImportService';
 import { ScreenshotService } from '../services/screenshotService';
 import { SettingsService } from '../services/settingsService';
 import { AutoUpdateService } from '../services/autoUpdateService';
+import { ArtificialAnalysisService } from '../services/artificialAnalysisService';
 import { ProviderRegistry } from '../providers/providerRegistry';
 import { Logger } from '../utils/logger';
 import { extractHtml } from '../../shared/utils/htmlExtractor';
@@ -330,6 +331,18 @@ export function registerIpcHandlers(services: {
       }
     }
   );
+
+  // Artificial Analysis Benchmark Intelligence
+  const aaService = new ArtificialAnalysisService(modelRepo);
+  ipcMain.handle(IPC_CHANNELS.AA_FETCH_MODELS, async (_, apiKey?: string) => {
+    return aaService.fetchModels(apiKey);
+  });
+  ipcMain.handle(IPC_CHANNELS.AA_FIND_BENCHMARK, async (_, modelName: string, provider?: string, apiKey?: string) => {
+    return aaService.findBenchmarkForModel(modelName, provider, apiKey);
+  });
+  ipcMain.handle(IPC_CHANNELS.AA_SYNC_ALL, async (_, apiKey?: string) => {
+    return aaService.syncAllModels(apiKey);
+  });
 
   // Database
   ipcMain.handle(IPC_CHANNELS.DB_GET_INFO, () => settingsService.getDatabaseInfo());

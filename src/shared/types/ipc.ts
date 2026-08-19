@@ -48,6 +48,47 @@ export interface CreateModelInput {
   architecture?: string;
   quantization?: string;
   localOrCloud?: 'local' | 'cloud';
+  contextWindow?: string;
+  isReasoningModel?: boolean | number;
+  aaIntelligenceIndex?: number;
+  aaEvaluationsJson?: string;
+  aaModelId?: string;
+  notes?: string;
+}
+
+export interface UpdateModelInput {
+  provider?: string;
+  modelName?: string;
+  displayName?: string;
+  modelVersion?: string;
+  modelFamily?: string;
+  parameterCount?: string;
+  architecture?: string;
+  quantization?: string;
+  localOrCloud?: 'local' | 'cloud';
+  contextWindow?: string;
+  isReasoningModel?: boolean | number;
+  aaIntelligenceIndex?: number;
+  aaEvaluationsJson?: string;
+  aaModelId?: string;
+  notes?: string;
+}
+
+export interface ArtificialAnalysisModelBenchmark {
+  modelId: string;
+  name: string;
+  provider: string;
+  intelligenceIndex?: number;
+  evaluations?: {
+    gpqa?: number;
+    math?: number;
+    coding?: number;
+    throughputTokSec?: number;
+    priceInputPer1M?: number;
+    priceOutputPer1M?: number;
+    [key: string]: unknown;
+  };
+  contextWindow?: string;
   notes?: string;
 }
 
@@ -226,6 +267,11 @@ export interface ElectronAPI {
   cancelBenchmarkRun: (requestId?: string) => Promise<void>;
   onStreamChunk: (callback: (data: { requestId: string; delta: string; accumulated: string }) => void) => () => void;
   onStreamStatus: (callback: (status: { requestId: string; state: 'started' | 'streaming' | 'extracting' | 'completed' | 'error'; error?: string }) => void) => () => void;
+
+  // Artificial Analysis Benchmark Intelligence
+  fetchArtificialAnalysisModels: (apiKey?: string) => Promise<{ success: boolean; models: ArtificialAnalysisModelBenchmark[]; error?: string }>;
+  fetchModelBenchmarks: (modelName: string, provider?: string, apiKey?: string) => Promise<{ success: boolean; benchmark?: ArtificialAnalysisModelBenchmark; error?: string }>;
+  syncAllModelBenchmarks: (apiKey?: string) => Promise<{ success: boolean; updatedCount: number; message?: string }>;
 
   // Database Management & Backup
   getDatabaseInfo: () => Promise<DatabaseInfo>;

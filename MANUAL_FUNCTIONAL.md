@@ -78,15 +78,25 @@ Prompt requirements evolve over time. LLM HTML Bench preserves historical integr
 
 Track generations across specific provider architectures, parameter sizes, and quantization formats:
 1. Click **New Model** (or navigate to the Models tab).
-2. Enter the **Provider / Organization** (e.g., *Anthropic, OpenAI, Alibaba, Google, DeepSeek, Meta, Local*).
-3. Enter the **Model Identifier** (e.g., `qwen3.8-27b`, `gpt-5.6`, `claude-3-7-sonnet`).
-4. Set the **Deployment Type**: *Cloud API* or *Local Inference*.
-5. (Optional) Provide **Model Family**, **Parameter Count** (e.g., `27B`, `70B`, `MoE`), **Quantization** (e.g., `FP16`, `Q4_K_M`, `NVFP4`), and Architecture Notes.
-6. Click **Register Model**. The model appears immediately in the model catalog.
+2. **⚡ 1-Click Model Presets**: Select from 30+ popular modern model templates (e.g. *DeepSeek R1, DeepSeek V3, Claude 3.7 Sonnet, GPT-4o, o3-mini, Qwen 2.5 Coder 32B, Llama 3.3 70B, Gemini 2.0 Flash*) to instantly auto-populate all technical specifications.
+3. **🏢 Categorized Provider Selection**: Choose from organized categories (*Frontier Cloud Labs*, *Local Inference Engines*, *Cloud Gateways & Aggregators*) or enter a custom provider.
+4. **🧠 Architecture & Quantization Presets**:
+   - **Architectures**: *Transformer (Decoder-only Dense)*, *Mixture of Experts (MoE)*, *Transformer + Multi-Head Latent Attention (MLA)*, *Reasoning / Thinking Model*, *Hybrid SSM-Transformer (Mamba)*, *Vision-Language (VLM)*.
+   - **Quantizations**: *Full / Native (FP32, BF16, FP16)*, *Modern FP8 (E4M3, E5M2, NVFP4)*, *GGUF / llama.cpp (Q4_K_M, Q5_K_M, Q8_0, etc.)*, *AWQ / EXL2 (4.0 bpw, 6.0 bpw)*.
+5. **🎛️ Parameter Scale & Context Window Pills**: Clickable buttons for standard parameter sizes (`7B`, `8B`, `14B`, `27B`, `32B`, `70B`, `MoE 671B`, `Proprietary`) and context windows (`32k` to `2M`).
+6. **🧠 Reasoning / Thinking Model Toggle**: Flag chain-of-thought models (e.g. DeepSeek R1, OpenAI o1/o3, QwQ) to distinguish reasoning models across benchmark leaderboards.
+7. **⚡ Artificial Analysis Benchmark Intelligence**:
+   - Click **Fetch / Match Stats** to retrieve independent benchmark metrics from **Artificial Analysis**:
+     - **Intelligence Index Score (0–100)**
+     - **Measured Throughput Generation Speed (tok/s)**
+     - **Per-1M Token API Pricing (Input / Output)**
+     - **Benchmark Scores (GPQA, MATH, Coding)**
+8. **👁️ Real-Time Visual Model Preview**: Live card preview demonstrating how the model badge, parameter pills, and provider tags will render across the application.
+9. Click **Register Model**. The model appears immediately in the catalog with full specifications and benchmark badges.
 
 ### Editing & Deleting Models
-- **Editing Model Specs**: Select any model in the Models tab and click **Edit** to modify provider name, display name, family, parameter count, architecture, or deployment notes.
-- **Deleting a Model**: Click **Delete** in the model detail view. A confirmation dialog will prompt you to confirm deletion, which cascades to delete all runs and evaluations recorded for that model.
+- **Editing Model Specs**: Select any model in the Models tab and click **Edit** (or press `E`) to modify provider, architecture, quantization, context window, and re-sync Artificial Analysis intelligence scores.
+- **Deleting a Model**: Click **Delete** in the model detail view (or press `Delete`). A confirmation dialog prompts for confirmation, cascading deletion across all runs and evaluations recorded for that model.
 
 ---
 

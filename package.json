@@ -1,6 +1,6 @@
 {
   "name": "llm-html-bench",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Desktop benchmark database and inspection laboratory for LLM-generated HTML applications",
   "author": {
     "name": "Tim Sinaeve",
@@ -17,7 +17,7 @@
     "build:linux": "npm run generate-icons && tsc && vite build && electron-builder --linux",
     "release:notes": "node scripts/generate-release-notes.mjs",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
-    "test": "vitest run tests/htmlExtractor.test.ts tests/scoreCalculator.test.ts tests/keyboardNav.test.ts && electron scripts/test-database.mjs",
+    "test": "vitest run tests/htmlExtractor.test.ts tests/scoreCalculator.test.ts tests/keyboardNav.test.ts tests/modelPresets.test.ts && electron scripts/test-database.mjs",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

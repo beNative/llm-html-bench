@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.8.0] - 2026-08-19
+
+### 🏢 Model Entry & Editor Overhaul + Artificial Analysis Benchmark Intelligence
+
+#### 🌟 Key Features & Architectural Enhancements
+- **Modern Model Entry & Editor Suite (`ModelForm.tsx`)**:
+  - Reusable, high-density form powering both `NewModelModal` and `EditModelModal`.
+  - **Categorized Provider Dropdown**: Organized into *Frontier Cloud Labs* (*Anthropic, OpenAI, Google, DeepSeek, xAI, Meta, Mistral AI, Cohere, Alibaba, Amazon Bedrock, Microsoft*), *Local Inference Engines* (*Ollama, LM Studio, vLLM, SGLang, LocalAI, llama.cpp, Jan*), and *Cloud Gateways & Aggregators* (*OpenRouter, Together AI, Groq, Fireworks AI, Cerebras*), plus custom write-in support.
+  - **Smart Deployment Detection**: Automatically switches between *Cloud API* and *Local Inference* based on provider selection.
+  - **Modern Architecture Presets**: *Transformer (Decoder Dense)*, *Mixture of Experts (MoE)*, *Transformer + Multi-Head Latent Attention (MLA)*, *Reasoning / Thinking Model*, *Hybrid SSM-Transformer (Mamba)*, and *Vision-Language Multimodal (VLM)*.
+  - **Grouped Quantization / Precision Formats**: *Full/Native (FP32, BF16, FP16)*, *Modern FP8 (E4M3, E5M2, NVFP4)*, *GGUF / llama.cpp (Q4_K_M, Q5_K_M, Q8_0, etc.)*, and *AWQ / EXL2 (4.0 bpw, 6.0 bpw)*.
+- **⚡ 30+ 1-Click Model Presets & Templates**:
+  - Top preset selector pre-populates all technical parameters for current flagship models (*DeepSeek R1, DeepSeek V3, Claude 3.7 Sonnet, Claude 3.5 Sonnet, Claude 3.5 Haiku, GPT-4o, GPT-4o mini, o1, o3-mini, Qwen 2.5 Coder 32B, Qwen 2.5 72B, Llama 3.3 70B, Llama 3.1 8B, Gemini 2.0 Flash, Mistral Large 2, Codestral 2501, Phi-4*, etc.).
+- **🎛️ Parameter Scale & Context Window Pills**:
+  - Clickable pills for parameter counts (`7B`, `8B`, `14B`, `27B`, `32B`, `70B`, `MoE 671B`, `Proprietary`) and context windows (`32k` to `2M`).
+  - `🧠 Reasoning / Thinking Model (CoT)` flag highlighting reasoning architectures across leaderboards.
+  - **Live Visual Preview Card**: Real-time card showing how the model badge, pill, and spec summary will render across the application.
+- **⚡ Artificial Analysis Benchmark Intelligence**:
+  - **Independent Benchmark Metrics**: Correlates **Intelligence Index (0–100)**, **Measured Output Speed (tok/s)**, **Per-1M Token Pricing ($ In / $ Out)**, and benchmark scores (**GPQA, MATH, Coding %**).
+  - **Zero-Setup Offline Database**: Pre-populated snapshot for 40+ top models with instant offline matching.
+  - **Live API Integration**: Optional API key in Settings querying `https://artificialanalysis.ai/api/v2/language/models` in real time.
+  - **Bulk Sync**: 1-Click "Sync All Models with Artificial Analysis" action in **Settings & DB**.
+  - **Models Catalog Visuals**: Displays Artificial Analysis intelligence index badges (`AA 89`), measured speeds, and pricing across sidebar cards and model detail views.
+- **Database Schema Migration 002**:
+  - Added `context_window`, `is_reasoning_model`, `aa_intelligence_index`, `aa_evaluations_json`, and `aa_model_id` columns to the `models` table.
+
+---
+
 ## [1.7.0] - 2026-08-19
 
 ### 🎛️ Unified Model Preview & Adaptive Side-by-Side Comparison Workspace

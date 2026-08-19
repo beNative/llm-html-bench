@@ -676,6 +676,74 @@ export const SettingsPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Artificial Analysis Benchmark Intelligence Card */}
+      <div
+        style={{
+          backgroundColor: 'var(--bg-secondary)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-color)',
+          padding: '16px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Sparkles size={18} color="var(--accent-warning)" />
+            <h2 className="h2" style={{ margin: 0 }}>Artificial Analysis Benchmark Intelligence</h2>
+          </div>
+          <span className="badge" style={{ backgroundColor: 'rgba(234, 179, 8, 0.15)', color: 'var(--accent-warning)', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+            Live & Offline Benchmarking
+          </span>
+        </div>
+
+        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '14px', lineHeight: 1.5 }}>
+          Fetch and correlate independent quality benchmarks (Intelligence Index 0–100, GPQA, MMLU, measured throughput speeds, and token pricing) from <strong>Artificial Analysis</strong> across all your registered models. Works out of the box with the bundled offline dataset, or optionally provide an API key for live real-time metrics.
+        </p>
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            type="password"
+            placeholder="Artificial Analysis API Key (optional for live queries)..."
+            value={providerApiKey.startsWith('aa_') ? providerApiKey : ''}
+            onChange={(e) => setProviderApiKey(e.target.value)}
+            style={{
+              flex: 1,
+              minWidth: '280px',
+              padding: '6px 10px',
+              backgroundColor: 'var(--bg-card)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '12px',
+              fontFamily: 'var(--font-mono)',
+            }}
+          />
+
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<RotateCw size={13} />}
+            onClick={async () => {
+              try {
+                if (window.electronAPI) {
+                  showToast('Synchronizing models with Artificial Analysis...', 'info');
+                  const res = await window.electronAPI.syncAllModelBenchmarks(providerApiKey);
+                  if (res.success) {
+                    showToast(res.message || `Synchronized ${res.updatedCount} models!`, 'success');
+                    await refreshModels();
+                  } else {
+                    showToast(res.message || 'Sync completed', 'info');
+                  }
+                }
+              } catch (err: any) {
+                showToast(`Sync failed: ${err.message}`, 'error');
+              }
+            }}
+          >
+            Sync All Models with Artificial Analysis
+          </Button>
+        </div>
+      </div>
+
       {/* Dataset Export / Import */}
       <div
         style={{

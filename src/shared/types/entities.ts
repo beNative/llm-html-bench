@@ -35,6 +35,11 @@ export interface Model {
   architecture: string | null;
   quantization: string | null;
   local_or_cloud: 'local' | 'cloud' | null;
+  context_window?: string | null;
+  is_reasoning_model?: number | null;
+  aa_intelligence_index?: number | null;
+  aa_evaluations_json?: string | null;
+  aa_model_id?: string | null;
   notes: string | null;
   created_at: string;
   run_count?: number;

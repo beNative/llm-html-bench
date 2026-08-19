@@ -164,13 +164,37 @@ export const ModelsPage: React.FC = () => {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
-                  <span style={{ fontWeight: 600, fontSize: '12px', color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
-                    {m.display_name}
-                  </span>
-                  <ScoreBadge score={m.avg_overall_score} size="sm" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden' }}>
+                    {m.is_reasoning_model ? <span title="Reasoning / CoT Model">🧠</span> : null}
+                    <span style={{ fontWeight: 600, fontSize: '12px', color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {m.display_name}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                    {m.aa_intelligence_index ? (
+                      <span
+                        className="badge"
+                        title="Artificial Analysis Intelligence Index"
+                        style={{
+                          fontSize: '9px',
+                          padding: '1px 4px',
+                          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                          color: 'var(--accent-primary)',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          fontWeight: 700,
+                        }}
+                      >
+                        AA {m.aa_intelligence_index.toFixed(0)}
+                      </span>
+                    ) : null}
+                    <ScoreBadge score={m.avg_overall_score} size="sm" />
+                  </div>
                 </div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                  {m.provider} {m.parameter_count ? `• ${m.parameter_count}` : ''} {m.quantization ? `• ${m.quantization}` : ''}
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  <span>{m.provider}</span>
+                  {m.parameter_count && <span>• {m.parameter_count}</span>}
+                  {m.quantization && m.quantization !== 'None / Cloud Native' && <span>• {m.quantization}</span>}
+                  {m.context_window && <span>• {m.context_window}</span>}
                 </div>
                 <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>
                   {m.run_count || 0} run{m.run_count !== 1 ? 's' : ''} across {m.prompt_count || 0} prompts
@@ -194,15 +218,24 @@ export const ModelsPage: React.FC = () => {
               marginBottom: '16px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
               <div>
-                <h1 className="h1">{selectedModel.display_name}</h1>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '6px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <h1 className="h1" style={{ margin: 0 }}>{selectedModel.display_name}</h1>
+                  {selectedModel.is_reasoning_model ? (
+                    <span className="badge" style={{ backgroundColor: 'rgba(139, 92, 246, 0.2)', color: 'var(--accent-purple)', border: '1px solid rgba(139, 92, 246, 0.4)' }}>
+                      🧠 Reasoning CoT
+                    </span>
+                  ) : null}
+                </div>
+                <div style={{ display: 'flex', gap: '6px', marginTop: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <span className="badge badge-purple">{selectedModel.provider}</span>
                   {selectedModel.model_family && <span className="badge">Family: {selectedModel.model_family}</span>}
                   {selectedModel.parameter_count && <span className="badge">Params: {selectedModel.parameter_count}</span>}
+                  {selectedModel.architecture && <span className="badge">Arch: {selectedModel.architecture}</span>}
                   {selectedModel.quantization && <span className="badge">Quant: {selectedModel.quantization}</span>}
-                  <span className="badge">{selectedModel.local_or_cloud === 'local' ? 'Local Model' : 'Cloud API'}</span>
+                  {selectedModel.context_window && <span className="badge">Context: {selectedModel.context_window}</span>}
+                  <span className="badge">{selectedModel.local_or_cloud === 'local' ? '🖥️ Local' : '☁️ Cloud'}</span>
                 </div>
               </div>
 
@@ -215,7 +248,7 @@ export const ModelsPage: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <Tooltip content="Edit Model Specs" description="Modify provider, parameter counts, quantization, and notes" position="left">
+                  <Tooltip content="Edit Model Specs" description="Modify provider, architecture, quantization, and benchmark data" position="left">
                     <Button
                       size="sm"
                       variant="secondary"
@@ -238,6 +271,74 @@ export const ModelsPage: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Artificial Analysis Benchmark Intelligence Strip */}
+            {(() => {
+              let evals: any = null;
+              if (selectedModel.aa_evaluations_json) {
+                try {
+                  evals = JSON.parse(selectedModel.aa_evaluations_json);
+                } catch {
+                  evals = null;
+                }
+              }
+
+              if (selectedModel.aa_intelligence_index || evals) {
+                return (
+                  <div
+                    style={{
+                      marginTop: '14px',
+                      padding: '10px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      backgroundColor: 'var(--bg-card)',
+                      border: '1px solid var(--border-subtle)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
+                        ⚡ Artificial Analysis Benchmarks:
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                      {selectedModel.aa_intelligence_index ? (
+                        <div style={{ fontSize: '11px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Intelligence: </span>
+                          <strong style={{ color: 'var(--accent-primary)' }}>{selectedModel.aa_intelligence_index.toFixed(1)} / 100</strong>
+                        </div>
+                      ) : null}
+
+                      {evals?.throughputTokSec ? (
+                        <div style={{ fontSize: '11px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Measured Speed: </span>
+                          <strong style={{ color: 'var(--accent-success)' }}>{Math.round(evals.throughputTokSec)} tok/s</strong>
+                        </div>
+                      ) : null}
+
+                      {evals?.priceOutputPer1M !== undefined ? (
+                        <div style={{ fontSize: '11px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Price / 1M: </span>
+                          <strong>${evals.priceInputPer1M ?? 0} in / ${evals.priceOutputPer1M} out</strong>
+                        </div>
+                      ) : null}
+
+                      {evals?.coding ? (
+                        <div style={{ fontSize: '11px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Coding: </span>
+                          <strong style={{ color: 'var(--accent-purple)' }}>{evals.coding}%</strong>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
             {/* Dimension Breakdown Bar */}
             <div

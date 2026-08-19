@@ -61,8 +61,10 @@ export class ModelRepository {
       .prepare(`
         INSERT INTO models (
           id, provider, model_name, display_name, model_version, model_family,
-          parameter_count, architecture, quantization, local_or_cloud, notes, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          parameter_count, architecture, quantization, local_or_cloud,
+          context_window, is_reasoning_model, aa_intelligence_index, aa_evaluations_json, aa_model_id,
+          notes, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       `)
       .run(
         id,
@@ -75,6 +77,11 @@ export class ModelRepository {
         input.architecture ?? null,
         input.quantization ?? null,
         input.localOrCloud ?? null,
+        input.contextWindow ?? null,
+        input.isReasoningModel ? 1 : 0,
+        input.aaIntelligenceIndex ?? null,
+        input.aaEvaluationsJson ?? null,
+        input.aaModelId ?? null,
         input.notes ?? null
       );
 
@@ -99,6 +106,11 @@ export class ModelRepository {
           architecture = COALESCE(?, architecture),
           quantization = COALESCE(?, quantization),
           local_or_cloud = COALESCE(?, local_or_cloud),
+          context_window = COALESCE(?, context_window),
+          is_reasoning_model = COALESCE(?, is_reasoning_model),
+          aa_intelligence_index = COALESCE(?, aa_intelligence_index),
+          aa_evaluations_json = COALESCE(?, aa_evaluations_json),
+          aa_model_id = COALESCE(?, aa_model_id),
           notes = COALESCE(?, notes)
         WHERE id = ?
       `)
@@ -112,6 +124,11 @@ export class ModelRepository {
         input.architecture ?? null,
         input.quantization ?? null,
         input.localOrCloud ?? null,
+        input.contextWindow ?? null,
+        input.isReasoningModel !== undefined ? (input.isReasoningModel ? 1 : 0) : null,
+        input.aaIntelligenceIndex ?? null,
+        input.aaEvaluationsJson ?? null,
+        input.aaModelId ?? null,
         input.notes ?? null,
         id
       );

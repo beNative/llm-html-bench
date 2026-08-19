@@ -187,7 +187,19 @@ This isolates and mirrors console messages in the application's **Console Drawer
 
 ---
 
-## 8. Packaging & Distribution
+## 8. Artificial Analysis Benchmark Intelligence & Model Presets
+
+- **Service Module**: `src/main/services/artificialAnalysisService.ts`
+- **Curated Dataset & Presets**: `src/shared/constants/modelPresets.ts` provides categorized providers (*Frontier Cloud*, *Local Inference*, *Aggregators*), modern AI architectures, quantization formats, and 30+ comprehensive model templates.
+- **Dual Live & Offline Mode**:
+  - **Offline Mode**: Bundles intelligence indices, generation speed benchmarks, and token pricing for zero-configuration, instant offline lookup.
+  - **Live API Integration**: When configured with an optional `x-api-key`, queries `https://artificialanalysis.ai/api/v2/language/models` in real time to fetch the latest quality evaluations.
+- **Schema Migration 002**: Adds `context_window`, `is_reasoning_model`, `aa_intelligence_index`, `aa_evaluations_json`, and `aa_model_id` columns to SQLite models table.
+- **IPC Interface**: Exposes `AA_FETCH_MODELS`, `AA_FIND_BENCHMARK`, and `AA_SYNC_ALL` across main, preload, and renderer processes.
+
+---
+
+## 9. Packaging & Distribution
 
 - **Packager**: `electron-builder` with configuration defined in `electron-builder.json5`.
 - **Target Platforms**: Windows (NSIS installer), macOS (DMG), Linux (AppImage).

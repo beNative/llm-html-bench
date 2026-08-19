@@ -57,6 +57,11 @@ export const IPC_CHANNELS = {
   PROVIDER_STREAM_STATUS: 'provider:stream-status',
   PROVIDER_CANCEL_RUN: 'provider:cancel-run',
 
+  // Artificial Analysis Benchmark Intelligence
+  AA_FETCH_MODELS: 'aa:fetch-models',
+  AA_FIND_BENCHMARK: 'aa:find-benchmark',
+  AA_SYNC_ALL: 'aa:sync-all',
+
   // Database
   DB_GET_INFO: 'db:get-info',
   DB_BACKUP: 'db:backup',

@@ -4,6 +4,7 @@ import fs from 'fs';
 import { app } from 'electron';
 import { Migrator } from './migrator';
 import { migration001 } from './migrations/001_initial_schema';
+import { migration002 } from './migrations/002_model_extensions';
 import { DEFAULT_COLLECTIONS } from '../../shared/constants/defaults';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -70,7 +71,7 @@ export function initializeDatabase(customPath?: string): Database.Database {
   db.pragma('foreign_keys = ON');
   db.pragma('journal_mode = WAL');
 
-  const migrator = new Migrator(db, [migration001]);
+  const migrator = new Migrator(db, [migration001, migration002]);
   migrator.runMigrations();
 
   // Seed default collections if none exist
