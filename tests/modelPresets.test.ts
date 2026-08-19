@@ -22,24 +22,29 @@ describe('Model Presets & Templates', () => {
     }
   });
 
-  it('includes DeepSeek R1, Claude 3.7 Sonnet, OpenAI o3-mini, and Grok 3 with reasoning flags', () => {
-    const r1 = MODEL_TEMPLATES.find((t) => t.id === 'deepseek-r1');
-    expect(r1).toBeDefined();
-    expect(r1?.isReasoningModel).toBe(true);
-    expect(r1?.aaIntelligenceIndex).toBeGreaterThan(80);
+  it('includes Claude Opus 5, GPT-5.6 Sol, DeepSeek-V4-Pro, Gemini 3.7 Flash, and Grok 4.6 with reasoning flags', () => {
+    const opus5 = MODEL_TEMPLATES.find((t) => t.id === 'claude-opus-5');
+    expect(opus5).toBeDefined();
+    expect(opus5?.isReasoningModel).toBe(true);
+    expect(opus5?.aaIntelligenceIndex).toBeGreaterThan(95);
 
-    const c37 = MODEL_TEMPLATES.find((t) => t.id === 'claude-3-7-sonnet-thinking');
-    expect(c37).toBeDefined();
-    expect(c37?.isReasoningModel).toBe(true);
-    expect(c37?.aaIntelligenceIndex).toBeGreaterThan(85);
+    const gpt56 = MODEL_TEMPLATES.find((t) => t.id === 'gpt-5-6-sol');
+    expect(gpt56).toBeDefined();
+    expect(gpt56?.isReasoningModel).toBe(true);
+    expect(gpt56?.aaIntelligenceIndex).toBeGreaterThan(95);
 
-    const o3 = MODEL_TEMPLATES.find((t) => t.id === 'openai-o3-mini');
-    expect(o3).toBeDefined();
-    expect(o3?.isReasoningModel).toBe(true);
+    const v4pro = MODEL_TEMPLATES.find((t) => t.id === 'deepseek-v4-pro');
+    expect(v4pro).toBeDefined();
+    expect(v4pro?.isReasoningModel).toBe(true);
+    expect(v4pro?.aaIntelligenceIndex).toBeGreaterThan(90);
 
-    const grok3 = MODEL_TEMPLATES.find((t) => t.id === 'grok-3');
-    expect(grok3).toBeDefined();
-    expect(grok3?.isReasoningModel).toBe(true);
+    const gemini37 = MODEL_TEMPLATES.find((t) => t.id === 'gemini-3-7-flash');
+    expect(gemini37).toBeDefined();
+    expect(gemini37?.isReasoningModel).toBe(true);
+
+    const grok46 = MODEL_TEMPLATES.find((t) => t.id === 'grok-4-6');
+    expect(grok46).toBeDefined();
+    expect(grok46?.isReasoningModel).toBe(true);
   });
 
   it('has comprehensive provider and architecture categories', () => {
