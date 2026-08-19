@@ -16,7 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     - **Anthropic Claude 5 (Active 2026 Lineup)**: *Claude Opus 5 (July 2026 Reasoning & Agentic Flagship)*, *Claude Sonnet 5 (June 2026 Daily Driver)*, *Claude Fable 5 (Creative & Synthesis)*, *Claude Haiku 4.5*.
     - **OpenAI GPT-5.6 / GPT-5 (Mid-2026)**: *GPT-5.6 Sol (Top-tier Frontier Reasoning Flagship)*, *GPT-5.6 Terra (Balanced Workhorse)*, *GPT-5.6 Luna (Fast & Cost-Efficient)*, *GPT-5.5 (Thinking Mode)*.
     - **DeepSeek V4 (August 2026 GA)**: *DeepSeek-V4-Pro (August 13, 2026 1.6T MoE GA)*, *DeepSeek-V4-Flash (July 31, 2026 480B MoE)*, *DeepSeek-V4-Coder (680B Frontend & WebGL Specialist)*, *DeepSeek-V4-Lite 32B (Local)*.
-    - **Google Gemini 3.7 & 3.x (August 2026)**: *Gemini 3.7 Flash (August 13, 2026 Algorithmic Coding Leader)*, *Gemini 3.6 Pro (2M Context Multimodal Flagship)*, *Gemini 3.5 Flash Thinking*.
+    - **Google Gemini (Active Lineup)**: *Gemini 3.7 Flash (August 13, 2026 Algorithmic Coding Leader)*, *Gemini 3.1 Pro (February 19, 2026 Core Reasoning & Agentic Workflows)*, *Gemini 3.1 Flash (High Speed 1M Context)*, *Gemini 3.0 Pro (Deep Think Mode)*, *Gemini 2.5 Pro (Thinking Model)*.
+    - **Global Frontier Labs (Kimi, MiniMax, Yi)**: *Moonshot Kimi K3 (July 2026 2.8T MoE with Agent Swarms)*, *Moonshot Kimi K2.7 Code*, *MiniMax M3 (Omni-Modal 1M Context)*, *01.AI Yi-Lightning (High-Speed Math & Coding MoE)*.
     - **Alibaba Qwen 3.8 (August 2026)**: *Qwen 3.8-Max (2.4T MoE Flagship)*, *Qwen 3.8-27B Instruct (August 14, 2026 Open Weights)*, *Qwen 3.8-Coder 32B*, *QwQ 2.0 Thinking (64B)*.
     - **xAI Grok 4 (August 2026)**: *xAI Grok 4.6 (August 12, 2026 SOTA Flagship with 500k Context)*, *xAI Grok 4.5 Flash*.
     - **Meta Llama 4 & Muse**: *Llama 4 Scout (400B MoE)*, *Llama 4 Maverick (Dense 70B)*, *Meta Muse Spark (April 2026 Reasoning)*.

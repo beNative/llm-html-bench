@@ -22,7 +22,7 @@ describe('Model Presets & Templates', () => {
     }
   });
 
-  it('includes Claude Opus 5, GPT-5.6 Sol, DeepSeek-V4-Pro, Gemini 3.7 Flash, and Grok 4.6 with reasoning flags', () => {
+  it('includes Claude Opus 5, GPT-5.6 Sol, DeepSeek-V4-Pro, Gemini 3.1 Pro, and Grok 4.6 with reasoning flags', () => {
     const opus5 = MODEL_TEMPLATES.find((t) => t.id === 'claude-opus-5');
     expect(opus5).toBeDefined();
     expect(opus5?.isReasoningModel).toBe(true);
@@ -38,13 +38,18 @@ describe('Model Presets & Templates', () => {
     expect(v4pro?.isReasoningModel).toBe(true);
     expect(v4pro?.aaIntelligenceIndex).toBeGreaterThan(90);
 
-    const gemini37 = MODEL_TEMPLATES.find((t) => t.id === 'gemini-3-7-flash');
-    expect(gemini37).toBeDefined();
-    expect(gemini37?.isReasoningModel).toBe(true);
+    const gemini31 = MODEL_TEMPLATES.find((t) => t.id === 'gemini-3-1-pro');
+    expect(gemini31).toBeDefined();
+    expect(gemini31?.isReasoningModel).toBe(true);
+    expect(gemini31?.aaIntelligenceIndex).toBeGreaterThan(90);
 
     const grok46 = MODEL_TEMPLATES.find((t) => t.id === 'grok-4-6');
     expect(grok46).toBeDefined();
     expect(grok46?.isReasoningModel).toBe(true);
+
+    const kimiK3 = MODEL_TEMPLATES.find((t) => t.id === 'kimi-k3');
+    expect(kimiK3).toBeDefined();
+    expect(kimiK3?.isReasoningModel).toBe(true);
   });
 
   it('has comprehensive provider and architecture categories', () => {
