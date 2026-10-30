@@ -190,12 +190,14 @@ This isolates and mirrors console messages in the application's **Console Drawer
 ## 8. Artificial Analysis Benchmark Intelligence & Model Presets
 
 - **Service Module**: `src/main/services/artificialAnalysisService.ts`
-- **Curated Dataset & Presets**: `src/shared/constants/modelPresets.ts` provides categorized providers (*Frontier Cloud*, *Local Inference*, *Aggregators*), modern AI architectures, quantization formats, and 30+ comprehensive model templates.
-- **Dual Live & Offline Mode**:
-  - **Offline Mode**: Bundles intelligence indices, generation speed benchmarks, and token pricing for zero-configuration, instant offline lookup.
-  - **Live API Integration**: When configured with an optional `x-api-key`, queries `https://artificialanalysis.ai/api/v2/language/models` in real time to fetch the latest quality evaluations.
+- **Curated Dataset & Presets**: `src/shared/constants/modelPresets.ts` provides categorized providers (*Frontier Cloud*, *Local Inference*, *Aggregators*), modern AI architectures, quantization formats, and 60+ comprehensive model templates with `isTopTier` flags for flagship frontier releases.
+- **3-Tier Live, Keyless & Offline Synchronization**:
+  - **Tier 1 — Official Live API v2**: Queries `https://artificialanalysis.ai/api/v2/data/llms/models` (and fallback `/api/v2/language/models`) when an encrypted `x-api-key` is configured in `SettingsService` (`aa_config`).
+  - **Tier 2 — Keyless Public Leaderboard Feeds**: Automatically fetches daily-updated public Artificial Analysis JSON mirrors (`aa-intelligence.json`, `aa-coding.json`, `aa-math.json`) and merges them with curated model specifications without requiring an API key.
+  - **Tier 3 — Offline Curated Snapshot**: Bundles October 2026 intelligence indices, generation speed benchmarks, and token pricing for zero-configuration offline lookup.
+- **Startup Auto-Sync & Top-Tier Upsert**: Non-blocking startup routine in `src/main/index.ts` invokes `syncAllModels({ importTopTier })`, updating existing SQLite model records and inserting missing top-tier models without duplicates.
 - **Schema Migration 002**: Adds `context_window`, `is_reasoning_model`, `aa_intelligence_index`, `aa_evaluations_json`, and `aa_model_id` columns to SQLite models table.
-- **IPC Interface**: Exposes `AA_FETCH_MODELS`, `AA_FIND_BENCHMARK`, and `AA_SYNC_ALL` across main, preload, and renderer processes.
+- **IPC Interface**: Exposes `AA_FETCH_MODELS`, `AA_FIND_BENCHMARK`, `AA_SYNC_ALL`, `AA_GET_CONFIG`, and `AA_SAVE_CONFIG` across main, preload, and renderer processes.
 
 ---
 

@@ -17,6 +17,7 @@ import { ExportImportService } from './services/exportImportService';
 import { ScreenshotService } from './services/screenshotService';
 import { SettingsService } from './services/settingsService';
 import { AutoUpdateService } from './services/autoUpdateService';
+import { ArtificialAnalysisService } from './services/artificialAnalysisService';
 import { ProviderRegistry } from './providers/providerRegistry';
 
 // Global Process Error Handlers
@@ -218,6 +219,22 @@ app.whenReady().then(() => {
     });
 
     Logger.info('IPC handlers registered.');
+
+    // Automatically sync & seed top-tier models on startup if enabled
+    const aaConfig = settingsService.getArtificialAnalysisConfig();
+    if (aaConfig.autoSyncOnStartup) {
+      const aaService = new ArtificialAnalysisService(modelRepo, settingsService);
+      aaService
+        .syncAllModels({ importTopTier: aaConfig.autoImportTopTier })
+        .then((res) => {
+          if (res.success) {
+            Logger.info('AA', `Startup model sync complete: ${res.message}`);
+          }
+        })
+        .catch((err) => {
+          Logger.warn('AA', `Startup model sync error: ${err instanceof Error ? err.message : String(err)}`);
+        });
+    }
   } catch (err) {
     Logger.error('CRITICAL ERROR during app initialization:', err);
   }

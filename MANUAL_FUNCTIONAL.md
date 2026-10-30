@@ -85,8 +85,10 @@ Track generations across specific provider architectures, parameter sizes, and q
    - **Quantizations**: *Full / Native (FP32, BF16, FP16)*, *Modern FP8 (E4M3, E5M2, NVFP4)*, *GGUF / llama.cpp (Q4_K_M, Q5_K_M, Q8_0, etc.)*, *AWQ / EXL2 (4.0 bpw, 6.0 bpw)*.
 5. **🎛️ Parameter Scale & Context Window Pills**: Clickable buttons for standard parameter sizes (`7B`, `8B`, `14B`, `27B`, `32B`, `70B`, `MoE 671B`, `Proprietary`) and context windows (`32k` to `2M`).
 6. **🧠 Reasoning / Thinking Model Toggle**: Flag chain-of-thought models (e.g. DeepSeek R1, OpenAI o1/o3, QwQ) to distinguish reasoning models across benchmark leaderboards.
-7. **⚡ Artificial Analysis Benchmark Intelligence**:
-   - Click **Fetch / Match Stats** to retrieve independent benchmark metrics from **Artificial Analysis**:
+7. **⚡ Artificial Analysis Benchmark Intelligence & Auto-Updater**:
+   - **Automatic Startup Sync & Top-Tier Import**: By default, LLM HTML Bench automatically synchronizes your catalog with Artificial Analysis on startup and imports newly released top-tier frontier models (configurable in **Settings & DB**).
+   - **1-Click "Sync Top" in Models Catalog**: Click the **Sync Top** button in the Models sidebar header to immediately fetch and import the latest top-tier frontier models (e.g., *Gemini 4 Carbon*, *GPT-6.1 Terra*, *Claude Opus 5.5*, *DeepSeek-V4.1-Flash (1017)*, *Mistral Large 4*, *Kimi K3.1 Pro*, *Meta Muse Wonder Full*, *MiMo-V2.6-Pro*).
+   - **Per-Model Fetch**: Click **Fetch / Match Stats** inside the Model Editor to retrieve independent benchmark metrics from **Artificial Analysis**:
      - **Intelligence Index Score (0–100)**
      - **Measured Throughput Generation Speed (tok/s)**
      - **Per-1M Token API Pricing (Input / Output)**

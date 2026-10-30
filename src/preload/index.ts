@@ -77,7 +77,10 @@ const api: ElectronAPI = {
   // Artificial Analysis Benchmark Intelligence
   fetchArtificialAnalysisModels: (apiKey?: string) => ipcRenderer.invoke(IPC_CHANNELS.AA_FETCH_MODELS, apiKey),
   fetchModelBenchmarks: (modelName: string, provider?: string, apiKey?: string) => ipcRenderer.invoke(IPC_CHANNELS.AA_FIND_BENCHMARK, modelName, provider, apiKey),
-  syncAllModelBenchmarks: (apiKey?: string) => ipcRenderer.invoke(IPC_CHANNELS.AA_SYNC_ALL, apiKey),
+  syncAllModelBenchmarks: (apiKeyOrOptions?: string | { apiKey?: string; importTopTier?: boolean }) =>
+    ipcRenderer.invoke(IPC_CHANNELS.AA_SYNC_ALL, apiKeyOrOptions),
+  getArtificialAnalysisConfig: () => ipcRenderer.invoke(IPC_CHANNELS.AA_GET_CONFIG),
+  saveArtificialAnalysisConfig: (config) => ipcRenderer.invoke(IPC_CHANNELS.AA_SAVE_CONFIG, config),
 
   // Database Management
   getDatabaseInfo: () => ipcRenderer.invoke(IPC_CHANNELS.DB_GET_INFO),

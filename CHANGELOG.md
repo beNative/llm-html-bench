@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.9.0] - 2026-10-30
+
+### ⚡ Artificial Analysis Auto-Updater & October 2026 Top-Tier Frontier Lineup
+
+#### 🌟 Key Features & Architectural Enhancements
+- **Automatic Top-Tier Model Synchronization (`ArtificialAnalysisService`)**:
+  - **3-Tier Live & Keyless Benchmark Architecture**:
+    - **Tier 1 (Official Live API v2)**: Queries `https://artificialanalysis.ai/api/v2/data/llms/models` (and fallback `/api/v2/language/models`) with an encrypted `x-api-key` for real-time Intelligence, Coding, Math, GPQA, token speed, and pricing metrics.
+    - **Tier 2 (Keyless Live Public Feeds)**: Automatically fetches daily-updated open-source Artificial Analysis JSON leaderboard feeds (`aa-intelligence.json`, `aa-coding.json`, `aa-math.json`) and merges them with curated technical specifications — enabling live leaderboard updates with zero API key setup.
+    - **Tier 3 (Offline Curated Snapshot)**: Bundled October 2026 dataset fallback when offline.
+  - **Non-Blocking Startup Auto-Sync**: Automatically updates registered models and imports newly released top-tier frontier models into SQLite upon application startup (configurable via Settings).
+  - **1-Click "Sync Top" Button in Models Catalog (`ModelsPage.tsx`)**: Added a quick-action button in the Models sidebar header to immediately fetch, update, and import the latest top-tier models from Artificial Analysis.
+  - **Enhanced Artificial Analysis Settings Card (`SettingsPage.tsx` & `SettingsService`)**:
+    - Dedicated encrypted storage (`aa_config` via `safeStorage`) for the Artificial Analysis API key, fixing previous input state collisions with LLM provider keys.
+    - Interactive toggles for *"Automatically sync & update models on app startup"* and *"Automatically add newly released top-tier frontier models to catalog"*.
+    - Live sync status badge displaying the last synchronization timestamp and active data source (`live-api`, `public-feed`, or `curated-snapshot`).
+- **October 2026 Top-Tier Frontier Model Lineup (`modelPresets.ts`)**:
+  - Added `isTopTier` flags across flagship templates and expanded the catalog with late-October 2026 frontier releases:
+    - **Google**: *Gemini 4 Carbon* (`gemini-4-carbon`, #1 Frontier on Artificial Analysis Intelligence Index at 98.8, 4M Context) & *Gemini 4 Argon* (`gemini-4-argon`).
+    - **OpenAI**: *GPT-6.1 Terra* (`gpt-6-1-terra`, UI/coding & subagent specialist, 98.5 AA Index), *GPT-6.1 Sol* (`gpt-6-1-sol`), and *GPT-6 Astra* (`gpt-6-astra`).
+    - **Anthropic**: *Claude Opus 5.5* (`claude-opus-5-5`, 98.6 AA Index) & *Claude Sonnet 5.5* (`claude-sonnet-5-5`).
+    - **DeepSeek**: *DeepSeek-V4.1-Flash (1017)* (`deepseek-v4-1-flash-1017`, Oct 17, 2026 395 tok/s speed & Pareto leader) & *DeepSeek-V4-Pro*.
+    - **Meta**: *Meta Muse Wonder Full* (`meta-muse-wonder-full`, Oct 2026 flagship agentic reasoning model) & *Meta Muse Spark 1.3*.
+    - **Mistral AI**: *Mistral Large 4* (`mistral-large-4`, Oct 29, 2026 "Le Chonk" ~1T MoE open-weights flagship) & *Devstral 2*.
+    - **Moonshot AI**: *Kimi K3.1 Pro* (`kimi-k3-1-pro` & `kimi-k3-1-pro-highspeed`, Oct 23, 2026 3T MoE flagship).
+    - **Alibaba**: *Qwen 3.8-Flash-Next* (`qwen-3-8-flash-next`, ultra-sparse MoE Qwen4 architecture preview) & *Qwen 3.8-Omni-Flash*.
+    - **Xiaomi**: *MiMo-V2.6-Pro* (`mimo-v2-6-pro`, 1.02T MoE multimodal reasoning flagship with 42k active parameters).
+    - **xAI**: *xAI Grok 4.7* (`grok-4-7`).
+
+---
+
 ## [1.8.2] - 2026-08-19
 
 ### ⚡ 2026 Next-Gen Frontier Model Lineup (Claude 5, GPT-5.6, DeepSeek V4, Gemini 3.7, Grok 4.6, Qwen 3.8)

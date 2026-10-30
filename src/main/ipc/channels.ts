@@ -61,6 +61,8 @@ export const IPC_CHANNELS = {
   AA_FETCH_MODELS: 'aa:fetch-models',
   AA_FIND_BENCHMARK: 'aa:find-benchmark',
   AA_SYNC_ALL: 'aa:sync-all',
+  AA_GET_CONFIG: 'aa:get-config',
+  AA_SAVE_CONFIG: 'aa:save-config',
 
   // Database
   DB_GET_INFO: 'db:get-info',

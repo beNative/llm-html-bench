@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { Model, Prompt, PromptVersion } from '@shared/types/entities';
 import { ProviderConfig, DiscoveredModel } from '@shared/types/providers';
 import { extractHtml } from '@shared/utils/htmlExtractor';
+import { MODEL_TEMPLATES } from '@shared/constants/modelPresets';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Tooltip } from '../common/Tooltip';
@@ -19,6 +20,7 @@ import {
   Code,
   Eye,
   XCircle,
+  Sparkles,
 } from 'lucide-react';
 
 export const RunBenchmarkModal: React.FC = () => {
@@ -42,12 +44,15 @@ export const RunBenchmarkModal: React.FC = () => {
 
   // Provider & Model selection mode
   const [selectedConfigId, setSelectedConfigId] = useState<string>('');
-  const [modelSource, setModelSource] = useState<'discovered' | 'catalog'>('discovered');
+  const [modelSource, setModelSource] = useState<'discovered' | 'catalog' | 'presets'>('discovered');
   const [discoveredModels, setDiscoveredModels] = useState<DiscoveredModel[]>([]);
   const [isDiscovering, setIsDiscovering] = useState<boolean>(false);
   const [discoveryNotice, setDiscoveryNotice] = useState<string | null>(null);
   const [selectedDiscoveredId, setSelectedDiscoveredId] = useState<string>('');
   const [selectedCatalogModelId, setSelectedCatalogModelId] = useState<string>('');
+  const [selectedPresetModelId, setSelectedPresetModelId] = useState<string>(
+    MODEL_TEMPLATES.length > 0 ? MODEL_TEMPLATES[0].id : ''
+  );
 
   // Execution parameters
   const [temperature, setTemperature] = useState<string>('0.7');
@@ -261,6 +266,15 @@ export const RunBenchmarkModal: React.FC = () => {
       targetModelId = selectedDiscoveredId;
       targetModelName = selectedDiscoveredId;
       targetModelDisplayName = disc?.name || selectedDiscoveredId;
+    } else if (modelSource === 'presets') {
+      if (!selectedPresetModelId) {
+        setErrorMsg('Please select a frontier model preset.');
+        return;
+      }
+      const preset = MODEL_TEMPLATES.find((m) => m.id === selectedPresetModelId);
+      targetModelId = selectedPresetModelId;
+      targetModelName = preset ? preset.modelName : selectedPresetModelId;
+      targetModelDisplayName = preset ? preset.displayName : selectedPresetModelId;
     } else {
       if (!selectedCatalogModelId) {
         setErrorMsg('Please select a model from the local catalog.');
@@ -343,7 +357,11 @@ export const RunBenchmarkModal: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span className="live-pulse-dot" />
                 <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  {modelSource === 'discovered' ? selectedDiscoveredId : selectedCatalogModelId}
+                  {modelSource === 'discovered'
+                    ? selectedDiscoveredId
+                    : modelSource === 'presets'
+                    ? (MODEL_TEMPLATES.find((t) => t.id === selectedPresetModelId)?.displayName || selectedPresetModelId)
+                    : (catalogModels.find((m) => m.id === selectedCatalogModelId)?.display_name || selectedCatalogModelId)}
                 </span>
               </div>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>via</span>
@@ -721,6 +739,31 @@ export const RunBenchmarkModal: React.FC = () => {
               >
                 Catalog Models ({catalogModels.length})
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setModelSource('presets');
+                  if (!selectedPresetModelId && MODEL_TEMPLATES.length > 0) {
+                    setSelectedPresetModelId(MODEL_TEMPLATES[0].id);
+                  }
+                }}
+                style={{
+                  padding: '3px 8px',
+                  borderRadius: 'var(--radius-xs)',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: modelSource === 'presets' ? 'var(--accent-primary)' : 'transparent',
+                  color: modelSource === 'presets' ? '#ffffff' : 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <Sparkles size={11} />
+                Frontier Presets ({MODEL_TEMPLATES.length})
+              </button>
             </div>
           </div>
 
@@ -744,7 +787,7 @@ export const RunBenchmarkModal: React.FC = () => {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
                         <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                          Check if your local server (LM Studio, Ollama, vLLM) is running with CORS enabled, or switch to Catalog Models.
+                          Check if your local server (LM Studio, Ollama, vLLM) is running with CORS enabled, or switch to Frontier Presets or Catalog Models.
                         </span>
                         <div style={{ display: 'flex', gap: '6px' }}>
                           <Button
@@ -755,6 +798,20 @@ export const RunBenchmarkModal: React.FC = () => {
                             onClick={() => activeConfig && discoverModelsForConfig(activeConfig)}
                           >
                             Retry
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="primary"
+                            icon={<Sparkles size={11} />}
+                            onClick={() => {
+                              setModelSource('presets');
+                              if (!selectedPresetModelId && MODEL_TEMPLATES.length > 0) {
+                                setSelectedPresetModelId(MODEL_TEMPLATES[0].id);
+                              }
+                            }}
+                          >
+                            Use Presets
                           </Button>
                           <Button
                             type="button"
@@ -791,6 +848,69 @@ export const RunBenchmarkModal: React.FC = () => {
                   ))}
                 </select>
               )}
+            </div>
+          ) : modelSource === 'presets' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <select
+                value={selectedPresetModelId}
+                onChange={(e) => setSelectedPresetModelId(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '6px 10px',
+                  backgroundColor: 'var(--bg-primary)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                }}
+              >
+                <option value="" disabled>
+                  Select a Frontier Lab model preset...
+                </option>
+                {Array.from(new Set(MODEL_TEMPLATES.map((t) => t.categoryTag || 'Other'))).map((cat) => (
+                  <optgroup key={cat} label={`── ${cat} ──`}>
+                    {MODEL_TEMPLATES.filter((t) => (t.categoryTag || 'Other') === cat).map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} [{t.parameterCount}] — {t.provider}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+
+              {(() => {
+                const preset = MODEL_TEMPLATES.find((p) => p.id === selectedPresetModelId);
+                if (!preset) return null;
+                return (
+                  <div
+                    style={{
+                      padding: '8px 10px',
+                      backgroundColor: 'var(--bg-primary)',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-subtle)',
+                      fontSize: '11px',
+                      color: 'var(--text-secondary)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>API Model ID:</span>{' '}
+                      <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-primary)' }}>{preset.modelName}</code>
+                      <span style={{ marginLeft: '10px', color: 'var(--text-muted)' }}>• Context: {preset.contextWindow}</span>
+                      {preset.isReasoningModel && <span style={{ marginLeft: '10px', color: 'var(--accent-purple)' }}>• Thinking Mode</span>}
+                    </div>
+                    {preset.aaIntelligenceIndex && (
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                        AA Index: <strong style={{ color: 'var(--accent-success)' }}>{preset.aaIntelligenceIndex}</strong>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           ) : (
             <select

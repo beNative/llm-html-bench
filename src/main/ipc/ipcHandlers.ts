@@ -333,15 +333,24 @@ export function registerIpcHandlers(services: {
   );
 
   // Artificial Analysis Benchmark Intelligence
-  const aaService = new ArtificialAnalysisService(modelRepo);
+  const aaService = new ArtificialAnalysisService(modelRepo, settingsService);
   ipcMain.handle(IPC_CHANNELS.AA_FETCH_MODELS, async (_, apiKey?: string) => {
     return aaService.fetchModels(apiKey);
   });
   ipcMain.handle(IPC_CHANNELS.AA_FIND_BENCHMARK, async (_, modelName: string, provider?: string, apiKey?: string) => {
     return aaService.findBenchmarkForModel(modelName, provider, apiKey);
   });
-  ipcMain.handle(IPC_CHANNELS.AA_SYNC_ALL, async (_, apiKey?: string) => {
-    return aaService.syncAllModels(apiKey);
+  ipcMain.handle(
+    IPC_CHANNELS.AA_SYNC_ALL,
+    async (_, apiKeyOrOptions?: string | { apiKey?: string; importTopTier?: boolean }) => {
+      return aaService.syncAllModels(apiKeyOrOptions);
+    }
+  );
+  ipcMain.handle(IPC_CHANNELS.AA_GET_CONFIG, () => {
+    return settingsService.getArtificialAnalysisConfig();
+  });
+  ipcMain.handle(IPC_CHANNELS.AA_SAVE_CONFIG, (_, config) => {
+    return settingsService.saveArtificialAnalysisConfig(config);
   });
 
   // Database

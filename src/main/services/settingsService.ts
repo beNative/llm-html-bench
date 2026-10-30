@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import fs from 'fs';
-import { DatabaseInfo } from '../../shared/types/ipc';
+import { DatabaseInfo, ArtificialAnalysisConfig } from '../../shared/types/ipc';
 import { ProviderConfig } from '../../shared/types/providers';
 import { getDatabasePath, initializeDatabase, closeDatabase } from '../database/connection';
 import { encryptString, decryptString } from '../security/safeStorage';
@@ -127,5 +127,54 @@ export class SettingsService {
     `
       )
       .run(JSON.stringify(existing));
+  }
+
+  public getArtificialAnalysisConfig(): ArtificialAnalysisConfig {
+    const row = this.db.prepare('SELECT value_json FROM app_settings WHERE key = ?').get('aa_config') as
+      | { value_json: string }
+      | undefined;
+
+    const defaults: ArtificialAnalysisConfig = {
+      autoSyncOnStartup: true,
+      autoImportTopTier: true,
+    };
+
+    if (!row) return defaults;
+
+    try {
+      const parsed = JSON.parse(row.value_json) as ArtificialAnalysisConfig;
+      return {
+        ...defaults,
+        ...parsed,
+        apiKey: parsed.apiKey ? decryptString(parsed.apiKey) : undefined,
+      };
+    } catch {
+      return defaults;
+    }
+  }
+
+  public saveArtificialAnalysisConfig(patch: Partial<ArtificialAnalysisConfig>): ArtificialAnalysisConfig {
+    const current = this.getArtificialAnalysisConfig();
+    const merged: ArtificialAnalysisConfig = {
+      ...current,
+      ...patch,
+    };
+
+    const toStore = {
+      ...merged,
+      apiKey: merged.apiKey && merged.apiKey.trim() ? encryptString(merged.apiKey.trim()) : undefined,
+    };
+
+    this.db
+      .prepare(
+        `
+      INSERT INTO app_settings (key, value_json, updated_at)
+      VALUES ('aa_config', ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = CURRENT_TIMESTAMP
+    `
+      )
+      .run(JSON.stringify(toStore));
+
+    return this.getArtificialAnalysisConfig();
   }
 }

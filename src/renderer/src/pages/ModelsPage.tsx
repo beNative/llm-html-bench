@@ -8,7 +8,7 @@ import { EditModelModal } from '../components/modals/EditModelModal';
 import { EditOutputModal } from '../components/modals/EditOutputModal';
 import { ConfirmModal } from '../components/common/ConfirmModal';
 import { Tooltip } from '../components/common/Tooltip';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, RotateCw } from 'lucide-react';
 
 export const ModelsPage: React.FC = () => {
   const {
@@ -28,6 +28,25 @@ export const ModelsPage: React.FC = () => {
   const [isDeleteModelModalOpen, setIsDeleteModelModalOpen] = useState(false);
   const [editingRun, setEditingRun] = useState<ModelRun | null>(null);
   const [deletingRun, setDeletingRun] = useState<ModelRun | null>(null);
+  const [isSyncingAA, setIsSyncingAA] = useState(false);
+
+  const handleSyncTopTierModels = async () => {
+    if (!window.electronAPI || isSyncingAA) return;
+    setIsSyncingAA(true);
+    try {
+      const res = await window.electronAPI.syncAllModelBenchmarks({ importTopTier: true });
+      if (res.success) {
+        showToast(res.message || `Synchronized ${res.updatedCount} models!`, 'success');
+        await refreshModels();
+      } else {
+        showToast(res.message || 'Model sync failed', 'error');
+      }
+    } catch (err: unknown) {
+      showToast(`Model sync failed: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    } finally {
+      setIsSyncingAA(false);
+    }
+  };
 
   const handleDeleteModel = async () => {
     if (!selectedModel || !window.electronAPI) return;
@@ -137,9 +156,26 @@ export const ModelsPage: React.FC = () => {
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
             Registered Models ({models.length})
           </span>
-          <Button size="sm" variant="primary" icon={<Plus size={13} />} onClick={() => setIsNewModelModalOpen(true)}>
-            Add
-          </Button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Tooltip
+              content="Auto-Update Top-Tier Models"
+              description="Automatically import & update the latest released top-tier frontier models from Artificial Analysis"
+              position="bottom"
+            >
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<RotateCw size={12} className={isSyncingAA ? 'spin-anim' : ''} />}
+                onClick={handleSyncTopTierModels}
+                disabled={isSyncingAA}
+              >
+                {isSyncingAA ? 'Syncing...' : 'Sync Top'}
+              </Button>
+            </Tooltip>
+            <Button size="sm" variant="primary" icon={<Plus size={13} />} onClick={() => setIsNewModelModalOpen(true)}>
+              Add
+            </Button>
+          </div>
         </div>
 
         <div ref={listContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '6px' }}>

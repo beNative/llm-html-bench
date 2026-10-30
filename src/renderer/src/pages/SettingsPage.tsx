@@ -85,15 +85,31 @@ export const SettingsPage: React.FC = () => {
   const [discoveredModelsMap, setDiscoveredModelsMap] = useState<Record<string, DiscoveredModel[]>>({});
   const [showDiscoveredFor, setShowDiscoveredFor] = useState<string | null>(null);
 
+  // Artificial Analysis configuration state
+  const [aaApiKey, setAaApiKey] = useState<string>('');
+  const [aaAutoSyncOnStartup, setAaAutoSyncOnStartup] = useState<boolean>(true);
+  const [aaAutoImportTopTier, setAaAutoImportTopTier] = useState<boolean>(true);
+  const [aaLastSyncedAt, setAaLastSyncedAt] = useState<string | null>(null);
+  const [aaLastSyncSource, setAaLastSyncSource] = useState<string | null>(null);
+  const [isSyncingAA, setIsSyncingAA] = useState<boolean>(false);
+
   const loadData = async () => {
     try {
       if (window.electronAPI) {
-        const [info, pConfigs] = await Promise.all([
+        const [info, pConfigs, aaConfig] = await Promise.all([
           window.electronAPI.getDatabaseInfo(),
           window.electronAPI.getProviderConfigs(),
+          window.electronAPI.getArtificialAnalysisConfig?.() ?? Promise.resolve(null),
         ]);
         setDbInfo(info);
         setProviders(pConfigs || []);
+        if (aaConfig) {
+          setAaApiKey(aaConfig.apiKey || '');
+          setAaAutoSyncOnStartup(aaConfig.autoSyncOnStartup !== false);
+          setAaAutoImportTopTier(aaConfig.autoImportTopTier !== false);
+          setAaLastSyncedAt(aaConfig.lastSyncedAt || null);
+          setAaLastSyncSource(aaConfig.lastSyncSource || null);
+        }
       }
     } catch (err) {
       console.error('Failed to load settings:', err);
@@ -688,26 +704,72 @@ export const SettingsPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Sparkles size={18} color="var(--accent-warning)" />
-            <h2 className="h2" style={{ margin: 0 }}>Artificial Analysis Benchmark Intelligence</h2>
+            <h2 className="h2" style={{ margin: 0 }}>Artificial Analysis Benchmark Intelligence & Auto-Updater</h2>
           </div>
-          <span className="badge" style={{ backgroundColor: 'rgba(234, 179, 8, 0.15)', color: 'var(--accent-warning)', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
-            Live & Offline Benchmarking
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {aaLastSyncedAt && (
+              <span className="badge" style={{ fontSize: '10px', backgroundColor: 'rgba(16, 185, 129, 0.12)', color: 'var(--accent-success)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                Synced: {new Date(aaLastSyncedAt).toLocaleString()} ({aaLastSyncSource || 'snapshot'})
+              </span>
+            )}
+            <span className="badge" style={{ backgroundColor: 'rgba(234, 179, 8, 0.15)', color: 'var(--accent-warning)', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+              Live API v2 + Keyless Public Feed + Curated Snapshot
+            </span>
+          </div>
         </div>
 
-        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '14px', lineHeight: 1.5 }}>
-          Fetch and correlate independent quality benchmarks (Intelligence Index 0–100, GPQA, MMLU, measured throughput speeds, and token pricing) from <strong>Artificial Analysis</strong> across all your registered models. Works out of the box with the bundled offline dataset, or optionally provide an API key for live real-time metrics.
+        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px', lineHeight: 1.5 }}>
+          Automatically fetch the latest top-tier frontier models and correlate independent quality benchmarks (Intelligence Index 0–100, Coding &amp; Math scores, GPQA, measured throughput speeds, and token pricing) from <strong>Artificial Analysis</strong>. Works automatically out of the box via daily public feeds &amp; curated snapshots, or provide an official Artificial Analysis v2 API key (<code>aa_...</code>) for direct live API polling.
         </p>
+
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '14px', padding: '10px 12px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={aaAutoSyncOnStartup}
+              onChange={async (e) => {
+                const next = e.target.checked;
+                setAaAutoSyncOnStartup(next);
+                if (window.electronAPI?.saveArtificialAnalysisConfig) {
+                  await window.electronAPI.saveArtificialAnalysisConfig({ autoSyncOnStartup: next });
+                  showToast(`Auto-sync on startup ${next ? 'enabled' : 'disabled'}`, 'info');
+                }
+              }}
+            />
+            <span>Automatically sync &amp; update models on app startup</span>
+          </label>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={aaAutoImportTopTier}
+              onChange={async (e) => {
+                const next = e.target.checked;
+                setAaAutoImportTopTier(next);
+                if (window.electronAPI?.saveArtificialAnalysisConfig) {
+                  await window.electronAPI.saveArtificialAnalysisConfig({ autoImportTopTier: next });
+                  showToast(`Auto-import of newly released top-tier models ${next ? 'enabled' : 'disabled'}`, 'info');
+                }
+              }}
+            />
+            <span>Automatically add newly released top-tier frontier models to catalog</span>
+          </label>
+        </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           <input
             type="password"
-            placeholder="Artificial Analysis API Key (optional for live queries)..."
-            value={providerApiKey.startsWith('aa_') ? providerApiKey : ''}
-            onChange={(e) => setProviderApiKey(e.target.value)}
+            placeholder="Artificial Analysis API Key (optional — e.g. aa_live_...)..."
+            value={aaApiKey}
+            onChange={(e) => setAaApiKey(e.target.value)}
+            onBlur={async () => {
+              if (window.electronAPI?.saveArtificialAnalysisConfig) {
+                await window.electronAPI.saveArtificialAnalysisConfig({ apiKey: aaApiKey.trim() });
+              }
+            }}
             style={{
               flex: 1,
-              minWidth: '280px',
+              minWidth: '260px',
               padding: '6px 10px',
               backgroundColor: 'var(--bg-card)',
               color: 'var(--text-primary)',
@@ -721,25 +783,65 @@ export const SettingsPage: React.FC = () => {
           <Button
             variant="primary"
             size="sm"
-            icon={<RotateCw size={13} />}
+            disabled={isSyncingAA}
+            icon={<Sparkles size={13} />}
             onClick={async () => {
               try {
                 if (window.electronAPI) {
-                  showToast('Synchronizing models with Artificial Analysis...', 'info');
-                  const res = await window.electronAPI.syncAllModelBenchmarks(providerApiKey);
+                  setIsSyncingAA(true);
+                  showToast('Fetching latest top-tier models & benchmarks from Artificial Analysis...', 'info');
+                  const res = await window.electronAPI.syncAllModelBenchmarks({
+                    apiKey: aaApiKey.trim() || undefined,
+                    importTopTier: true,
+                  });
                   if (res.success) {
-                    showToast(res.message || `Synchronized ${res.updatedCount} models!`, 'success');
+                    showToast(res.message || `Updated ${res.updatedCount} and imported ${res.addedCount ?? 0} top-tier models!`, 'success');
                     await refreshModels();
+                    await loadData();
                   } else {
                     showToast(res.message || 'Sync completed', 'info');
                   }
                 }
               } catch (err: any) {
                 showToast(`Sync failed: ${err.message}`, 'error');
+              } finally {
+                setIsSyncingAA(false);
               }
             }}
           >
-            Sync All Models with Artificial Analysis
+            Auto-Update &amp; Import Top-Tier Models
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={isSyncingAA}
+            icon={<RotateCw size={13} />}
+            onClick={async () => {
+              try {
+                if (window.electronAPI) {
+                  setIsSyncingAA(true);
+                  showToast('Synchronizing existing models with Artificial Analysis...', 'info');
+                  const res = await window.electronAPI.syncAllModelBenchmarks({
+                    apiKey: aaApiKey.trim() || undefined,
+                    importTopTier: false,
+                  });
+                  if (res.success) {
+                    showToast(res.message || `Synchronized ${res.updatedCount} existing models!`, 'success');
+                    await refreshModels();
+                    await loadData();
+                  } else {
+                    showToast(res.message || 'Sync completed', 'info');
+                  }
+                }
+              } catch (err: any) {
+                showToast(`Sync failed: ${err.message}`, 'error');
+              } finally {
+                setIsSyncingAA(false);
+              }
+            }}
+          >
+            Sync Existing Models Only
           </Button>
         </div>
       </div>

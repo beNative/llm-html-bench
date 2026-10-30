@@ -89,7 +89,17 @@ export interface ArtificialAnalysisModelBenchmark {
     [key: string]: unknown;
   };
   contextWindow?: string;
+  isReasoningModel?: boolean;
+  isTopTier?: boolean;
   notes?: string;
+}
+
+export interface ArtificialAnalysisConfig {
+  apiKey?: string;
+  autoSyncOnStartup: boolean;
+  autoImportTopTier: boolean;
+  lastSyncedAt?: string;
+  lastSyncSource?: 'live-api' | 'public-feed' | 'curated-snapshot';
 }
 
 export interface CreateModelRunInput {
@@ -269,9 +279,24 @@ export interface ElectronAPI {
   onStreamStatus: (callback: (status: { requestId: string; state: 'started' | 'streaming' | 'extracting' | 'completed' | 'error'; error?: string }) => void) => () => void;
 
   // Artificial Analysis Benchmark Intelligence
-  fetchArtificialAnalysisModels: (apiKey?: string) => Promise<{ success: boolean; models: ArtificialAnalysisModelBenchmark[]; error?: string }>;
+  fetchArtificialAnalysisModels: (apiKey?: string) => Promise<{
+    success: boolean;
+    models: ArtificialAnalysisModelBenchmark[];
+    source?: 'live-api' | 'public-feed' | 'curated-snapshot';
+    error?: string;
+  }>;
   fetchModelBenchmarks: (modelName: string, provider?: string, apiKey?: string) => Promise<{ success: boolean; benchmark?: ArtificialAnalysisModelBenchmark; error?: string }>;
-  syncAllModelBenchmarks: (apiKey?: string) => Promise<{ success: boolean; updatedCount: number; message?: string }>;
+  syncAllModelBenchmarks: (
+    apiKeyOrOptions?: string | { apiKey?: string; importTopTier?: boolean }
+  ) => Promise<{
+    success: boolean;
+    updatedCount: number;
+    addedCount?: number;
+    source?: 'live-api' | 'public-feed' | 'curated-snapshot';
+    message?: string;
+  }>;
+  getArtificialAnalysisConfig: () => Promise<ArtificialAnalysisConfig>;
+  saveArtificialAnalysisConfig: (config: Partial<ArtificialAnalysisConfig>) => Promise<ArtificialAnalysisConfig>;
 
   // Database Management & Backup
   getDatabaseInfo: () => Promise<DatabaseInfo>;
